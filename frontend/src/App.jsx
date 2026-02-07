@@ -1,11 +1,14 @@
+import Header from './component/header.jsx'
+import MyAccount from './pages/myAccount.jsx'
+
 function App() {
   return (
-    <>
-      <h1>su</h1>
-      <p>Edit <code>src/App.jsx</code> and save to test HMR</p>
-    </>
+    <div style={{width: "98vw", height: "100vh"}}>
+        <Header/>
+        <MyAccount/>
+    </div>
   )
 }
 
-export default App
+export default App;
 
