@@ -1,14 +1,7 @@
-import Header from './component/header.jsx'
-import MyAccount from './pages/myAccount.jsx'
+import AppRoutes from "./routes/AppRoutes.jsx";
 
-function App() {
-  return (
-    <div style={{width: "98vw", height: "100vh"}}>
-        <Header/>
-        <MyAccount/>
-    </div>
-  )
+function App(){
+    return <AppRoutes/>;
 }
 
 export default App;
-
