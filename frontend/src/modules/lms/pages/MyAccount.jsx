@@ -1,4 +1,5 @@
 import image from '../../../assets/Linus-Torvalds-2012.webp'
+import "./MyAccount.css"
 export default function MyAccount(){
     const details = {
         "Name With Initials": "Torvalds L",
