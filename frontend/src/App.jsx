@@ -1,11 +1,7 @@
-function App() {
-  return (
-    <>
-      <h1>su</h1>
-      <p>Edit <code>src/App.jsx</code> and save to test HMR</p>
-    </>
-  )
+import AppRoutes from "./routes/AppRoutes.jsx";
+
+function App(){
+    return <AppRoutes/>;
 }
 
-export default App
-
+export default App;
