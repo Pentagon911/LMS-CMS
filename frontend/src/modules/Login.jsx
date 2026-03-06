@@ -1,144 +1,152 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import './Login.css';
 
 const Login = () => {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
-  
-  const [errors, setErrors] = useState({});
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [userType, setUserType] = useState('lms'); // 'lms' or 'cms'
+  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
-    // Clear error for this field when user starts typing
-    if (errors[name]) {
-      setErrors({
-        ...errors,
-        [name]: ''
-      });
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
-    }
-    
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-    
-    return newErrors;
-  };
-
-  const handleSubmit = async (e) => {
+  // Mock validation - replace with real authentication later
+  const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // Validate form
-    const newErrors = validateForm();
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+    setError('');
+    setIsLoading(true);
+
+    // Simple validation
+    if (!username.trim() || !password.trim()) {
+      setError('Please enter both username and password');
+      setIsLoading(false);
       return;
     }
-    
-    setIsLoading(true);
-    
-    // Simulate API call
-    try {
-      // Replace this with your actual login API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+
+    // Mock authentication (replace with actual API call)
+    setTimeout(() => {
+      // For demo purposes, any credentials work
+      // In real app, you would validate with backend
       
-      console.log('Login successful:', formData);
-      alert('Login successful!');
-      // Redirect or handle successful login here
-      
-    } catch (error) {
-      console.error('Login failed:', error);
-      setErrors({ general: 'Login failed. Please try again.' });
-    } finally {
-      setIsLoading(false);
-    }
+      if (username === 'admin' && password === 'admin') {
+        // Redirect based on user type selection
+        if (userType === 'lms') {
+          navigate('/lms/dashboard');
+        } else {
+          navigate('/cms');
+        }
+      } else {
+        setError('Invalid username or password');
+        setIsLoading(false);
+      }
+    }, 1000);
   };
 
   return (
     <div className="login-container">
       <div className="login-card">
-        <h2>Welcome Back</h2>
-        <p className="subtitle">Please login to your account</p>
-        
-        {errors.general && (
-          <div className="error-message general-error">
-            {errors.general}
+        <div className="login-header">
+          <div className="logo-icon">📚</div>
+          <h1>Welcome Back</h1>
+          <p>Sign in to continue to your portal</p>
+        </div>
+
+        {error && (
+          <div className="error-message">
+            <span className="error-icon">⚠️</span>
+            {error}
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="username">
+              <span className="label-icon">👤</span>
+              Username
+            </label>
             <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-              className={errors.email ? 'error' : ''}
+              type="text"
+              id="username"
+              placeholder="Enter your username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               disabled={isLoading}
             />
-            {errors.email && (
-              <span className="error-text">{errors.email}</span>
-            )}
           </div>
-          
+
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">
+              <span className="label-icon">🔒</span>
+              Password
+            </label>
             <input
               type="password"
               id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
               placeholder="Enter your password"
-              className={errors.password ? 'error' : ''}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
             />
-            {errors.password && (
-              <span className="error-text">{errors.password}</span>
-            )}
           </div>
-          
-          <div className="form-options">
-            <label className="remember-me">
-              <input type="checkbox" /> Remember me
+
+          <div className="form-group">
+            <label className="radio-label">
+              <span className="label-icon">🎯</span>
+              Select Portal
             </label>
-            <a href="/forgot-password" className="forgot-password">
-              Forgot password?
-            </a>
+            <div className="radio-group">
+              <label className={`radio-option ${userType === 'lms' ? 'selected' : ''}`}>
+                <input
+                  type="radio"
+                  name="userType"
+                  value="lms"
+                  checked={userType === 'lms'}
+                  onChange={(e) => setUserType(e.target.value)}
+                />
+                <span className="radio-icon">📖</span>
+                <span className="radio-text">LMS Portal</span>
+                <span className="radio-desc">Learning Management System</span>
+              </label>
+
+              <label className={`radio-option ${userType === 'cms' ? 'selected' : ''}`}>
+                <input
+                  type="radio"
+                  name="userType"
+                  value="cms"
+                  checked={userType === 'cms'}
+                  onChange={(e) => setUserType(e.target.value)}
+                />
+                <span className="radio-icon">📝</span>
+                <span className="radio-text">CMS Portal</span>
+                <span className="radio-desc">Content Management System</span>
+              </label>
+            </div>
           </div>
-          
+
           <button 
             type="submit" 
-            className="login-button"
+            className={`login-btn ${isLoading ? 'loading' : ''}`}
             disabled={isLoading}
           >
-            {isLoading ? 'Logging in...' : 'Login'}
+            {isLoading ? (
+              <>
+                <span className="spinner"></span>
+                Signing in...
+              </>
+            ) : (
+              <>
+                <span className="btn-icon">🚀</span>
+                Sign In
+              </>
+            )}
           </button>
         </form>
-        
-        <p className="signup-link">
-          Don't have an account? <a href="/signup">Sign up</a>
-        </p>
+
+        <div className="login-footer">
+          <p>Demo credentials: username: admin, password: admin</p>
+          <p className="hint">(Works for both LMS and CMS)</p>
+        </div>
       </div>
     </div>
   );

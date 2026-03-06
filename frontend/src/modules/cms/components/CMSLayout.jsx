@@ -17,7 +17,14 @@ const CMSLayout = ({ children }) => {
   return (
     <>
       <Header user={user} onLogout={handleLogout} />
-      <main style={{ paddingTop: '70px' }}>
+      {/* Add gradient background to the main content area */}
+      <main 
+        style={{ 
+          paddingTop: '70px',
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+        }}
+      >
         {children}
       </main>
     </>
