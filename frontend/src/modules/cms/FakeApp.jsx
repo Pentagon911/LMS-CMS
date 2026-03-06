@@ -11,10 +11,10 @@ function App() {
   const isLecturer = true;
 
   return (
-     <div style={{ padding: "20px", maxWidth: "900px", margin: "auto" }}>
+     <div style={{ padding: "10px", maxWidth: "100%", margin: "auto" }}>
        <h1>Course Weeks</h1>
 
-       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
          {weekData.map((week, index) => (
            <WeekCard
              key={index}
