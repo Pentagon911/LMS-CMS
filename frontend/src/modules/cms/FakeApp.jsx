@@ -1,16 +1,29 @@
-import weeks from "./mockdata/weekcard.json";
-import WeekCard from "./components/WeekCard";
+import React from "react";
+import WeekCard from "./components/WeekCard.jsx"
+import QuizEditor from "./components/QuizEditor.jsx"
+
+// import JSON data
+import weekData from "./mockdata/weekcard.json";
 
 function App() {
 
-  const isLecturer = true; // change to false for students
+  // If you want, you can set this true/false depending on the user role
+  const isLecturer = true;
 
   return (
-    <div>
-      {weeks.map((week, index) => (
-        <WeekCard key={index} data={week} isLecturer={isLecturer} />
-      ))}
-    </div>
+     <div style={{ padding: "20px", maxWidth: "900px", margin: "auto" }}>
+       <h1>Course Weeks</h1>
+
+       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+         {weekData.map((week, index) => (
+           <WeekCard
+             key={index}
+             data={week}
+             isLecturer={isLecturer}
+           />
+         ))}
+       </div>
+     </div>
   );
 }
 

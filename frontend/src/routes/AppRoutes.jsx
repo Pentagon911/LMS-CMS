@@ -6,6 +6,7 @@ import MyAccount from "../modules/lms/pages/MyAccount.jsx";
 import MenuBar from "../modules/lms/pages/MenuBar.jsx"; 
 import Dashboard from "../modules/lms/pages/Dashboard.jsx";
 import CMS from "../modules/cms/FakeApp.jsx";
+import QuizEditor from "../modules/cms/components/QuizEditor.jsx"
 
 // --- ProtectedRoute Component ---
 function ProtectedRoute({ children }) {
@@ -26,6 +27,7 @@ function AppRoutes() {
       {/* Public Route */}
       <Route path="/login" element={<Login />} />
       <Route path="/cms" element={<CMS />} />
+      <Route path="/quiz" element={<QuizEditor />} />
 
       {/* Protected LMS Routes */}
       <Route
