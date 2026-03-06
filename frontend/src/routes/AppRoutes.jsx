@@ -5,6 +5,7 @@ import Login from "../modules/Login.jsx";
 import MyAccount from "../modules/lms/pages/MyAccount.jsx";
 import MenuBar from "../modules/lms/pages/MenuBar.jsx"; 
 import Dashboard from "../modules/lms/pages/Dashboard.jsx";
+import CMS from "../modules/cms/FakeApp.jsx";
 
 // --- ProtectedRoute Component ---
 function ProtectedRoute({ children }) {
@@ -24,6 +25,7 @@ function AppRoutes() {
     <Routes>
       {/* Public Route */}
       <Route path="/login" element={<Login />} />
+      <Route path="/cms" element={<CMS />} />
 
       {/* Protected LMS Routes */}
       <Route
