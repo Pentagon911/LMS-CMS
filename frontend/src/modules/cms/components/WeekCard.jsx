@@ -3,7 +3,7 @@ import AddContentModal from "./AddContentModal.jsx";
 
 const WeekCard = ({ data, isLecturer }) => {
 
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [contents, setContents] = useState(data.contents);
 

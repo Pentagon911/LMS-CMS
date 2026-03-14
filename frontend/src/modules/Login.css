@@ -261,6 +261,28 @@
   font-weight: 500;
 }
 
+/* Demo Button */
+.demo-btn {
+  background: transparent;
+  border: 1px solid #667eea;
+  color: #667eea;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.demo-btn:hover {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
 /* Responsive Design */
 @media (max-width: 480px) {
   .login-card {

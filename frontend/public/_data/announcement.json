@@ -1,0 +1,86 @@
+[
+  {
+    "id": 1,
+    "title": "📢 Midterm Exam Schedule Released",
+    "content": "<h2>Midterm Examination Schedule</h2><p><strong>Date:</strong> March 20th, 2026</p><p><strong>Time:</strong> 10:00 AM - 12:00 PM</p><p><strong>Location:</strong> Main Hall (Room 101-105)</p><p><br></p><p><strong>Important Instructions:</strong></p><ul><li>Bring your student ID card</li><li>Arrive 15 minutes early</li><li>No electronic devices allowed</li><li><em>Calculators are permitted</em></li></ul><p><br></p><p>For any special accommodations, please contact the <a href=\"mailto:examsoffice@lms.com\" rel=\"noopener noreferrer\" target=\"_blank\">Exams Office</a> by March 15th.</p>",
+    "postedBy": "admin002",
+    "createdAt": "2026-03-14T10:00:00Z",
+    "updatedAt": "2026-03-14T10:00:00Z",
+    "attachments": [
+      {
+        "fileName": "exam_schedule.pdf",
+        "fileUrl": "/uploads/exam_schedule.pdf",
+        "fileSize": 245760,
+        "fileType": "application/pdf"
+      },
+      {
+        "fileName": "exam_rules.pdf",
+        "fileUrl": "/uploads/exam_rules.pdf",
+        "fileSize": 182345,
+        "fileType": "application/pdf"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "title": "Week 5 Lecture Notes Now Available",
+    "content": "<h3>Database Systems - Week 5</h3><p>The lecture notes for Week 5 have been uploaded. This week covers:</p><ul><li><strong>Normalization:</strong> 1NF, 2NF, 3NF, BCNF</li><li><strong>SQL Optimization:</strong> Indexing and query planning</li><li><strong>Transaction Management:</strong> ACID properties</li></ul><p><br></p><p><em>Note: The tutorial for this week will be held on Friday instead of Thursday due to the holiday.</em></p>",
+    "postedBy": "dr_smith",
+    "createdAt": "2026-03-13T08:00:00Z",
+    "updatedAt": "2026-03-13T09:30:00Z",
+    "attachments": [
+      {
+        "fileName": "week5_lecture_slides.pdf",
+        "fileUrl": "/uploads/week5_lecture_slides.pdf",
+        "fileSize": 3456789,
+        "fileType": "application/pdf"
+      },
+      {
+        "fileName": "week5_examples.sql",
+        "fileUrl": "/uploads/week5_examples.sql",
+        "fileSize": 4567,
+        "fileType": "text/plain"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "title": "🌟 Guest Lecture: AI in Modern Education",
+    "content": "<h2>Special Guest Lecture</h2><p>We are excited to announce a guest lecture by <strong>Dr. Sarah Johnson</strong> from Stanford University.</p><p><br></p><p><strong>Topic:</strong> The Future of AI in Education</p><p><strong>Date:</strong> March 18th, 2026</p><p><strong>Time:</strong> 3:00 PM - 5:00 PM</p><p><strong>Location:</strong> Auditorium B</p><p><br></p><p><blockquote>\"AI will transform how we teach and learn. Join us to explore the possibilities!\"</blockquote></p><p><br></p><p>This lecture is <u>mandatory</u> for all CS students. Refreshments will be provided.</p>",
+    "postedBy": "dean_office",
+    "createdAt": "2026-03-12T14:30:00Z",
+    "updatedAt": "2026-03-12T14:30:00Z",
+    "attachments": []
+  },
+  {
+    "id": 4,
+    "title": "⚠️ System Maintenance This Weekend",
+    "content": "<p><strong>Scheduled Maintenance Notice</strong></p><p>The LMS will be unavailable on <strong>Saturday, March 16th</strong> from 2:00 AM to 6:00 AM for system upgrades.</p><p><br></p><p><strong>What's being updated:</strong></p><ul><li>New quiz engine with better math support</li><li>Improved discussion forums</li><li>Security patches</li></ul><p><br></p><p>We apologize for any inconvenience. The system will be back online by 6:00 AM.</p>",
+    "postedBy": "it_support",
+    "createdAt": "2026-03-11T09:15:00Z",
+    "updatedAt": "2026-03-11T09:15:00Z",
+    "attachments": []
+  },
+  {
+    "id": 5,
+    "title": "Project Submission Guidelines",
+    "content": "<h3>Final Year Project - Important Update</h3><p>The project submission deadline has been <strong>extended</strong> to <strong>April 5th, 2026</strong>.</p><p><br></p><p><strong>Submission requirements:</strong></p><ol><li>Project report (PDF format)</li><li>Source code (ZIP archive)</li><li>Presentation slides (PPT or PDF)</li><li>Demo video (optional, max 5 minutes)</li></ol><p><br></p><p><span style=\"background-color: #ffff00;\">Use the submission portal on the LMS by 11:59 PM on the deadline date.</span></p><p><br></p><p>For any questions, attend the Q&A session this Friday at 2 PM in Room 302.</p>",
+    "postedBy": "prof_williams",
+    "createdAt": "2026-03-10T16:20:00Z",
+    "updatedAt": "2026-03-10T16:45:00Z",
+    "attachments": [
+      {
+        "fileName": "project_guidelines.pdf",
+        "fileUrl": "/uploads/project_guidelines.pdf",
+        "fileSize": 567890,
+        "fileType": "application/pdf"
+      },
+      {
+        "fileName": "sample_project.zip",
+        "fileUrl": "/uploads/sample_project.zip",
+        "fileSize": 2345678,
+        "fileType": "application/zip"
+      }
+    ]
+  }
+]

@@ -1,0 +1,17 @@
+[
+  { "code": "CS1040", "title": "Program Construction", "color": "#00ffff" },
+  { "code": "MA1024", "title": "Methods of Mathematics", "color": "#ff00ff" },
+  { "code": "CS1050", "title": "Computer Org & Digital Design", "color": "#3446eb" },
+  { "code": "CS2023", "title": "Data Structures & Algorithms", "color": "#ffaabb" },
+  { "code": "PH1010", "title": "Physics I", "color": "#f7b267" },
+  { "code": "CH1010", "title": "Chemistry Basics", "color": "#6a2c70" },
+  { "code": "CS2030", "title": "Operating Systems", "color": "#f08a5d" },
+  { "code": "CS2040", "title": "Computer Networks", "color": "#b83b5e" },
+  { "code": "MA2020", "title": "Linear Algebra", "color": "#0b4f6c" },
+  { "code": "CS3010", "title": "Software Engineering", "color": "#00bdaa" },
+  { "code": "CS3020", "title": "Databases", "color": "#ff6f59" },
+  { "code": "CS3030", "title": "Artificial Intelligence", "color": "#3a86ff" },
+  { "code": "MA3010", "title": "Probability & Statistics", "color": "#8338ec" },
+  { "code": "CS4010", "title": "Machine Learning", "color": "#ffbe0b" },
+  { "code": "CS4020", "title": "Computer Security", "color": "#ff006e" }
+]
