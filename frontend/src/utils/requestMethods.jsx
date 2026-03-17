@@ -1,6 +1,5 @@
 // requestMethods.jsx - API request handler
 
-// Base URL - change this based on your environment
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5173';
 
 // Helper to get auth token
@@ -19,7 +18,6 @@ const getHeaders = (customHeaders = {}, isFormData = false) => {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  // Don't set Content-Type for FormData (browser will set it with boundary)
   if (!isFormData && !headers['Content-Type']) {
     headers['Content-Type'] = 'application/json';
   }

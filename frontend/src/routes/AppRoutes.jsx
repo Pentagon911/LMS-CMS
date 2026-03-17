@@ -9,10 +9,11 @@ import LMSDashboard from "../modules/lms/pages/Dashboard.jsx";
 
 //CMS Pages
 import CMSDashboard from "../modules/cms/pages/Dashboard.jsx";
-import QuizEditor from "../modules/cms/components/QuizEditor.jsx";
+import QuizEditor from "../modules/cms/pages/Quiz.jsx";
 import Coursepage from "../modules/cms/pages/CoursesPage.jsx";
 import CourseContentPage from "../modules/cms/pages/CourseContentPage.jsx";
 import AnnouncementEditor from "../modules/cms/components/AnnouncementEditor.jsx";
+import Quiz from "../modules/cms/pages/QuizPage.jsx";
 
 // --- ProtectedRoute Component ---
 function ProtectedRoute({ children }) {
@@ -35,9 +36,10 @@ function AppRoutes() {
       
       {/* CMS Routes - Each route individually wrapped with CMSLayout */}
       <Route path="/cms/dashboard" element={<CMSLayout> <CMSDashboard /> </CMSLayout>} />
-      <Route path="/quiz" element={<CMSLayout> <QuizEditor /> </CMSLayout>} />
+      <Route path="/cms/quiz-editor" element={<CMSLayout> <QuizEditor /> </CMSLayout>} />
+      <Route path="/cms/quizes" element={<CMSLayout> <Quiz /> </CMSLayout>} />
       <Route path="/cms/courses" element={<CMSLayout> <Coursepage /> </CMSLayout>} />
-      <Route path="/cms/course-content" element={<CMSLayout> <CourseContentPage /> </CMSLayout>} />
+      <Route path="/cms/course-content/:moduleCode" element={<CMSLayout> <CourseContentPage /> </CMSLayout>} />
       <Route path="/cms/announcements" element={<CMSLayout> <AnnouncementEditor /> </CMSLayout>} />
 
       {/* Protected LMS Routes - NO HEADER */}

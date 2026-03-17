@@ -3,23 +3,23 @@ import Quill from "quill";
 import { BlockMath } from "react-katex";
 import "quill/dist/quill.snow.css";
 import "katex/dist/katex.min.css";
-import "./QuizEditor.css"; // We'll create this next
+import "./QuizEditor.css";
 
-function QuizEditor() {
+function QuizEditor({ onSubmit, initialData = null }) {
   const editorRef = useRef(null);
   const quillRef = useRef(null);
   const [latex, setLatex] = useState("");
   const [options, setOptions] = useState(["", ""]);
-  const [quizTitle, setQuizTitle] = useState("");
   const [correctAnswer, setCorrectAnswer] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
+  // Initialize Quill editor
   useEffect(() => {
     if (editorRef.current && !quillRef.current) {
       quillRef.current = new Quill(editorRef.current, {
         theme: "snow",
-        placeholder: "Type your quiz question here...",
+        placeholder: "Type your question here...",
         modules: {
           toolbar: [
             ["bold", "italic", "underline", "strike"],
@@ -32,6 +32,29 @@ function QuizEditor() {
       });
     }
   }, []);
+
+  // Update form when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      console.log("Loading initial data into editor:", initialData);
+      setOptions(initialData.options || ['', '']);
+      setCorrectAnswer(initialData.correctAnswer ?? null);
+      setLatex(initialData.equationPreview || '');
+      
+      // Set Quill content
+      if (quillRef.current && initialData.question) {
+        quillRef.current.root.innerHTML = initialData.question;
+      }
+    } else {
+      // Reset form when not editing
+      setOptions(['', '']);
+      setCorrectAnswer(null);
+      setLatex('');
+      if (quillRef.current) {
+        quillRef.current.root.innerHTML = '';
+      }
+    }
+  }, [initialData]);
 
   const insertMath = (latexSymbol) => {
     const quill = quillRef.current;
@@ -61,13 +84,8 @@ function QuizEditor() {
     setOptions(newOptions);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     const questionHTML = quillRef.current.root.innerHTML;
-    
-    if (!quizTitle.trim()) {
-      alert("Please enter a quiz title");
-      return;
-    }
     
     if (!questionHTML.trim() || questionHTML === "<p><br></p>") {
       alert("Please enter a question");
@@ -86,22 +104,31 @@ function QuizEditor() {
 
     setIsSubmitting(true);
     
-    const quizData = {
-      title: quizTitle,
+    const questionData = {
       question: questionHTML,
       equationPreview: latex,
       options: options,
       correctAnswer: correctAnswer,
+      multipleAnswers: "false",
       createdAt: new Date().toISOString()
     };
 
-    console.log("Quiz Data:", quizData);
-    
-    // Simulate API call
+    // Pass data to parent component
+    if (onSubmit) {
+      onSubmit(questionData);
+    }
+
+    // Reset form after submission
     setTimeout(() => {
+      setOptions(["", ""]);
+      setCorrectAnswer(null);
+      setLatex("");
+      if (quillRef.current) {
+        quillRef.current.root.innerHTML = "";
+      }
       setIsSubmitting(false);
-      // Show success message or redirect
-    }, 1000);
+      alert(initialData ? "Question updated successfully!" : "Question added successfully!");
+    }, 500);
   };
 
   const mathSymbols = [
@@ -121,27 +148,7 @@ function QuizEditor() {
 
   return (
     <div className="quiz-editor-container">
-      <div className="quiz-editor-header">
-        <h1>Create New Quiz</h1>
-        <p>Fill in the details below to create your interactive quiz question</p>
-      </div>
-
       <div className="quiz-editor-content">
-        {/* Title Section */}
-        <div className="form-section">
-          <label className="section-label">
-            <span className="label-icon">📝</span>
-            Quiz Title
-          </label>
-          <input
-            type="text"
-            className="title-input"
-            placeholder="e.g., Mathematics Quiz - Chapter 1"
-            value={quizTitle}
-            onChange={(e) => setQuizTitle(e.target.value)}
-          />
-        </div>
-
         {/* Math Symbols Toolbar */}
         <div className="form-section">
           <label className="section-label">
@@ -172,6 +179,7 @@ function QuizEditor() {
             <div
               ref={editorRef}
               className="quill-editor"
+              style={{ height: '200px' }}
             />
           </div>
         </div>
@@ -180,13 +188,13 @@ function QuizEditor() {
         <div className="form-section">
           <label className="section-label">
             <span className="label-icon">📐</span>
-            Equation Preview
+            Equation Preview (LaTeX)
           </label>
           <div className="equation-container">
             <input
               type="text"
               className="equation-input"
-              placeholder="Enter LaTeX equation (e.g., \int_0^1 x^2 dx)"
+              placeholder="e.g., \int_0^1 x^2 dx"
               value={latex}
               onChange={(e) => setLatex(e.target.value)}
             />
@@ -249,7 +257,7 @@ function QuizEditor() {
           )}
         </div>
 
-        {/* Submit Button */}
+        {/* Action Buttons */}
         <div className="form-actions">
           <button
             className="preview-btn"
@@ -266,12 +274,12 @@ function QuizEditor() {
             {isSubmitting ? (
               <>
                 <span className="spinner"></span>
-                Saving...
+                {initialData ? 'Updating...' : 'Adding...'}
               </>
             ) : (
               <>
-                <span className="btn-icon">💾</span>
-                Save Quiz
+                <span className="btn-icon">{initialData ? '✎' : '➕'}</span>
+                {initialData ? 'Update Question' : 'Add Question'}
               </>
             )}
           </button>
@@ -282,11 +290,10 @@ function QuizEditor() {
           <div className="preview-modal">
             <div className="preview-content">
               <div className="preview-header">
-                <h3>Quiz Preview</h3>
+                <h3>Question Preview</h3>
                 <button className="close-preview" onClick={() => setShowPreview(false)}>×</button>
               </div>
               <div className="preview-body">
-                <h4>{quizTitle || "Untitled Quiz"}</h4>
                 <div className="preview-question" dangerouslySetInnerHTML={{ 
                   __html: quillRef.current?.root.innerHTML || "No question entered" 
                 }} />
