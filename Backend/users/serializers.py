@@ -2,6 +2,8 @@ from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from .models import User
 from .profiles import StudentProfile, InstructorProfile, AdminProfile
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.utils import timezone
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
@@ -63,8 +65,8 @@ class UserDetailSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'username', 'email', 'first_name', 'last_name',
                  'role', 'phone_number', 'profile_picture', 'profile',
-                 'date_joined', 'last_login')
-        read_only_fields = ('date_joined', 'last_login')
+                 'date_joined', 'last_login', 'last_password_change')
+        read_only_fields = ('date_joined', 'last_login', 'last_password_change')
     
     def get_profile(self, obj):
         if obj.is_student and hasattr(obj, 'student_profile'):
@@ -95,3 +97,33 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         model = User
         fields = ('first_name', 'last_name', 'phone_number', 
                  'address', 'date_of_birth', 'profile_picture')
+        
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """
+    Custom JWT serializer that includes user data and updates last_login
+    """
+    
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        
+        # Update last_login
+        self.user.last_login = timezone.now()
+        self.user.save(update_fields=['last_login'])
+        
+        # Add user data to response
+        data['user'] = UserDetailSerializer(self.user).data
+        
+        return data
+    
+class ChangePasswordSerializer(serializers.Serializer):
+    """
+    Serializer for password change
+    """
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+    confirm_password = serializers.CharField(required=True)
+    
+    def validate(self, data):
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError("New passwords do not match")
+        return data

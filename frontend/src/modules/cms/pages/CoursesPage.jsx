@@ -205,7 +205,7 @@ const CoursesPage = () => {
   };
 
   const handleCardClick = (code) => {
-    navigate(`/module/${code}`);
+    navigate(`/cms/course-content/${code}`);
   };
 
   if (loading) {

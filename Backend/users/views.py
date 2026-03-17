@@ -1,19 +1,116 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
+from django.utils import timezone
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from .models import User
 from .serializers import (
     UserRegistrationSerializer, UserDetailSerializer, 
-    UserUpdateSerializer, StudentProfileSerializer,
-    AdminProfileSerializer, InstructorProfileSerializer
+    UserUpdateSerializer, 
+    # StudentProfileSerializer, AdminProfileSerializer, InstructorProfileSerializer,
+    CustomTokenObtainPairSerializer, ChangePasswordSerializer,
 )
 from .permissions import (
     IsAdminOrSelf, IsAdminUser, IsRoleAllowed, 
     IsStaffOrReadOnly
 )
+import logging
+
+logger = logging.getLogger(__name__)
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    """
+    Login endpoint that returns JWT tokens with user details
+    Also updates last_login automatically
+    """
+    serializer_class = CustomTokenObtainPairSerializer
+
+
+class CustomTokenRefreshView(TokenRefreshView):
+    """
+    Refresh token endpoint
+    Also updates last_login on refresh (handled by UPDATE_LAST_LOGIN=True)
+    """
+    pass
+
+
+class LogoutView(APIView):
+    """
+    Logout endpoint - blacklists the refresh token
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        try:
+            refresh_token = request.data.get('refresh')
+            if not refresh_token:
+                return Response(
+                    {'error': 'Refresh token is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            
+            return Response(
+                {'message': 'Successfully logged out'},
+                status=status.HTTP_205_RESET_CONTENT
+            )
+        except TokenError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            logger.error(f"Logout error: {e}")
+            return Response(
+                {'error': 'An error occurred during logout'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class ChangePasswordView(APIView):
+    """
+    Change password for authenticated user
+    Updates last_password_change timestamp
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = request.user
+        data = serializer.validated_data
+        
+        # Check old password
+        if not user.check_password(data['old_password']):
+            return Response(
+                {'old_password': ['Wrong password']},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Set new password
+        user.set_password(data['new_password'])
+        user.last_password_change = timezone.now()
+        user.save()
+        
+        # Generate new tokens (forces re-login)
+        refresh = RefreshToken.for_user(user)
+        
+        return Response({
+            'message': 'Password changed successfully',
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'last_password_change': user.last_password_change
+        })
 
 
 class UserRegistrationView(generics.CreateAPIView):
@@ -50,7 +147,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
     Users can update their own profile, admins can update any profile.
     """
     queryset = User.objects.all()
-    permission_classes = [permissions.IsAuthenticated, IsAdminOrSelf]
+    # permission_classes = [permissions.IsAuthenticated, IsAdminOrSelf]
     
     def get_serializer_class(self):
         if self.request.method in ['PUT', 'PATCH']:
@@ -118,7 +215,7 @@ class UserProfileView(generics.RetrieveAPIView):
     Get current authenticated user's profile.
     """
     serializer_class = UserDetailSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
     
     def get_object(self):
         return self.request.user
@@ -128,7 +225,7 @@ class UpdateProfilePictureView(APIView):
     """
     Update current user's profile picture.
     """
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
     
     def post(self, request):
         user = request.user
@@ -173,7 +270,7 @@ class StudentListView(generics.ListAPIView):
     Accessible by admin and instructor.
     """
     serializer_class = UserDetailSerializer
-    permission_classes = [permissions.IsAuthenticated, IsRoleAllowed]
+    # permission_classes = [permissions.IsAuthenticated, IsRoleAllowed]
     allowed_roles = ['admin', 'instructor']
     
     def get_queryset(self):
@@ -186,7 +283,7 @@ class InstructorListView(generics.ListAPIView):
     Only accessible by admin.
     """
     serializer_class = UserDetailSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    # permission_classes = [permissions.IsAuthenticated, IsAdminUser]
     
     def get_queryset(self):
         return User.objects.filter(role=User.Role.INSTRUCTOR).order_by('-date_joined')
@@ -198,7 +295,7 @@ class AdminListView(generics.ListAPIView):
     Only accessible by admin.
     """
     serializer_class = UserDetailSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    # permission_classes = [permissions.IsAuthenticated, IsAdminUser]
     
     def get_queryset(self):
         return User.objects.filter(role=User.Role.ADMIN).order_by('-date_joined')
@@ -209,7 +306,7 @@ class UserStatsView(APIView):
     Get user statistics.
     Only accessible by admin.
     """
-    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    # permission_classes = [permissions.IsAuthenticated, IsAdminUser]
     
     def get(self, request):
         total_users = User.objects.count()
@@ -238,7 +335,7 @@ class BulkUserCreateView(APIView):
     Bulk create users.
     Only accessible by admin.
     """
-    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    # permission_classes = [permissions.IsAuthenticated, IsAdminUser]
     
     def post(self, request):
         users_data = request.data.get('users', [])
@@ -280,25 +377,9 @@ class ProfileDetailView(generics.RetrieveAPIView):
     Get detailed profile information for a specific user based on their role.
     """
     serializer_class = UserDetailSerializer
-    permission_classes = [permissions.IsAuthenticated, IsStaffOrReadOnly]
+    # permission_classes = [permissions.IsAuthenticated, IsStaffOrReadOnly]
     
     def get_object(self):
         if 'pk' in self.kwargs:
             return get_object_or_404(User, pk=self.kwargs['pk'])
         return self.request.user
-    # def get(self, request, pk=None):
-    #     user = get_object_or_404(User, pk=pk) if pk else request.user
-        
-    #     profile_data = {
-    #         'user': UserDetailSerializer(user).data
-    #     }
-        
-    #     # Add role-specific profile data
-    #     if user.is_student and hasattr(user, 'student_profile'):
-    #         profile_data['profile'] = StudentProfileSerializer(user.student_profile).data
-    #     elif user.is_admin and hasattr(user, 'admin_profile'):
-    #         profile_data['profile'] = AdminProfileSerializer(user.admin_profile).data
-    #     elif user.is_instructor and hasattr(user, 'instructor_profile'):
-    #         profile_data['profile'] = InstructorProfileSerializer(user.instructor_profile).data
-        
-    #     return Response(profile_data)

@@ -1,0 +1,221 @@
+{
+    "courseTitle": "Data Structures and Algorithms",
+    "weeks": [
+  {
+    "week": "Week 1: Introduction to Data Structures",
+    "items": [
+      {
+        "type": "content",
+        "title": "Lecture Slides: Introduction to Algorithms",
+        "format": "PDF",
+        "fileUrl": "/files/week1/lecture_slides.pdf",
+        "fileSize": 2457600,
+        "description": "Chapter 1: Basic concepts and terminology"
+      },
+      {
+        "type": "content",
+        "title": "Video Lecture: Big O Notation",
+        "format": "Video",
+        "fileUrl": "/files/week1/big_o_lecture.mp4",
+        "fileSize": 15728640,
+        "duration": "45:30",
+        "description": "Understanding time complexity with examples"
+      },
+      {
+        "type": "content",
+        "title": "Supplementary Reading: Algorithm Analysis",
+        "format": "Link",
+        "fileUrl": "https://www.khanacademy.org/computing/computer-science/algorithms",
+        "description": "External resource for additional practice"
+      },
+      {
+        "type": "quiz",
+        "title": "Week 1: Time Complexity Quiz",
+        "quizId": "quiz001",
+        "duration": "15 min",
+        "questionsCount": 10,
+        "description": "Test your understanding of Big O notation"
+      },
+      {
+        "type": "announcement",
+        "title": "📢 Office Hours Change",
+        "message": "Office hours for this week have been moved to Thursday 3-5 PM due to a department meeting. Please book slots via the portal.",
+        "date": "2026-03-15",
+        "postedBy": "Dr. Smith"
+      }
+    ]
+  },
+  {
+    "week": "Week 2: Arrays and Linked Lists",
+    "items": [
+      {
+        "type": "content",
+        "title": "Lecture Slides: Arrays vs Linked Lists",
+        "format": "PDF",
+        "fileUrl": "/files/week2/arrays_linkedlists.pdf",
+        "fileSize": 3145728,
+        "description": "Comparative analysis with code examples"
+      },
+      {
+        "type": "content",
+        "title": "Interactive Visualization: Linked Lists",
+        "format": "Link",
+        "fileUrl": "https://visualgo.net/en/list",
+        "description": "Interactive tool to visualize linked list operations"
+      },
+      {
+        "type": "quiz",
+        "title": "Week 2: Linked Lists Quiz",
+        "quizId": "quiz002",
+        "duration": "20 min",
+        "questionsCount": 15,
+        "description": "Questions on singly, doubly, and circular linked lists"
+      },
+      {
+        "type": "announcement",
+        "title": "🎯 Quiz 1 Results Released",
+        "message": "Results for Week 1 quiz are now available. Average score: 82%. We'll review common mistakes in Friday's tutorial.",
+        "date": "2026-03-18",
+        "postedBy": "Teaching Team"
+      }
+    ]
+  },
+  {
+    "week": "Week 3: Stacks and Queues",
+    "items": [
+      {
+        "type": "content",
+        "title": "Lecture Slides: Stack Applications",
+        "format": "PDF",
+        "fileUrl": "/files/week3/stacks.pdf",
+        "fileSize": 2097152,
+        "description": "Expression evaluation, undo operations, backtracking"
+      },
+      {
+        "type": "content",
+        "title": "Lecture Slides: Queue Implementations",
+        "format": "PDF",
+        "fileUrl": "/files/week3/queues.pdf",
+        "fileSize": 1835008,
+        "description": "Simple queue, circular queue, priority queue"
+      },
+      {
+        "type": "content",
+        "title": "Video Demo: Stack Memory Visualization",
+        "format": "Video",
+        "fileUrl": "/files/week3/stack_memory.mp4",
+        "fileSize": 22020096,
+        "duration": "32:15"
+      },
+      {
+        "type": "quiz",
+        "title": "Week 3: Stacks and Queues Quiz",
+        "quizId": "quiz003",
+        "duration": "20 min",
+        "questionsCount": 12,
+        "description": "Applications and implementations of stacks and queues"
+      },
+      {
+        "type": "announcement",
+        "title": "⚠️ Assignment Extension",
+        "message": "Due to popular request, the Week 2 assignment deadline has been extended to April 3rd. Use the extra time to optimize your solutions!",
+        "date": "2026-03-28",
+        "postedBy": "Course Coordinator"
+      },
+      {
+        "type": "announcement",
+        "title": "📝 Midterm Exam Info",
+        "message": "Midterm exam will cover Weeks 1-4. Date: April 15th, 10 AM - 12 PM in Main Hall. Review session on April 13th during lecture.",
+        "date": "2026-03-30",
+        "postedBy": "Dr. Smith"
+      }
+    ]
+  },
+  {
+    "week": "Week 4: Trees and Binary Search Trees",
+    "items": [
+      {
+        "type": "content",
+        "title": "Lecture Slides: Tree Traversals",
+        "format": "PDF",
+        "fileUrl": "/files/week4/tree_traversals.pdf",
+        "fileSize": 2621440,
+        "description": "Inorder, preorder, postorder, level order with examples"
+      },
+      {
+        "type": "content",
+        "title": "Lecture Slides: BST Operations",
+        "format": "PDF",
+        "fileUrl": "/files/week4/bst.pdf",
+        "fileSize": 3145728,
+        "description": "Search, insert, delete in Binary Search Trees"
+      },
+      {
+        "type": "content",
+        "title": "Interactive BST Simulator",
+        "format": "Link",
+        "fileUrl": "https://www.cs.usfca.edu/~galles/visualization/BST.html",
+        "description": "Visualize BST operations step by step"
+      },
+      {
+        "type": "quiz",
+        "title": "Week 4: Trees Quiz",
+        "quizId": "quiz004",
+        "duration": "25 min",
+        "questionsCount": 15,
+        "description": "Binary trees, BST properties, and traversals"
+      },
+      {
+        "type": "announcement",
+        "title": "📊 Practice Problems Released",
+        "message": "Additional practice problems for trees are now available in the resources section. Solutions will be discussed in next week's tutorial.",
+        "date": "2026-04-05",
+        "postedBy": "Teaching Assistant"
+      }
+    ]
+  },
+  {
+    "week": "Week 5: Sorting Algorithms",
+    "items": [
+      {
+        "type": "content",
+        "title": "Lecture Slides: Comparison-based Sorting",
+        "format": "PDF",
+        "fileUrl": "/files/week5/comparison_sorting.pdf",
+        "fileSize": 3670016,
+        "description": "Bubble, Selection, Insertion, Merge, Quick Sort"
+      },
+      {
+        "type": "content",
+        "title": "Lecture Slides: Non-comparison Sorting",
+        "format": "PDF",
+        "fileUrl": "/files/week5/non_comparison_sorting.pdf",
+        "fileSize": 2097152,
+        "description": "Counting Sort, Radix Sort, Bucket Sort"
+      },
+      {
+        "type": "content",
+        "title": "Sorting Algorithm Visualizer",
+        "format": "Link",
+        "fileUrl": "https://www.toptal.com/developers/sorting-algorithms",
+        "description": "Watch different sorting algorithms in action"
+      },
+      {
+        "type": "quiz",
+        "title": "Week 5: Sorting Algorithms Quiz",
+        "quizId": "quiz005",
+        "duration": "30 min",
+        "questionsCount": 20,
+        "description": "Time complexities, stability, and applications of sorting algorithms"
+      },
+      {
+        "type": "announcement",
+        "title": "🎓 Guest Lecture: Advanced Sorting Techniques",
+        "message": "Dr. Johnson from Google will give a guest lecture on parallel sorting algorithms and their applications in big data systems this Friday at 3 PM.",
+        "date": "2026-04-10",
+        "postedBy": "Department"
+      }
+    ]
+  }
+]
+}

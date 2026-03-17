@@ -1,0 +1,69 @@
+{
+  "quizId": "quiz001",
+  "title": "Numerical Methods Basics",
+  "course": "MA1014",
+  "time": "15m",
+  "questions": [
+    {
+      "questionId": "q1",
+      "question": "<h3>Bisection Method</h3><p>What is the main requirement to apply the <strong>Bisection Method</strong>?</p>",
+      "image": null,
+      "multipleAnswers": "false",
+      "options": [
+        { "id": "A", "text": "Function must be differentiable" },
+        { "id": "B", "text": "<strong>✓ Function must change sign in the interval</strong>" },
+        { "id": "C", "text": "Function must be linear" },
+        { "id": "D", "text": "Function must be periodic" }
+      ]
+    },
+    {
+      "questionId": "q2",
+      "question": "<h3>Newton-Raphson Method</h3><p>Which of the following is required for the Newton-Raphson method?</p>",
+      "image": null,
+      "multipleAnswers": "false",
+      "options": [
+        { "id": "A", "text": "<strong>✓ Derivative of the function</strong>" },
+        { "id": "B", "text": "Matrix inversion" },
+        { "id": "C", "text": "Integration only" },
+        { "id": "D", "text": "Random values" }
+      ]
+    },
+    {
+      "questionId": "q3",
+      "question": "<h3>Error Analysis</h3><p>What does <strong>absolute error</strong> represent?</p>",
+      "image": null,
+      "multipleAnswers": "false",
+      "options": [
+        { "id": "A", "text": "<strong>✓ Difference between true value and approximate value</strong>" },
+        { "id": "B", "text": "Ratio of values" },
+        { "id": "C", "text": "Square of error" },
+        { "id": "D", "text": "Percentage only" }
+      ]
+    },
+    {
+      "questionId": "q4",
+      "question": "<h3>Interpolation</h3><p>Which method is used to estimate values between known data points?</p>",
+      "image": null,
+      "multipleAnswers": "false",
+      "options": [
+        { "id": "A", "text": "Differentiation" },
+        { "id": "B", "text": "<strong>✓ Interpolation</strong>" },
+        { "id": "C", "text": "Integration" },
+        { "id": "D", "text": "Factorization" }
+      ]
+    },
+    {
+      "questionId": "q5",
+      "question": "<h3>Trapezoidal Rule</h3><p>The trapezoidal rule is used to approximate what?</p>",
+      "image": null,
+      "multipleAnswers": "false",
+      "options": [
+        { "id": "A", "text": "Derivatives" },
+        { "id": "B", "text": "<strong>✓ Definite integrals</strong>" },
+        { "id": "C", "text": "Roots only" },
+        { "id": "D", "text": "Matrices" }
+      ]
+    }
+  ]
+}
+

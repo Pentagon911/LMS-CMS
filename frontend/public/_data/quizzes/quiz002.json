@@ -1,0 +1,128 @@
+{
+  "quizId": "quiz002",
+  "title": "Data Structures & Algorithms Fundamentals",
+  "course": "CS1050",
+  "time": "15m",
+  "questions": [
+    {
+      "questionId": "q1",
+      "question": "<h3>Time Complexity Analysis</h3><p>What is the time complexity of <strong>Binary Search</strong> in a sorted array of n elements?</p><p><em>(Assume the array is already sorted)</em></p>",
+      "image": null,
+      "multipleAnswers": "false",
+      "options": [
+        { "id": "A", "text": "<code>O(n)</code> - Linear time" },
+        { "id": "B", "text": "<code><strong>O(log n)</strong></code> - Logarithmic time" },
+        { "id": "C", "text": "<code>O(n log n)</code> - Linearithmic time" },
+        { "id": "D", "text": "<code>O(1)</code> - Constant time" }
+      ]
+    },
+    {
+      "questionId": "q2",
+      "question": "<h3>Stack Operations</h3><p>Which data structure follows the <strong>LIFO</strong> (Last In First Out) principle?</p><p><span style='background-color: #ffff00;'>Hint: Think of a stack of plates</span></p>",
+      "image": null,
+      "multipleAnswers": "false",
+      "options": [
+        { "id": "A", "text": "<del>Queue</del> (FIFO)" },
+        { "id": "B", "text": "<strong>✓ Stack</strong>" },
+        { "id": "C", "text": "<em>Heap</em>" },
+        { "id": "D", "text": "<u>Linked List</u>" }
+      ]
+    },
+    {
+      "questionId": "q3",
+      "question": "<h3>Queue Operations</h3><p>Which data structure follows the <strong>FIFO</strong> (First In First Out) principle?</p><p><code>enqueue()</code> and <code>dequeue()</code> are the primary operations.</p>",
+      "image": null,
+      "multipleAnswers": "false",
+      "options": [
+        { "id": "A", "text": "<span style='color: #666;'>Stack</span>" },
+        { "id": "B", "text": "<span style='color: #27ae60; font-weight: bold;'>✓ Queue</span>" },
+        { "id": "C", "text": "<span style='color: #e74c3c;'>Tree</span>" },
+        { "id": "D", "text": "<span style='color: #3498db;'>Graph</span>" }
+      ]
+    },
+    {
+      "questionId": "q4",
+      "question": "<h3>QuickSort Analysis</h3><p>What is the <strong>worst-case</strong> time complexity of QuickSort?</p><p><small>This occurs when the pivot is always the smallest or largest element.</small></p>",
+      "image": null,
+      "multipleAnswers": "false",
+      "options": [
+        { "id": "A", "text": "<code>O(n log n)</code> (Average case)" },
+        { "id": "B", "text": "<code>O(n)</code>" },
+        { "id": "C", "text": "<code><strong style='color: #c0392b;'>O(n²)</strong></code> (Worst case)" },
+        { "id": "D", "text": "<code>O(log n)</code>" }
+      ]
+    },
+    {
+      "questionId": "q5",
+      "question": "<h3>Priority Queue Implementation</h3><p>Which data structure is <u>most commonly used</u> to implement a priority queue efficiently?</p><p><blockquote>\"Efficient both in insertion and extraction of minimum element\"</blockquote></p>",
+      "image": null,
+      "multipleAnswers": "true",
+      "options": [
+        { "id": "A", "text": "<span style='text-decoration: line-through;'>Array</span> (Not efficient for extraction)" },
+        { "id": "B", "text": "<strong>✓ Binary Heap</strong> (Correct choice)" },
+        { "id": "C", "text": "<span style='opacity: 0.7;'>Stack</span> (Not suitable)" },
+        { "id": "D", "text": "<em>Balanced BST</em> (Can work but heap is preferred)" }
+      ]
+    },
+    {
+      "questionId": "q6",
+      "question": "<h3>Linked List Operations</h3><p>What is the time complexity of inserting an element at the <strong>beginning</strong> of a singly linked list?</p><p><small>Assume you have a head pointer</small></p>",
+      "image": null,
+      "multipleAnswers": "false",
+      "options": [
+        { "id": "A", "text": "<code><strong>O(1)</strong></code> - Update head pointer only" },
+        { "id": "B", "text": "<code>O(n)</code> - Need to traverse" },
+        { "id": "C", "text": "<code>O(log n)</code>" },
+        { "id": "D", "text": "<code>O(n log n)</code>" }
+      ]
+    },
+    {
+      "questionId": "q7",
+      "question": "<h3>Binary Tree Traversal</h3><p>Which traversal method visits nodes in the order: <strong>Left → Root → Right</strong>?</p>",
+      "image": "/uploads/tree_traversal.png",
+      "multipleAnswers": "false",
+      "options": [
+        { "id": "A", "text": "<span style='color: #7f8c8d;'>Preorder</span> (Root → Left → Right)" },
+        { "id": "B", "text": "<span style='color: #7f8c8d;'>Postorder</span> (Left → Right → Root)" },
+        { "id": "C", "text": "<span style='color: #27ae60; font-weight: bold;'>✓ Inorder</span>" },
+        { "id": "D", "text": "<span style='color: #7f8c8d;'>Level order</span> (BFS)" }
+      ]
+    },
+    {
+      "questionId": "q8",
+      "question": "<h3>Binary Search Tree</h3><p>What is the <strong>worst-case</strong> time complexity of searching in a Binary Search Tree?</p><p><small>Consider a skewed tree</small></p>",
+      "image": null,
+      "multipleAnswers": "false",
+      "options": [
+        { "id": "A", "text": "<code>O(log n)</code> (Balanced BST)" },
+        { "id": "B", "text": "<code><strong>O(n)</strong></code> (Skewed tree becomes linked list)" },
+        { "id": "C", "text": "<code>O(n log n)</code>" },
+        { "id": "D", "text": "<code>O(1)</code>" }
+      ]
+    },
+    {
+      "questionId": "q9",
+      "question": "<h3>Graph Algorithms</h3><p>Which algorithm is used to find the <strong>shortest path</strong> in a graph with non-negative edge weights?</p><p><em>Edsger W. Dijkstra</em> developed this algorithm in 1956.</p>",
+      "image": null,
+      "multipleAnswers": "true",
+      "options": [
+        { "id": "A", "text": "<span style='color: #7f8c8d;'>Kruskal's Algorithm</span> (Minimum Spanning Tree)" },
+        { "id": "B", "text": "<span style='color: #7f8c8d;'>Prim's Algorithm</span> (Minimum Spanning Tree)" },
+        { "id": "C", "text": "<span style='color: #27ae60; font-weight: bold;'>✓ Dijkstra's Algorithm</span>" },
+        { "id": "D", "text": "<span style='color: #7f8c8d;'>Bellman-Ford</span> (Handles negative weights)" }
+      ]
+    },
+    {
+      "questionId": "q10",
+      "question": "<h3>Sorting Algorithms</h3><p>Which sorting algorithm repeatedly <strong>selects the smallest element</strong> and moves it to the front?</p><p><code>Selection Sort</code> vs <code>Bubble Sort</code> vs <code>Merge Sort</code></p>",
+      "image": null,
+      "multipleAnswers": "false",
+      "options": [
+        { "id": "A", "text": "<span style='color: #7f8c8d;'>Bubble Sort</span> (Repeated swapping)" },
+        { "id": "B", "text": "<span style='color: #27ae60; font-weight: bold;'>✓ Selection Sort</span>" },
+        { "id": "C", "text": "<span style='color: #7f8c8d;'>Merge Sort</span> (Divide and conquer)" },
+        { "id": "D", "text": "<span style='color: #7f8c8d;'>Insertion Sort</span> (Builds sorted array)" }
+      ]
+    }
+  ]
+}

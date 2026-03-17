@@ -1,0 +1,5 @@
+[
+  { "quizId": "quiz001", "title": "Numerical Methods", "course": "MA1014", "time": "15m" },
+  { "quizId": "quiz002", "title": "Data Structures & Algorithms Fundamentals", "course": "CS2023", "time": "15m" }
+]
+
