@@ -1,71 +1,172 @@
-import image from '../../../assets/Linus-Torvalds-2012.webp'
-import "./MyAccount.css"
-export default function MyAccount(){
-    const details = {
-        "Name With Initials": "Torvalds L",
-        "Username": "Penguin",
-        "Birthday": "1969-12-28",
-        "Primary Email": "LinusTorvalds123@gmail.com",
-        "Gender": "Male"
-    };
+import { useState, useEffect } from 'react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
+import Avatar from '../components/Avatar';
+import LoadingSpinner from '../components/LoadingSpinner';
+import './MyAccount.css';
 
-    const style1 = {
-        height: 250,
-        width: 175,
-        borderRadius: 10,
-        overflow: "hidden",
-        margin: "5px 5px"
-    };
+const MyAccount = () => {
+  const { user: contextUser } = useOutletContext();
+  const [user, setUser] = useState(contextUser);
+  const [loading, setLoading] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [formData, setFormData] = useState({});
+  const [profilePicture, setProfilePicture] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const navigate = useNavigate();
 
-    const style2 = {
-        display: "flex",
-        flexDirection: "row"  
+  useEffect(() => {
+    if (contextUser) {
+      setFormData({
+        first_name: contextUser.first_name || '',
+        last_name: contextUser.last_name || '',
+        email: contextUser.email || '',
+        phone_number: contextUser.phone_number || '',
+      });
+      setPreviewUrl(contextUser.profile_picture || null);
     }
-    return(
-        <>
-            <div className='forum'>
-                <h1>My Informations</h1>
-                <div style={style2}>
-                    <div style={style1}><img src={image} alt="profile picture" style={{height:250, width:175}}/> </div>
-                    <div className='forumText' >{Object.entries(details).map(([key,value]) => <p key={key}>{key}:{value}</p>)}</div>
-                </div>
+  }, [contextUser]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfilePicture(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSave = () => {
+    // Simulate API update
+    const updatedUser = {
+      ...user,
+      ...formData,
+      profile_picture: previewUrl || user?.profile_picture,
+    };
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+    setEditMode(false);
+    alert('Profile updated successfully!');
+  };
+
+  const handleChangePassword = () => {
+    alert('Change password functionality will be implemented later.');
+  };
+
+  if (loading) return <LoadingSpinner message="Loading profile..." />;
+
+  return (
+    <div className="profile-container">
+      <div className="profile-card">
+        <h2>My Account</h2>
+
+        <div className="profile-avatar-section">
+          <Avatar user={user} size="large" />
+          {editMode && (
+            <div className="avatar-upload">
+              <label htmlFor="profile-picture" className="upload-btn">
+                Choose Picture
+              </label>
+              <input
+                type="file"
+                id="profile-picture"
+                accept="image/*"
+                onChange={handleFileChange}
+                style={{ display: 'none' }}
+              />
             </div>
-            <form className='forum'>
-                <h1>Edit My Informations</h1>
-                <label for="fname" className='forumText'>First Name:</label>
-                <input type="text" id="fname" name="fname"/><br/>
-                
-                <label for="lname" className='forumText'>Last Name:</label>
-                <input type="text" id="lname" name="lname"/><br/>
-                
-                <label for="dob" className='forumText'>Date of Birth:</label>
-                <input type="date" id="dob" name="dob"/><br/>
-                
-                <label className='forumText'>Gender:</label>
-                <input type="radio" id="male" name="gender" value="Male"/>
-                <label for="male" className='forumText'>Male</label>
-                
-                <input type="radio" id="female" name="gender" value="Female"/>
-                <label for="female" className='forumText'>Female</label>
-                
-                <input type="radio" id="other" name="gender" value="Other"/>
-                <label for="other" className='forumText'>Other</label><br/>
-                
-                <label for="address" className='forumText'>Address:</label><br/>
-                <textarea id="address" name="address" rows="4" cols="30"></textarea><br/><br/>
-                
-                <button className='submitButton'>Submit</button>
-            </form>
-            <div className='forum'>
-                <h1>Change Password</h1>
-                <label for="oldPasswd" className='forumText'>Old Password:</label>
-                <input type='password' id='oldPasswd' name='oldPasswd'/><br/>
-                <label for="newPasswd" className='forumText'>New Password:</label>
-                <input type='password' id='newPasswd' name='newPasswd'/><br/>
-                <label for="confirmPasswd" className='forumText'>Confirm Password:</label>
-                <input type='password' id='confirmPasswd' name='confirmPasswd'/><br/>
-                <button className='submitButton'>Submit</button>
-            </div>
-        </>
-    );
-}
+          )}
+        </div>
+
+        <div className="profile-details">
+          {editMode ? (
+            <>
+              <div className="form-group">
+                <label>First Name</label>
+                <input
+                  type="text"
+                  name="first_name"
+                  value={formData.first_name}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="form-group">
+                <label>Last Name</label>
+                <input
+                  type="text"
+                  name="last_name"
+                  value={formData.last_name}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="form-group">
+                <label>Phone Number</label>
+                <input
+                  type="tel"
+                  name="phone_number"
+                  value={formData.phone_number}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="detail-item">
+                <span className="detail-label">Username</span>
+                <span className="detail-value">{user?.username}</span>
+              </div>
+              <div className="detail-item">
+                <span className="detail-label">Name</span>
+                <span className="detail-value">{user?.first_name} {user?.last_name}</span>
+              </div>
+              <div className="detail-item">
+                <span className="detail-label">Email</span>
+                <span className="detail-value">{user?.email}</span>
+              </div>
+              <div className="detail-item">
+                <span className="detail-label">Phone</span>
+                <span className="detail-value">{user?.phone_number || 'Not provided'}</span>
+              </div>
+              <div className="detail-item">
+                <span className="detail-label">Role</span>
+                <span className="detail-value role-badge">{user?.role}</span>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="profile-actions">
+          {editMode ? (
+            <>
+              <button className="save-btn" onClick={handleSave}>Save Changes</button>
+              <button className="cancel-btn" onClick={() => setEditMode(false)}>Cancel</button>
+            </>
+          ) : (
+            <>
+              <button className="edit-btn" onClick={() => setEditMode(true)}>Edit Profile</button>
+              <button className="password-btn" onClick={handleChangePassword}>Change Password</button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default MyAccount;
