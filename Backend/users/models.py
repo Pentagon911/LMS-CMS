@@ -38,6 +38,9 @@ class User(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    # Track password changes
+    last_password_change = models.DateTimeField(null=True, blank=True)
+
     # Metadata
     class Meta:
         db_table = 'users'
