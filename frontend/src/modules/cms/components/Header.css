@@ -443,3 +443,31 @@
     height: 35px;
   }
 }
+.user-role-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.2rem 0.6rem;
+  border-radius: 50px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  margin-top: 0.3rem;
+  align-self: flex-start;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.user-info strong {
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.user-info span {
+  font-size: 0.8rem;
+  color: #666;
+}

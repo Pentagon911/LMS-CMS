@@ -2,6 +2,12 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # Authentication
+    path('login/', views.CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/refresh/', views.CustomTokenRefreshView.as_view(), name='token_refresh'),
+    path('logout/', views.LogoutView.as_view(), name='logout'),
+    path('change-password/', views.ChangePasswordView.as_view(), name='change_password'),
+
     # Registration and profile
     path('register/', views.UserRegistrationView.as_view(), name='user-register'),
     path('profile/', views.UserProfileView.as_view(), name='user-profile'),

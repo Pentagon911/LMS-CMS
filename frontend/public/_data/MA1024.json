@@ -1,0 +1,454 @@
+{
+    "courseTitle": "Methods of Mathematics",
+    "weeks": [
+  {
+    "week": "Week 1-2: Numerical Methods - Root Finding",
+    "items": [
+      {
+        "type": "content",
+        "title": "Lecture Slides: Introduction to Numerical Methods",
+        "format": "PDF",
+        "fileUrl": "/files/ma1024/week1/numerical_intro.pdf",
+        "fileSize": 2850000,
+        "description": "Overview of numerical methods, errors, and approximations"
+      },
+      {
+        "type": "content",
+        "title": "Lecture Notes: Bisection Method",
+        "format": "PDF",
+        "fileUrl": "/files/ma1024/week1/bisection_method.pdf",
+        "fileSize": 1950000,
+        "description": "Step-by-step algorithm with examples"
+      },
+      {
+        "type": "content",
+        "title": "Video Lecture: Newton-Raphson Method",
+        "format": "Video",
+        "fileUrl": "/files/ma1024/week1/newton_raphson.mp4",
+        "fileSize": 18500000,
+        "duration": "42:15",
+        "description": "Derivation and geometric interpretation"
+      },
+      {
+        "type": "content",
+        "title": "Interactive: Root Finding Visualizer",
+        "format": "Link",
+        "fileUrl": "https://www.geogebra.org/m/root-finder",
+        "description": "Visualize bisection, secant, and Newton-Raphson methods"
+      },
+      {
+        "type": "content",
+        "title": "Practice Problems: Root Finding",
+        "format": "PDF",
+        "fileUrl": "/files/ma1024/week1/root_finding_problems.pdf",
+        "fileSize": 1200000,
+        "description": "20 problems with varying difficulty"
+      },
+      {
+        "type": "quiz",
+        "title": "Quiz 1: Root Finding Methods",
+        "quizId": "ma1024_quiz001",
+        "duration": "20 min",
+        "questionsCount": 12,
+        "description": "Bisection, Newton-Raphson, Secant methods"
+      },
+      {
+        "type": "announcement",
+        "title": "📌 MATLAB/Octave Tutorial Session",
+        "message": "We'll have an optional tutorial on implementing numerical methods in MATLAB/Octave this Friday at 2 PM in Lab 301.",
+        "date": "2026-03-10",
+        "postedBy": "Dr. Williams"
+      }
+    ]
+  },
+  {
+    "week": "Week 3-4: Numerical Methods - Interpolation & Integration",
+    "items": [
+      {
+        "type": "content",
+        "title": "Lecture Slides: Interpolation",
+        "format": "PDF",
+        "fileUrl": "/files/ma1024/week2/interpolation.pdf",
+        "fileSize": 3200000,
+        "description": "Lagrange interpolation, Newton's divided differences, splines"
+      },
+      {
+        "type": "content",
+        "title": "Lecture Slides: Numerical Integration",
+        "format": "PDF",
+        "fileUrl": "/files/ma1024/week2/numerical_integration.pdf",
+        "fileSize": 2950000,
+        "description": "Trapezoidal rule, Simpson's rule, Romberg integration"
+      },
+      {
+        "type": "content",
+        "title": "Video Lecture: Gaussian Quadrature",
+        "format": "Video",
+        "fileUrl": "/files/ma1024/week2/gaussian_quadrature.mp4",
+        "fileSize": 21000000,
+        "duration": "48:30",
+        "description": "Advanced integration techniques"
+      },
+      {
+        "type": "content",
+        "title": "Python Notebook: Numerical Methods Demo",
+        "format": "Link",
+        "fileUrl": "https://colab.research.google.com/drive/ma1024-numerical",
+        "description": "Interactive Python notebook with examples"
+      },
+      {
+        "type": "quiz",
+        "title": "Quiz 2: Interpolation & Integration",
+        "quizId": "ma1024_quiz002",
+        "duration": "25 min",
+        "questionsCount": 15,
+        "description": "Lagrange interpolation, trapezoidal and Simpson's rules"
+      },
+      {
+        "type": "announcement",
+        "title": "📊 Numerical Methods Assignment Released",
+        "message": "Assignment 1: Implement root finding and numerical integration methods. Due April 5th. Check the portal for details.",
+        "date": "2026-03-20",
+        "postedBy": "Teaching Team"
+      }
+    ]
+  },
+  {
+    "week": "Week 5-6: Probability - Fundamentals",
+    "items": [
+      {
+        "type": "content",
+        "title": "Lecture Slides: Basic Probability Concepts",
+        "format": "PDF",
+        "fileUrl": "/files/ma1024/week3/probability_basics.pdf",
+        "fileSize": 3450000,
+        "description": "Sample space, events, axioms of probability, conditional probability"
+      },
+      {
+        "type": "content",
+        "title": "Lecture Notes: Bayes' Theorem",
+        "format": "PDF",
+        "fileUrl": "/files/ma1024/week3/bayes_theorem.pdf",
+        "fileSize": 1850000,
+        "description": "Derivation and applications with examples"
+      },
+      {
+        "type": "content",
+        "title": "Video Lecture: Random Variables",
+        "format": "Video",
+        "fileUrl": "/files/ma1024/week3/random_variables.mp4",
+        "fileSize": 19500000,
+        "duration": "44:20",
+        "description": "Discrete and continuous random variables"
+      },
+      {
+        "type": "content",
+        "title": "Interactive: Probability Simulator",
+        "format": "Link",
+        "fileUrl": "https://www.mathsisfun.com/data/probability.html",
+        "description": "Interactive probability experiments"
+      },
+      {
+        "type": "quiz",
+        "title": "Quiz 3: Probability Fundamentals",
+        "quizId": "ma1024_quiz003",
+        "duration": "20 min",
+        "questionsCount": 12,
+        "description": "Conditional probability, Bayes' theorem, random variables"
+      },
+      {
+        "type": "announcement",
+        "title": "🎲 Midterm Exam Coverage",
+        "message": "Midterm exam will cover Weeks 1-6: Numerical Methods and Probability Fundamentals. Date: April 20th, 9 AM - 11 AM in Main Hall.",
+        "date": "2026-03-28",
+        "postedBy": "Dr. Williams"
+      }
+    ]
+  },
+  {
+    "week": "Week 7-8: Probability Distributions",
+    "items": [
+      {
+        "type": "content",
+        "title": "Lecture Slides: Discrete Distributions",
+        "format": "PDF",
+        "fileUrl": "/files/ma1024/week4/discrete_distributions.pdf",
+        "fileSize": 3750000,
+        "description": "Binomial, Poisson, Geometric, Hypergeometric distributions"
+      },
+      {
+        "type": "content",
+        "title": "Lecture Slides: Continuous Distributions",
+        "format": "PDF",
+        "fileUrl": "/files/ma1024/week4/continuous_distributions.pdf",
+        "fileSize": 3650000,
+        "description": "Normal, Exponential, Gamma, Uniform distributions"
+      },
+      {
+        "type": "content",
+        "title": "Video Lecture: Normal Distribution",
+        "format": "Video",
+        "fileUrl": "/files/ma1024/week4/normal_distribution.mp4",
+        "fileSize": 22500000,
+        "duration": "51:10",
+        "description": "Properties, standardization, and applications"
+      },
+      {
+        "type": "content",
+        "title": "Distribution Calculator Tool",
+        "format": "Link",
+        "fileUrl": "https://www.statdistributions.com/",
+        "description": "Online calculator for various probability distributions"
+      },
+      {
+        "type": "quiz",
+        "title": "Quiz 4: Probability Distributions",
+        "quizId": "ma1024_quiz004",
+        "duration": "30 min",
+        "questionsCount": 18,
+        "description": "Properties and applications of common distributions"
+      },
+      {
+        "type": "announcement",
+        "title": "📝 Practice Problems for Distributions",
+        "message": "Extra practice problems for binomial and normal distributions are now available in the resources section. Solutions will be discussed in tutorial.",
+        "date": "2026-04-05",
+        "postedBy": "Teaching Assistant"
+      }
+    ]
+  },
+  {
+    "week": "Week 9-10: Statistics - Descriptive & Inferential",
+    "items": [
+      {
+        "type": "content",
+        "title": "Lecture Slides: Descriptive Statistics",
+        "format": "PDF",
+        "fileUrl": "/files/ma1024/week5/descriptive_stats.pdf",
+        "fileSize": 3150000,
+        "description": "Measures of central tendency, dispersion, visualization"
+      },
+      {
+        "type": "content",
+        "title": "Lecture Slides: Sampling Distributions",
+        "format": "PDF",
+        "fileUrl": "/files/ma1024/week5/sampling_distributions.pdf",
+        "fileSize": 2950000,
+        "description": "Central Limit Theorem, standard error"
+      },
+      {
+        "type": "content",
+        "title": "Lecture Notes: Confidence Intervals",
+        "format": "PDF",
+        "fileUrl": "/files/ma1024/week5/confidence_intervals.pdf",
+        "fileSize": 2100000,
+        "description": "Construction and interpretation of confidence intervals"
+      },
+      {
+        "type": "content",
+        "title": "Video Lecture: Hypothesis Testing",
+        "format": "Video",
+        "fileUrl": "/files/ma1024/week5/hypothesis_testing.mp4",
+        "fileSize": 26500000,
+        "duration": "58:40",
+        "description": "Null and alternative hypotheses, p-values, Type I and II errors"
+      },
+      {
+        "type": "content",
+        "title": "R Tutorial: Statistical Analysis",
+        "format": "Link",
+        "fileUrl": "https://www.r-project.org/doc/manuals/r-intro.pdf",
+        "description": "Introduction to statistical computing with R"
+      },
+      {
+        "type": "quiz",
+        "title": "Quiz 5: Statistical Inference",
+        "quizId": "ma1024_quiz005",
+        "duration": "25 min",
+        "questionsCount": 15,
+        "description": "Confidence intervals, hypothesis testing"
+      },
+      {
+        "type": "announcement",
+        "title": "📊 Statistics Project Announced",
+        "message": "Group project: Analyze a real dataset using techniques learned in class. Form groups of 3-4. Proposal due May 10th.",
+        "date": "2026-04-15",
+        "postedBy": "Dr. Williams"
+      }
+    ]
+  },
+  {
+    "week": "Week 11-12: Multivariable Calculus",
+    "items": [
+      {
+        "type": "content",
+        "title": "Lecture Slides: Functions of Several Variables",
+        "format": "PDF",
+        "fileUrl": "/files/ma1024/week6/multivariable_functions.pdf",
+        "fileSize": 3850000,
+        "description": "Domain, range, level curves, limits and continuity"
+      },
+      {
+        "type": "content",
+        "title": "Lecture Slides: Partial Derivatives",
+        "format": "PDF",
+        "fileUrl": "/files/ma1024/week6/partial_derivatives.pdf",
+        "fileSize": 3550000,
+        "description": "Definition, geometric interpretation, higher-order derivatives"
+      },
+      {
+        "type": "content",
+        "title": "Video Lecture: Gradient and Directional Derivatives",
+        "format": "Video",
+        "fileUrl": "/files/ma1024/week6/gradient.mp4",
+        "fileSize": 23500000,
+        "duration": "53:20",
+        "description": "Gradient vector, directional derivatives, tangent planes"
+      },
+      {
+        "type": "content",
+        "title": "Interactive: 3D Function Visualizer",
+        "format": "Link",
+        "fileUrl": "https://www.geogebra.org/3d",
+        "description": "Visualize multivariable functions in 3D"
+      },
+      {
+        "type": "content",
+        "title": "Lecture Notes: Chain Rule for Multivariable Functions",
+        "format": "PDF",
+        "fileUrl": "/files/ma1024/week6/chain_rule_multivariable.pdf",
+        "fileSize": 1650000,
+        "description": "Extension of chain rule to multiple variables"
+      },
+      {
+        "type": "quiz",
+        "title": "Quiz 6: Partial Derivatives",
+        "quizId": "ma1024_quiz006",
+        "duration": "25 min",
+        "questionsCount": 14,
+        "description": "Partial derivatives, gradient, directional derivatives"
+      },
+      {
+        "type": "announcement",
+        "title": "⚠️ Tutorial Change",
+        "message": "This week's tutorial will focus on solving partial derivative problems. Bring your questions!",
+        "date": "2026-04-25",
+        "postedBy": "Teaching Assistant"
+      }
+    ]
+  },
+  {
+    "week": "Week 13-14: Multiple Integrals",
+    "items": [
+      {
+        "type": "content",
+        "title": "Lecture Slides: Double Integrals",
+        "format": "PDF",
+        "fileUrl": "/files/ma1024/week7/double_integrals.pdf",
+        "fileSize": 3950000,
+        "description": "Definition, iterated integrals, area and volume applications"
+      },
+      {
+        "type": "content",
+        "title": "Lecture Slides: Triple Integrals",
+        "format": "PDF",
+        "fileUrl": "/files/ma1024/week7/triple_integrals.pdf",
+        "fileSize": 3750000,
+        "description": "Definition, applications in volume and mass calculations"
+      },
+      {
+        "type": "content",
+        "title": "Video Lecture: Change of Variables",
+        "format": "Video",
+        "fileUrl": "/files/ma1024/week7/change_of_variables.mp4",
+        "fileSize": 24500000,
+        "duration": "55:15",
+        "description": "Jacobian, polar, cylindrical, and spherical coordinates"
+      },
+      {
+        "type": "content",
+        "title": "Practice Problems: Multiple Integrals",
+        "format": "PDF",
+        "fileUrl": "/files/ma1024/week7/multiple_integrals_problems.pdf",
+        "fileSize": 1850000,
+        "description": "30 problems with solutions"
+      },
+      {
+        "type": "quiz",
+        "title": "Quiz 7: Multiple Integrals",
+        "quizId": "ma1024_quiz007",
+        "duration": "30 min",
+        "questionsCount": 16,
+        "description": "Double and triple integrals, change of variables"
+      },
+      {
+        "type": "announcement",
+        "title": "📝 Review Session for Final Exam",
+        "message": "Comprehensive review session for the final exam will be held on June 5th at 10 AM in Lecture Hall B. Covers all topics.",
+        "date": "2026-05-20",
+        "postedBy": "Dr. Williams"
+      }
+    ]
+  },
+  {
+    "week": "Week 15-16: Partial Differential Equations",
+    "items": [
+      {
+        "type": "content",
+        "title": "Lecture Slides: Introduction to PDEs",
+        "format": "PDF",
+        "fileUrl": "/files/ma1024/week8/pde_intro.pdf",
+        "fileSize": 3350000,
+        "description": "Classification of PDEs, initial and boundary conditions"
+      },
+      {
+        "type": "content",
+        "title": "Lecture Notes: Heat Equation",
+        "format": "PDF",
+        "fileUrl": "/files/ma1024/week8/heat_equation.pdf",
+        "fileSize": 2750000,
+        "description": "Derivation, separation of variables, Fourier series solution"
+      },
+      {
+        "type": "content",
+        "title": "Video Lecture: Wave Equation",
+        "format": "Video",
+        "fileUrl": "/files/ma1024/week8/wave_equation.mp4",
+        "fileSize": 25500000,
+        "duration": "57:30",
+        "description": "d'Alembert's solution, standing waves"
+      },
+      {
+        "type": "content",
+        "title": "Lecture Slides: Laplace's Equation",
+        "format": "PDF",
+        "fileUrl": "/files/ma1024/week8/laplace_equation.pdf",
+        "fileSize": 2950000,
+        "description": "Properties, solution methods, applications"
+      },
+      {
+        "type": "content",
+        "title": "PDE Solver Demo",
+        "format": "Link",
+        "fileUrl": "https://www.pdesolver.org/demo",
+        "description": "Interactive PDE solver for visualization"
+      },
+      {
+        "type": "quiz",
+        "title": "Quiz 8: Partial Differential Equations",
+        "quizId": "ma1024_quiz008",
+        "duration": "30 min",
+        "questionsCount": 15,
+        "description": "Classification, heat equation, wave equation"
+      },
+      {
+        "type": "announcement",
+        "title": "🎓 Final Exam Information",
+        "message": "Final exam: June 12th, 9 AM - 12 PM in Sports Hall. Comprehensive coverage of all topics. Formula sheet will be provided.",
+        "date": "2026-05-28",
+        "postedBy": "Department"
+      }
+    ]
+  }
+]
+}

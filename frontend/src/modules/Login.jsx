@@ -1,3 +1,4 @@
+import request from '../utils/requestMethods.jsx';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
@@ -11,8 +12,8 @@ const Login = () => {
   
   const navigate = useNavigate();
 
-  // Mock validation - replace with real authentication later
-  const handleSubmit = (e) => {
+  // API login handler
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
@@ -24,23 +25,41 @@ const Login = () => {
       return;
     }
 
-    // Mock authentication (replace with actual API call)
-    setTimeout(() => {
-      // For demo purposes, any credentials work
-      // In real app, you would validate with backend
+    try {
+      // Make API call using requestMethods
+     // const data = await request.POST('/login', {
+     //   username: username,
+     //   password: password,
+     // });
+      const data = await request.GET('/_data/credential.json');
+
+      // Store user data in localStorage
+      localStorage.setItem('user', JSON.stringify(data));
       
-      if (username === 'admin' && password === 'admin') {
-        // Redirect based on user type selection
-        if (userType === 'lms') {
-          navigate('/lms/dashboard');
-        } else {
-          navigate('/cms');
-        }
-      } else {
-        setError('Invalid username or password');
-        setIsLoading(false);
+      // Store auth token if your API returns one
+      if (data.token) {
+        localStorage.setItem('token', data.token);
       }
-    }, 1000);
+
+      // Redirect based on user type selection
+      if (userType === 'lms') {
+        navigate('/lms/dashboard');
+      } else {
+        navigate('/cms/dashboard');
+      }
+
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(err.message || 'Invalid username or password');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // For demo purposes - remove this in production
+  const handleDemoLogin = () => {
+    setUsername('admin');
+    setPassword('admin');
   };
 
   return (
@@ -143,7 +162,15 @@ const Login = () => {
           </button>
         </form>
 
+        {/* Demo credentials - remove in production */}
         <div className="login-footer">
+          <button 
+            className="demo-btn" 
+            onClick={handleDemoLogin}
+            type="button"
+          >
+            📋 Fill Demo Credentials
+          </button>
           <p>Demo credentials: username: admin, password: admin</p>
           <p className="hint">(Works for both LMS and CMS)</p>
         </div>
