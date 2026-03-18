@@ -6,11 +6,12 @@
 
  body{
      font-family: Arial, sans-serif;
+     background-color: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
  }
 
  .week-container{
   width:95%;
-  margin:20px auto;
+  margin:10px auto;
   background:#ffffff;
   border-radius:20px;
   padding:20px;
@@ -35,13 +36,13 @@
 .content-list{
   display:flex;
   flex-direction:column;
-  gap:10px;
+  gap:5px;
 }
 
 .content-card{
   background:#f9f9f9;
-  padding:12px 15px;
-  border-radius:6px;
+  padding:12px 10px;
+  border-radius:10px;
   border:1px solid #ececec;
   display:flex;
   justify-content:space-between;
