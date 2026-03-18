@@ -1,3 +1,4 @@
+#CMS/ models.py
 from django.db import models
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -6,7 +7,7 @@ User = get_user_model()
 # yet to connect LMS sem module as foriegn key to week
     
 class Week(models.Model):
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='weeks', null=True)
+    course = models.ForeignKey('lms.Course', on_delete=models.CASCADE, related_name='weeks', null=True)
     order = models.PositiveIntegerField(default=1)
     topic = models.CharField(max_length=200)
     description = models.TextField(blank= True)
