@@ -38,11 +38,14 @@ class QuizViewSet(viewsets.ModelViewSet):
 
         # Write operations (create, update, delete) - Only instructors/admins
         if self.action in ['create', 'update', 'partial_update', 'destroy',]:
-            permission_classes = [IsAuthenticated,IsInstructorUser]
+            # permission_classes = [IsAuthenticated,IsInstructorUser]
+            permission_classes = [permissions.AllowAny]
         elif self.action in ['submit']:
-            permission_classes = [IsAuthenticated,IsStudentUser]
+            # permission_classes = [IsAuthenticated,IsStudentUser]
+            permission_classes = [permissions.AllowAny]
         else:
-            permission_classes = [IsAuthenticated]
+            # permission_classes = [IsAuthenticated]
+            permission_classes = [permissions.AllowAny]
 
         return [permission() for permission in permission_classes]
 
@@ -131,10 +134,12 @@ class QuestionViewSet(viewsets.ModelViewSet):
         """Simple permission control"""
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
             # Only instructors can modify questions
-            permission_classes = [IsAuthenticated, IsInstructorUser]
+            # permission_classes = [IsAuthenticated, IsInstructorUser]
+            permission_classes = [permissions.AllowAny]
         else:
             # Anyone authenticated can view
-            permission_classes = [IsAuthenticated]
+            # permission_classes = [IsAuthenticated]
+            permission_classes = [permissions.AllowAny]
         
         return [permission() for permission in permission_classes]
     
@@ -166,9 +171,11 @@ class OptionViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            permission_classes = [IsAuthenticated, IsInstructorUser]
+            # permission_classes = [IsAuthenticated, IsInstructorUser]
+            permission_classes = [permissions.AllowAny]
         else:
-            permission_classes = [IsAuthenticated]
+            # permission_classes = [IsAuthenticated]
+            permission_classes = [permissions.AllowAny]
         return [permission() for permission in permission_classes]
     
 
