@@ -1,3 +1,4 @@
+#user/permissions.py
 from rest_framework import permissions
 
 class IsAdminOrSelf(permissions.BasePermission):
@@ -12,18 +13,18 @@ class IsAdminOrSelf(permissions.BasePermission):
             return True
         
         # Write permissions are only allowed to the user themselves or admin
-        return obj == request.user or request.user.role == 'ADMIN'
-
+        return obj == request.user or request.user.role == 'admin'
+    
 
 class IsRoleAllowed(permissions.BasePermission):
     """
     Custom permission to only allow users with specific roles.
     Usage: 
     permission_classes = [IsRoleAllowed]
-    allowed_roles = ['ADMIN', 'INSTRUCTOR']
+    allowed_roles = ['admin', 'instructor']
     
     Or as a class:
-    @method_decorator(decorator=IsRoleAllowed(['ADMIN', 'INSTRUCTOR']))
+    @method_decorator(decorator=IsRoleAllowed(['admin', 'instructor']))
     """
     
     def __init__(self, allowed_roles=None):
@@ -95,3 +96,10 @@ class IsStaffOrReadOnly(permissions.BasePermission):
             request.user.is_authenticated and 
             request.user.role in ['admin', 'instructor']
         )
+    
+class IsAdminOrInstructor(permissions.BasePermission):
+    """
+    Allow access only to admin or instructor users.
+    """
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.role in ['admin', 'instructor']
