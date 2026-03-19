@@ -12,7 +12,7 @@ class IsAdminOrSelf(permissions.BasePermission):
             return True
         
         # Write permissions are only allowed to the user themselves or admin
-        return obj == request.user or request.user.role == 'ADMIN'
+        return obj == request.user or request.user.role == 'admin'
 
 
 class IsRoleAllowed(permissions.BasePermission):
@@ -20,10 +20,10 @@ class IsRoleAllowed(permissions.BasePermission):
     Custom permission to only allow users with specific roles.
     Usage: 
     permission_classes = [IsRoleAllowed]
-    allowed_roles = ['ADMIN', 'INSTRUCTOR']
+    allowed_roles = ['admin', 'instructor']
     
     Or as a class:
-    @method_decorator(decorator=IsRoleAllowed(['ADMIN', 'INSTRUCTOR']))
+    @method_decorator(decorator=IsRoleAllowed(['admin', 'instructor']))
     """
     
     def __init__(self, allowed_roles=None):
@@ -81,7 +81,7 @@ class IsInstructorUser(permissions.BasePermission):
 
 class IsStaffOrReadOnly(permissions.BasePermission):
     """
-    Custom permission to only allow staff (teachers, instructors, admin) 
+    Custom permission to only allow staff (lecturers, instructors, admin) 
     to edit, but anyone authenticated can read.
     """
     
