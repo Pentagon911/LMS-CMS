@@ -1,3 +1,4 @@
+#user/permissions.py
 from rest_framework import permissions
 
 class IsAdminOrSelf(permissions.BasePermission):
@@ -95,3 +96,10 @@ class IsStaffOrReadOnly(permissions.BasePermission):
             request.user.is_authenticated and 
             request.user.role in ['admin', 'instructor']
         )
+    
+class IsAdminOrInstructor(permissions.BasePermission):
+    """
+    Allow access only to admin or instructor users.
+    """
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.role in ['admin', 'instructor']

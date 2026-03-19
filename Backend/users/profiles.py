@@ -1,4 +1,4 @@
-# profiels.py
+# users/profiles.py
 from django.db import models
 from django.db.models import JSONField
 from users.models import User

@@ -13,4 +13,6 @@ router.register(r'users', views.UserManageViewSet)  # admin user management
 urlpatterns = [
     path('', include(router.urls)),
     path('db-info/', views.db_info, name='db-info'),
+    path('student/dashboard/', views.student_dashboard),
+    path('instructor/dashboard/', views.instructor_dashboard),
 ]
