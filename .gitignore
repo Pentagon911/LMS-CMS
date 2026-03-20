@@ -1,0 +1,29 @@
+# Virtual environment
+venv/
+env/
+ENV/
+# Python cache files
+__pycache__/
+*.pyc
+
+# Database
+Backend/*.sqlite3
+Backend/db.sqlite3
+
+# Django migrations (ignore all migration files)
+Backend/**/migrations/*.py
+!Backend/**/migrations/__init__.py
+
+# Environment variables
+.env
+*.env
+
+# IDE / editor folders
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db

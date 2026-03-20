@@ -64,6 +64,7 @@ class Batch(models.Model):
 class Course(models.Model):
     """Course"""
     code = models.CharField(max_length=20, unique=True)
+    color = models.CharField(null=True)
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     credits = models.PositiveSmallIntegerField()

@@ -5,13 +5,79 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
-
+from lms.models import *
 from .models import *
 from .serializers import *
 
 # Create your views here.
+class CourseViewSet(viewsets.ModelViewSet):
+    """ViewSet for courses
+    GET  /cms/courses/               → List all courses I'm assigned to
+    GET  /cms/courses/1/dashboard/   → Complete dashboard for course ID 1 (with all weeks)
+    """
+    queryset = Course.objects.all()
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.action == 'dashboard':
+            return courseDashboardSerializer
+        return courseListSerializer
+
+    def get_queryset(self):
+        """
+        Filter courses based on user role
+        - Instructors see courses they teach
+        - Students see courses they're enrolled in
+        """
+        user = self.request.user
+
+        if user.role == 'instructor':
+            return Course.objects.filter(instructor = user)
+        elif user.role == 'student':
+            return Course.objects.filter(enrollments__students = user,enrollments__status = 'enrolled')
+
+        return Course.objects.none
+    
+    def list(self,request,*args,**kwargs):
+        """
+        Custom list method to format response exactly as frontend expects
+        """
+        self.queryset = self.filter_queryset(self.get_queryset())
+        courses = []
+
+        for course in self.queryset:
+            courses.append({
+                'id': course.id,
+                'code':course.code,
+                'title':course.name,
+                'color':course.color
+            })
+        return Response(courses)
+    
+    @action(detail = True, methods = ['get'],url_path='dashboard')
+    def dashboard(self,request,pk = None):
+        """
+        Returns complete course dashboard with weeks, content, quizzes, and announcements
+        """
+
+        course= self.get_object()
+
+        if request.user.role == 'student':
+            if not course.enrollments.filter(student = request.user,status= 'enrolled'):
+                return Response({'error':'Not enrolled in this course'},status = 403)
+        elif request.user.role == 'instructor':
+            if request.user != course.instructor:
+                return Response({'error': 'Not your Course'},status=403)
+
+        serializer = self.get_serializer(course,context = {'request':request})
+        return Response(serializer.data)            
+
 
 class QuizViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for Quiz operations
+    Supports nested URLs: /courses/{course_id}/weeks/{week_number}/quizzes/
+    """
     queryset = Quiz.objects.all()
     
     def get_serializer_class(self):
@@ -128,8 +194,9 @@ class QuestionViewSet(viewsets.ModelViewSet):
     """
     - Manage Questions
     """
-    queryset = Question.objects.all()
 
+    queryset = Question.objects.all()
+    
     def get_permissions(self):
         """Simple permission control"""
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
@@ -159,8 +226,10 @@ class QuestionViewSet(viewsets.ModelViewSet):
         return queryset.order_by('order')
 
 class OptionViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing options"""
     queryset = Option.objects.all()
 
+   
     def get_serializer_class(self):
         """Different serializers for different roles"""
         if self.request.user.role == 'student':
@@ -178,7 +247,6 @@ class OptionViewSet(viewsets.ModelViewSet):
             permission_classes = [permissions.AllowAny]
         return [permission() for permission in permission_classes]
     
-
     def get_queryset(self):
         queryset = Option.objects.all()
         question_id = self.request.query_params.get('question',None)
@@ -206,3 +274,6 @@ class StudentAnswerViewSet(viewsets.ModelViewSet):
             return StudentAnswer.objects.filter(attempt__student = self.request.user)
         
         return StudentAnswer.objects.all()
+    
+
+

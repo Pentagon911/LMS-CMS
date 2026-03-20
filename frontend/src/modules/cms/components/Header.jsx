@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { MdDashboard, MdMenuBook, MdQuiz, MdPerson, MdCampaign, MdLogout, MdLibraryBooks, MdDarkMode, MdLightMode } from 'react-icons/md';
+import { MdDashboard, MdMenuBook, MdQuiz, MdPerson, MdCampaign, MdLogout, MdLibraryBooks, MdDarkMode, MdLightMode, MdTableChart } from 'react-icons/md';
 import './Header.css';
 
 const Header = () => {
@@ -83,6 +83,7 @@ const Header = () => {
   const baseNavigation = [
     { name: 'Dashboard', href: '/cms/dashboard', icon: <MdDashboard /> },
     { name: 'Courses', href: '/cms/courses', icon: <MdLibraryBooks /> },
+    { name: 'Time-Tables', href: '/cms/time-tables', icon: <MdTableChart />},
   ];
 
   // Build navigation based on role
@@ -199,7 +200,7 @@ const Header = () => {
                     )}
                   </div>
                 </div>
-                <Link to="/profile" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <Link to="/cms/edit-profile" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>
                     <span className="mobile-icon"><MdPerson /></span>
                     Profile
                 </Link>
@@ -240,7 +241,7 @@ const Header = () => {
             </Link>
           ))}
           <div className="mobile-divider"></div>
-          <Link to="/profile" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>
+          <Link to="/cms/edit-profile" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>
             <span className="mobile-icon"><MdPerson /></span>
             Profile
           </Link>

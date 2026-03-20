@@ -1,4 +1,4 @@
-/* Login.css - Minimal & Professional */
+/* Login.css - Minimal & Professional with Dark Mode */
 
 .login-container {
   min-height: 100vh;
@@ -7,6 +7,12 @@
   justify-content: center;
   padding: 2rem;
   background: linear-gradient(135deg, #f5f7fa 0%, #e9ecf2 100%);
+  transition: background 0.3s ease;
+}
+
+/* Dark mode background */
+body.dark-mode .login-container {
+  background: linear-gradient(135deg, #1a1e24 0%, #0f1217 100%);
 }
 
 .login-card {
@@ -17,6 +23,14 @@
   padding: 2.5rem;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
   border: 1px solid #eef2f6;
+  transition: all 0.3s ease;
+}
+
+/* Dark mode card */
+body.dark-mode .login-card {
+  background: #1e242c;
+  border-color: #2a313c;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
 /* Header */
@@ -38,6 +52,10 @@
   color: white;
 }
 
+body.dark-mode .logo-icon {
+  background: #2c3e50;
+}
+
 .login-header h1 {
   font-size: 1.8rem;
   font-weight: 700;
@@ -49,6 +67,14 @@
   color: #5a6778;
   margin: 0;
   font-size: 0.95rem;
+}
+
+body.dark-mode .login-header h1 {
+  color: #e5e9f0;
+}
+
+body.dark-mode .login-header p {
+  color: #a0a8b7;
 }
 
 /* Error */
@@ -63,6 +89,12 @@
   margin-bottom: 1.5rem;
   color: #d32f2f;
   font-size: 0.9rem;
+}
+
+body.dark-mode .error-message {
+  background: #3a2a2a;
+  border-color: #5a3a3a;
+  color: #ff8a80;
 }
 
 /* Form */
@@ -80,9 +112,17 @@
   margin-bottom: 0.4rem;
 }
 
+body.dark-mode .form-group label {
+  color: #e5e9f0;
+}
+
 .label-icon {
   color: #7f8c9f;
   font-size: 1rem;
+}
+
+body.dark-mode .label-icon {
+  color: #a0a8b7;
 }
 
 .form-group input {
@@ -92,12 +132,28 @@
   border-radius: 8px;
   font-size: 0.95rem;
   transition: all 0.2s ease;
+  background: #ffffff;
 }
 
 .form-group input:focus {
   outline: none;
   border-color: #1a2632;
   box-shadow: 0 0 0 3px rgba(26, 38, 50, 0.1);
+}
+
+body.dark-mode .form-group input {
+  background: #2a313c;
+  border-color: #323b48;
+  color: #ffffff;
+}
+
+body.dark-mode .form-group input:focus {
+  border-color: #3a4a5e;
+  box-shadow: 0 0 0 3px rgba(58, 74, 94, 0.3);
+}
+
+body.dark-mode .form-group input::placeholder {
+  color: #7f8c9f;
 }
 
 /* Radio Group */
@@ -148,6 +204,29 @@
   text-align: center;
 }
 
+/* Dark mode radio options */
+body.dark-mode .radio-option {
+  background: #2a313c;
+  border-color: #323b48;
+}
+
+body.dark-mode .radio-option.selected {
+  border-color: #3a4a5e;
+  background: #1e242c;
+}
+
+body.dark-mode .radio-icon {
+  color: #e5e9f0;
+}
+
+body.dark-mode .radio-text {
+  color: #e5e9f0;
+}
+
+body.dark-mode .radio-desc {
+  color: #a0a8b7;
+}
+
 /* Button */
 .login-btn {
   width: 100%;
@@ -175,6 +254,14 @@
 .login-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+body.dark-mode .login-btn {
+  background: #2c3e50;
+}
+
+body.dark-mode .login-btn:hover:not(:disabled) {
+  background: #3a4a5e;
 }
 
 /* Spinner */
