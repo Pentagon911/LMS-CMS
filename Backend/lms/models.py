@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
-from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 from users.models import User
@@ -208,7 +208,7 @@ class BaseAppeal(TimeStampedModel):
     student = models.ForeignKey(
         User, 
         on_delete=models.CASCADE, 
-        related_name='appeals', 
+        related_name='%(class)s_appeals', 
         limit_choices_to={'role': User.Role.STUDENT}
     )
     
@@ -229,7 +229,7 @@ class BaseAppeal(TimeStampedModel):
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True, 
-        related_name='reviewed_appeals'
+        related_name='%(class)s_reviewed'
     )
     review_notes = models.TextField(blank=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
@@ -389,7 +389,7 @@ class ResultReEvaluationAppeal(BaseAppeal):
         related_name='reevaluation_reviews'
     )
     new_marks = models.FloatField(null=True, blank=True)
-    new_grade = models.CharField(max_length=2, choices=ExamResult.GRADE_CHOICES, null=True, blank=True)
+    new_grade = models.CharField(max_length=2, null=True, blank=True)
     review_comments = models.TextField(blank=True)
     
     class Meta:
@@ -445,7 +445,7 @@ class AppealReviewQueue(models.Model):
         db_table = 'appeal_review_queue'
         indexes = [
             models.Index(fields=['content_type', 'object_id']),
-            models.Index(fields=['category', 'status']),
+            models.Index(fields=['category']),
             models.Index(fields=['department', 'faculty', 'academic_year']),
         ]
     
