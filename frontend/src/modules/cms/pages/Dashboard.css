@@ -46,8 +46,8 @@ body.dark-mode .welcome-subtitle { color: #a0a8b7; }
 .dashboard-grid {
   max-width: 1400px;
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
   gap: 1.5rem;
 }
 
@@ -87,7 +87,7 @@ body.dark-mode .dashboard-card h3 { color: #e5e9f0; }
 
 /* Profile Card */
 .profile-card {
-  grid-column: span 2;
+  grid-column: span 2 !important;
 }
 
 .profile-header {

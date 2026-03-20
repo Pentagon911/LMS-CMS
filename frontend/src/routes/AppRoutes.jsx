@@ -14,6 +14,8 @@ import Coursepage from "../modules/cms/pages/CoursesPage.jsx";
 import CourseContentPage from "../modules/cms/pages/CourseContentPage.jsx";
 import AnnouncementEditor from "../modules/cms/pages/AnnouncementEditor.jsx";
 import Quiz from "../modules/cms/pages/QuizPage.jsx";
+import TimeTablePage from "../modules/cms/pages/TimeTablePage.jsx";
+import EditProfile from "../modules/cms/pages/EditProfile.jsx";
 
 // --- ProtectedRoute Component ---
 function ProtectedRoute({ children }) {
@@ -41,6 +43,8 @@ function AppRoutes() {
       <Route path="/cms/courses" element={<CMSLayout> <Coursepage /> </CMSLayout>} />
       <Route path="/cms/course-content/:moduleCode" element={<CMSLayout> <CourseContentPage /> </CMSLayout>} />
       <Route path="/cms/announcements" element={<CMSLayout> <AnnouncementEditor /> </CMSLayout>} />
+      <Route path="/cms/time-tables" element={<CMSLayout> <TimeTablePage /> </CMSLayout>} />
+      <Route path="/cms/edit-profile" element={<CMSLayout> <EditProfile /> </CMSLayout>} />
 
       {/* Protected LMS Routes - NO HEADER */}
       <Route
