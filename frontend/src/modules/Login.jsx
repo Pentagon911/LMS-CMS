@@ -1,6 +1,7 @@
 import request from '../utils/requestMethods.jsx';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {MdLibraryBooks,MdWarning,MdPerson,MdLock,MdFlag,MdMenuBook,MdDescription,MdRocketLaunch,MdContentPaste} from "react-icons/md";
 import './Login.css';
 
 const Login = () => {
@@ -66,14 +67,14 @@ const Login = () => {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <div className="logo-icon">📚</div>
+          <div className="logo-icon"><MdLibraryBooks /></div>
           <h1>Welcome Back</h1>
           <p>Sign in to continue to your portal</p>
         </div>
 
         {error && (
           <div className="error-message">
-            <span className="error-icon">⚠️</span>
+            <span className="error-icon"><MdWarning /></span>
             {error}
           </div>
         )}
@@ -81,7 +82,7 @@ const Login = () => {
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="username">
-              <span className="label-icon">👤</span>
+              <span className="label-icon"><MdPerson /></span>
               Username
             </label>
             <input
@@ -96,7 +97,7 @@ const Login = () => {
 
           <div className="form-group">
             <label htmlFor="password">
-              <span className="label-icon">🔒</span>
+              <span className="label-icon"><MdLock /></span>
               Password
             </label>
             <input
@@ -111,7 +112,7 @@ const Login = () => {
 
           <div className="form-group">
             <label className="radio-label">
-              <span className="label-icon">🎯</span>
+              <span className="label-icon"><MdFlag /></span>
               Select Portal
             </label>
             <div className="radio-group">
@@ -123,9 +124,9 @@ const Login = () => {
                   checked={userType === 'lms'}
                   onChange={(e) => setUserType(e.target.value)}
                 />
-                <span className="radio-icon">📖</span>
+                <span className="radio-icon"><MdDescription /></span>
                 <span className="radio-text">LMS Portal</span>
-                <span className="radio-desc">Learning Management System</span>
+                <div className="radio-desc">Learning Management System</div>
               </label>
 
               <label className={`radio-option ${userType === 'cms' ? 'selected' : ''}`}>
@@ -136,9 +137,9 @@ const Login = () => {
                   checked={userType === 'cms'}
                   onChange={(e) => setUserType(e.target.value)}
                 />
-                <span className="radio-icon">📝</span>
-                <span className="radio-text">CMS Portal</span>
-                <span className="radio-desc">Content Management System</span>
+                <span className="radio-icon"><MdMenuBook /></span>
+                <span className="radio-text"> CMS Portal</span>
+                <div className="radio-desc">Content Management System</div>
               </label>
             </div>
           </div>
@@ -155,25 +156,13 @@ const Login = () => {
               </>
             ) : (
               <>
-                <span className="btn-icon">🚀</span>
+                <span className="btn-icon"><MdRocketLaunch /></span>
                 Sign In
               </>
             )}
           </button>
         </form>
 
-        {/* Demo credentials - remove in production */}
-        <div className="login-footer">
-          <button 
-            className="demo-btn" 
-            onClick={handleDemoLogin}
-            type="button"
-          >
-            📋 Fill Demo Credentials
-          </button>
-          <p>Demo credentials: username: admin, password: admin</p>
-          <p className="hint">(Works for both LMS and CMS)</p>
-        </div>
       </div>
     </div>
   );

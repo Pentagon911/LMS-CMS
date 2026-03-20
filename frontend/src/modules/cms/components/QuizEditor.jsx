@@ -1,320 +1,222 @@
-import { useEffect, useRef, useState } from "react";
-import Quill from "quill";
-import { BlockMath } from "react-katex";
-import "quill/dist/quill.snow.css";
-import "katex/dist/katex.min.css";
+import { useState, useEffect } from "react";
+import TextEditor from "./TextEditor";
+import { 
+  MdClose, MdAdd, MdRemove, MdPreview, 
+  MdCheckCircle, MdRadioButtonChecked,
+  MdCheckBox, MdCheckBoxOutlineBlank, 
+  MdQuiz, MdImage, MdDelete
+} from 'react-icons/md';
 import "./QuizEditor.css";
 
 function QuizEditor({ onSubmit, initialData = null }) {
-  const editorRef = useRef(null);
-  const quillRef = useRef(null);
-  const [latex, setLatex] = useState("");
-  const [options, setOptions] = useState(["", ""]);
-  const [correctAnswer, setCorrectAnswer] = useState(null);
+  const [question, setQuestion] = useState("");
+  const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const [options, setOptions] = useState([
+    { text: "", isCorrect: false },
+    { text: "", isCorrect: false }
+  ]);
+  const [multipleAnswers, setMultipleAnswers] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
-  // Initialize Quill editor
-  useEffect(() => {
-    if (editorRef.current && !quillRef.current) {
-      quillRef.current = new Quill(editorRef.current, {
-        theme: "snow",
-        placeholder: "Type your question here...",
-        modules: {
-          toolbar: [
-            ["bold", "italic", "underline", "strike"],
-            [{ header: [1, 2, 3, false] }],
-            [{ list: "ordered" }, { list: "bullet" }],
-            ["link", "blockquote", "code-block"],
-            ["clean"]
-          ]
-        }
-      });
-    }
-  }, []);
-
-  // Update form when initialData changes
   useEffect(() => {
     if (initialData) {
-      console.log("Loading initial data into editor:", initialData);
-      setOptions(initialData.options || ['', '']);
-      setCorrectAnswer(initialData.correctAnswer ?? null);
-      setLatex(initialData.equationPreview || '');
+      setQuestion(initialData.question || "");
+      setImage(initialData.image || null);
       
-      // Set Quill content
-      if (quillRef.current && initialData.question) {
-        quillRef.current.root.innerHTML = initialData.question;
+      if (initialData.options) {
+        const formattedOptions = initialData.options.map(opt => ({
+          text: opt.text || opt,
+          isCorrect: opt.is_correct === "true" || opt.is_correct === true
+        }));
+        setOptions(formattedOptions);
       }
+      
+      setMultipleAnswers(initialData.multipleAnswers === "true");
     } else {
-      // Reset form when not editing
-      setOptions(['', '']);
-      setCorrectAnswer(null);
-      setLatex('');
-      if (quillRef.current) {
-        quillRef.current.root.innerHTML = '';
-      }
+      setOptions([
+        { text: "", isCorrect: false },
+        { text: "", isCorrect: false }
+      ]);
+      setQuestion("");
+      setImage(null);
+      setImagePreview("");
+      setMultipleAnswers(false);
     }
   }, [initialData]);
 
-  const insertMath = (latexSymbol) => {
-    const quill = quillRef.current;
-    const range = quill.getSelection(true);
-    quill.insertText(range.index, ` ${latexSymbol} `);
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result);
+      reader.readAsDataURL(file);
+    }
   };
 
-  const addOption = () => {
-    setOptions([...options, ""]);
+  const removeImage = () => {
+    setImage(null);
+    setImagePreview("");
   };
+
+  const addOption = () => setOptions([...options, { text: "", isCorrect: false }]);
 
   const removeOption = (index) => {
     if (options.length > 2) {
-      const newOptions = options.filter((_, i) => i !== index);
-      setOptions(newOptions);
-      if (correctAnswer === index) {
-        setCorrectAnswer(null);
-      } else if (correctAnswer > index) {
-        setCorrectAnswer(correctAnswer - 1);
-      }
+      setOptions(options.filter((_, i) => i !== index));
     }
   };
 
   const handleOptionChange = (index, value) => {
     const newOptions = [...options];
-    newOptions[index] = value;
+    newOptions[index].text = value;
+    setOptions(newOptions);
+  };
+
+  const toggleCorrectAnswer = (index) => {
+    const newOptions = [...options];
+    
+    if (multipleAnswers) {
+      newOptions[index].isCorrect = !newOptions[index].isCorrect;
+    } else {
+      newOptions.forEach((opt, i) => opt.isCorrect = i === index);
+    }
+    
     setOptions(newOptions);
   };
 
   const handleSubmit = () => {
-    const questionHTML = quillRef.current.root.innerHTML;
-    
-    if (!questionHTML.trim() || questionHTML === "<p><br></p>") {
+    if (!question.trim() || question === "<p><br></p>") {
       alert("Please enter a question");
       return;
     }
     
-    if (correctAnswer === null) {
-      alert("Please select the correct answer");
+    const hasCorrectAnswer = options.some(opt => opt.isCorrect);
+    if (!hasCorrectAnswer) {
+      alert("Please select at least one correct answer");
       return;
     }
     
-    if (options.some(opt => !opt.trim())) {
+    if (options.some(opt => !opt.text.trim())) {
       alert("Please fill in all options");
       return;
     }
 
     setIsSubmitting(true);
     
+    const formattedOptions = options.map((opt, idx) => ({
+      id: String.fromCharCode(65 + idx),
+      text: opt.text,
+      is_correct: opt.isCorrect ? "true" : "false"
+    }));
+
     const questionData = {
-      question: questionHTML,
-      equationPreview: latex,
-      options: options,
-      correctAnswer: correctAnswer,
-      multipleAnswers: "false",
-      createdAt: new Date().toISOString()
+      questionId: `q${Date.now()}`,
+      question: question,
+      image: imagePreview || null,
+      multipleAnswers: multipleAnswers ? "true" : "false",
+      options: formattedOptions
     };
 
-    // Pass data to parent component
-    if (onSubmit) {
-      onSubmit(questionData);
-    }
+    onSubmit(questionData);
 
-    // Reset form after submission
     setTimeout(() => {
-      setOptions(["", ""]);
-      setCorrectAnswer(null);
-      setLatex("");
-      if (quillRef.current) {
-        quillRef.current.root.innerHTML = "";
-      }
+      setOptions([
+        { text: "", isCorrect: false },
+        { text: "", isCorrect: false }
+      ]);
+      setQuestion("");
+      setImage(null);
+      setImagePreview("");
+      setMultipleAnswers(false);
       setIsSubmitting(false);
-      alert(initialData ? "Question updated successfully!" : "Question added successfully!");
+      alert(initialData ? "Question updated!" : "Question added!");
     }, 500);
   };
-
-  const mathSymbols = [
-    { symbol: "Σ", latex: "\\sum_{i=1}^{n}", label: "Sum" },
-    { symbol: "∫", latex: "\\int_a^b", label: "Integral" },
-    { symbol: "π", latex: "\\pi", label: "Pi" },
-    { symbol: "√", latex: "\\sqrt{}", label: "Square Root" },
-    { symbol: "∞", latex: "\\infty", label: "Infinity" },
-    { symbol: "±", latex: "\\pm", label: "Plus-Minus" },
-    { symbol: "α", latex: "\\alpha", label: "Alpha" },
-    { symbol: "β", latex: "\\beta", label: "Beta" },
-    { symbol: "θ", latex: "\\theta", label: "Theta" },
-    { symbol: "λ", latex: "\\lambda", label: "Lambda" },
-    { symbol: "μ", latex: "\\mu", label: "Mu" },
-    { symbol: "σ", latex: "\\sigma", label: "Sigma" }
-  ];
 
   return (
     <div className="quiz-editor-container">
       <div className="quiz-editor-content">
-        {/* Math Symbols Toolbar */}
-        <div className="form-section">
-          <label className="section-label">
-            <span className="label-icon">🔢</span>
-            Math Symbols
-          </label>
-          <div className="math-toolbar">
-            {mathSymbols.map((item, index) => (
-              <button
-                key={index}
-                className="math-symbol-btn"
-                onClick={() => insertMath(item.latex)}
-                title={item.label}
-              >
-                {item.symbol}
-              </button>
-            ))}
-          </div>
+        {/* Question */}
+        <div className="form-group">
+          <label><MdQuiz /> Question</label>
+          <TextEditor
+            value={question}
+            onChange={setQuestion}
+            placeholder="Type your question here..."
+            height="200px"
+          />
         </div>
 
-        {/* Question Editor */}
-        <div className="form-section">
-          <label className="section-label">
-            <span className="label-icon">❓</span>
-            Question
-          </label>
-          <div className="editor-wrapper">
-            <div
-              ref={editorRef}
-              className="quill-editor"
-              style={{ height: '200px' }}
-            />
-          </div>
-        </div>
-
-        {/* Equation Preview */}
-        <div className="form-section">
-          <label className="section-label">
-            <span className="label-icon">📐</span>
-            Equation Preview (LaTeX)
-          </label>
-          <div className="equation-container">
-            <input
-              type="text"
-              className="equation-input"
-              placeholder="e.g., \int_0^1 x^2 dx"
-              value={latex}
-              onChange={(e) => setLatex(e.target.value)}
-            />
-            {latex && (
-              <div className="equation-preview" onClick={() => setShowPreview(!showPreview)}>
-                <BlockMath math={latex} />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Answer Options */}
-        <div className="form-section">
-          <div className="options-header">
-            <label className="section-label">
-              <span className="label-icon">✓</span>
-              Answer Options
-            </label>
-            <button className="add-option-btn" onClick={addOption}>
-              <span className="btn-icon">+</span>
-              Add Option
-            </button>
-          </div>
-          
-          <div className="options-container">
-            {options.map((opt, index) => (
-              <div key={index} className="option-item">
-                <div className="option-number">{index + 1}</div>
-                <input
-                  type="text"
-                  className={`option-input ${correctAnswer === index ? 'correct-option' : ''}`}
-                  placeholder={`Option ${index + 1}`}
-                  value={opt}
-                  onChange={(e) => handleOptionChange(index, e.target.value)}
-                />
-                <button
-                  className={`correct-btn ${correctAnswer === index ? 'selected' : ''}`}
-                  onClick={() => setCorrectAnswer(index)}
-                  title="Mark as correct answer"
-                >
-                  ✓
-                </button>
-                {options.length > 2 && (
-                  <button
-                    className="remove-option-btn"
-                    onClick={() => removeOption(index)}
-                    title="Remove option"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-          
-          {correctAnswer !== null && (
-            <div className="correct-answer-indicator">
-              ✓ Correct answer: Option {correctAnswer + 1}
+        {/* Image */}
+        <div className="form-group">
+          <label><MdImage /> Image (Optional)</label>
+          {!imagePreview ? (
+            <div className="upload-area">
+              <input type="file" id="image" accept="image/*" onChange={handleImageUpload} hidden />
+              <label htmlFor="image" className="upload-label">Click to upload image</label>
+            </div>
+          ) : (
+            <div className="preview-area">
+              <img src={imagePreview} alt="Preview" />
+              <button onClick={removeImage}><MdDelete /> Remove</button>
             </div>
           )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="form-actions">
-          <button
-            className="preview-btn"
-            onClick={() => setShowPreview(!showPreview)}
-          >
-            <span className="btn-icon">👁️</span>
-            Preview
-          </button>
-          <button
-            className={`submit-btn ${isSubmitting ? 'submitting' : ''}`}
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <span className="spinner"></span>
-                {initialData ? 'Updating...' : 'Adding...'}
-              </>
-            ) : (
-              <>
-                <span className="btn-icon">{initialData ? '✎' : '➕'}</span>
-                {initialData ? 'Update Question' : 'Add Question'}
-              </>
-            )}
+        {/* Answer Type */}
+        <div className="form-group">
+          <label><MdCheckCircle /> Answer Type</label>
+          <div className="toggle-group">
+            <button className={`toggle-btn ${!multipleAnswers ? 'active' : ''}`} onClick={() => setMultipleAnswers(false)}>
+              <MdRadioButtonChecked /> Single
+            </button>
+            <button className={`toggle-btn ${multipleAnswers ? 'active' : ''}`} onClick={() => setMultipleAnswers(true)}>
+              <MdCheckBox /> Multiple
+            </button>
+          </div>
+        </div>
+
+        {/* Options */}
+        <div className="form-group">
+          <div className="options-header">
+            <label>✓ Answer Options</label>
+            <button onClick={addOption}><MdAdd /> Add</button>
+          </div>
+          
+          {options.map((opt, i) => (
+            <div key={i} className="option-row">
+              <span className="option-num">{i+1}</span>
+              <input
+                type="text"
+                value={opt.text}
+                onChange={(e) => handleOptionChange(i, e.target.value)}
+                placeholder={`Option ${i+1}`}
+                className={opt.isCorrect ? 'correct' : ''}
+              />
+              <button className={`correct-btn ${opt.isCorrect ? 'selected' : ''}`} onClick={() => toggleCorrectAnswer(i)}>
+                {multipleAnswers ? (opt.isCorrect ? <MdCheckBox /> : <MdCheckBoxOutlineBlank />) : <MdCheckCircle />}
+              </button>
+              {options.length > 2 && <button onClick={() => removeOption(i)}><MdRemove /></button>}
+            </div>
+          ))}
+
+          {options.some(o => o.isCorrect) && (
+            <div className="correct-indicator">
+              <MdCheckCircle /> Correct: Option {options.findIndex(o => o.isCorrect) + 1}
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="action-buttons">
+          <button onClick={handleSubmit} disabled={isSubmitting} className="submit">
+            {isSubmitting ? 'Saving...' : (initialData ? 'Update' : 'Add')}
           </button>
         </div>
 
-        {/* Preview Modal */}
-        {showPreview && (
-          <div className="preview-modal">
-            <div className="preview-content">
-              <div className="preview-header">
-                <h3>Question Preview</h3>
-                <button className="close-preview" onClick={() => setShowPreview(false)}>×</button>
-              </div>
-              <div className="preview-body">
-                <div className="preview-question" dangerouslySetInnerHTML={{ 
-                  __html: quillRef.current?.root.innerHTML || "No question entered" 
-                }} />
-                {latex && (
-                  <div className="preview-equation">
-                    <BlockMath math={latex} />
-                  </div>
-                )}
-                <div className="preview-options">
-                  {options.map((opt, idx) => (
-                    <div key={idx} className={`preview-option ${correctAnswer === idx ? 'preview-correct' : ''}`}>
-                      <span className="preview-option-number">{idx + 1}.</span>
-                      <span>{opt || `Option ${idx + 1}`}</span>
-                      {correctAnswer === idx && <span className="correct-badge">✓ Correct</span>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

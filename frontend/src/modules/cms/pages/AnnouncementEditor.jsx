@@ -1,13 +1,12 @@
-import { useEffect, useRef, useState } from "react";
-import Quill from "quill";
-import "quill/dist/quill.snow.css";
+import { useState, useEffect } from "react";
+import TextEditor from "../components/TextEditor";
 import "./AnnouncementEditor.css";
+import { MdCampaign, MdDescription, MdGroups, MdRocketLaunch, MdPublic, MdVisibility, MdMenuBook, MdAttachFile } from "react-icons/md";
+
 
 const AnnouncementEditor = ({ announcement = null, onSave, onCancel }) => {
-  const editorRef = useRef(null);
-  const quillRef = useRef(null);
-  
   const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
   const [audience, setAudience] = useState("ALL");
   const [selectedModules, setSelectedModules] = useState([]);
   const [modules, setModules] = useState([]);
@@ -23,33 +22,13 @@ const AnnouncementEditor = ({ announcement = null, onSave, onCancel }) => {
       .catch(err => console.error("Failed to load modules", err));
   }, []);
 
-  // Initialize Quill editor
+  // Populate form if editing existing announcement
   useEffect(() => {
-    if (editorRef.current && !quillRef.current) {
-      quillRef.current = new Quill(editorRef.current, {
-        theme: "snow",
-        placeholder: "Write your announcement here... You can use formatting, add links, and more.",
-        modules: {
-          toolbar: [
-            ["bold", "italic", "underline", "strike"],
-            [{ header: [1, 2, 3, false] }],
-            [{ list: "ordered" }, { list: "bullet" }],
-            ["link", "blockquote", "code-block"],
-            ["clean"]
-          ]
-        }
-      });
-
-      // If editing existing announcement, populate content
-      if (announcement) {
-        setTitle(announcement.title || "");
-        setAudience(announcement.audience?.includes("ALL") ? "ALL" : "SPECIFIC");
-        setSelectedModules(announcement.audience?.filter(m => m !== "ALL") || []);
-        
-        if (announcement.content) {
-          quillRef.current.root.innerHTML = announcement.content;
-        }
-      }
+    if (announcement) {
+      setTitle(announcement.title || "");
+      setContent(announcement.content || "");
+      setAudience(announcement.audience?.includes("ALL") ? "ALL" : "SPECIFIC");
+      setSelectedModules(announcement.audience?.filter(m => m !== "ALL") || []);
     }
   }, [announcement]);
 
@@ -74,8 +53,6 @@ const AnnouncementEditor = ({ announcement = null, onSave, onCancel }) => {
 
   // Submit handler
   const handleSubmit = async () => {
-    const content = quillRef.current.root.innerHTML;
-    
     // Validation
     if (!title.trim()) {
       alert("Please enter an announcement title");
@@ -104,7 +81,7 @@ const AnnouncementEditor = ({ announcement = null, onSave, onCancel }) => {
       audience: audience === "ALL" ? ["ALL"] : selectedModules,
       attachments: attachments.map(file => ({
         fileName: file.name,
-        fileUrl: URL.createObjectURL(file), // In real app, upload to server
+        fileUrl: URL.createObjectURL(file),
         fileSize: file.size,
         fileType: file.type
       }))
@@ -132,7 +109,7 @@ const AnnouncementEditor = ({ announcement = null, onSave, onCancel }) => {
         {/* Title Section */}
         <div className="form-section">
           <label className="section-label">
-            <span className="label-icon">📢</span>
+            <span className="label-icon"><MdCampaign /></span>
             Announcement Title
           </label>
           <input
@@ -146,24 +123,24 @@ const AnnouncementEditor = ({ announcement = null, onSave, onCancel }) => {
           <div className="char-count">{title.length}/200</div>
         </div>
 
-        {/* Rich Text Editor */}
+        {/* Rich Text Editor - Using TextEditor component */}
         <div className="form-section">
           <label className="section-label">
-            <span className="label-icon">📝</span>
+            <span className="label-icon"><MdDescription /></span>
             Announcement Content
           </label>
-          <div className="editor-wrapper">
-            <div
-              ref={editorRef}
-              className="quill-editor"
-            />
-          </div>
+          <TextEditor
+            value={content}
+            onChange={setContent}
+            placeholder="Write your announcement here... You can use formatting, add links, and more."
+            height="400px"
+          />
         </div>
 
         {/* Audience Selection */}
         <div className="form-section">
           <label className="section-label">
-            <span className="label-icon">👥</span>
+            <span className="label-icon"><MdGroups /></span>
             Target Audience
           </label>
           
@@ -172,13 +149,13 @@ const AnnouncementEditor = ({ announcement = null, onSave, onCancel }) => {
               className={`audience-tab ${audience === 'ALL' ? 'active' : ''}`}
               onClick={() => setAudience('ALL')}
             >
-              🌐 All Modules
+              <MdPublic /> All Modules
             </button>
             <button
               className={`audience-tab ${audience === 'SPECIFIC' ? 'active' : ''}`}
               onClick={() => setAudience('SPECIFIC')}
             >
-              📚 Specific Modules
+              <MdMenuBook /> Specific Modules
             </button>
           </div>
 
@@ -210,7 +187,7 @@ const AnnouncementEditor = ({ announcement = null, onSave, onCancel }) => {
         {/* Attachments */}
         <div className="form-section">
           <label className="section-label">
-            <span className="label-icon">📎</span>
+            <span className="label-icon"><MdAttachFile /></span>
             Attachments (Optional)
           </label>
           
@@ -234,7 +211,7 @@ const AnnouncementEditor = ({ announcement = null, onSave, onCancel }) => {
             <div className="file-list">
               {attachments.map((file, index) => (
                 <div key={index} className="file-item">
-                  <span className="file-icon">📄</span>
+                  <span className="file-icon"><MdDescription /></span>
                   <span className="file-name">{file.name}</span>
                   <span className="file-size">
                     {(file.size / 1024).toFixed(1)} KB
@@ -259,7 +236,7 @@ const AnnouncementEditor = ({ announcement = null, onSave, onCancel }) => {
             className="preview-btn"
             onClick={() => setShowPreview(true)}
           >
-            <span className="btn-icon">👁️</span>
+            <span className="btn-icon"><MdVisibility /></span>
             Preview
           </button>
           
@@ -286,7 +263,7 @@ const AnnouncementEditor = ({ announcement = null, onSave, onCancel }) => {
                 </>
               ) : (
                 <>
-                  <span className="btn-icon">🚀</span>
+                  <span className="btn-icon"><MdRocketLaunch /></span>
                   {announcement ? 'Update Announcement' : 'Post Announcement'}
                 </>
               )}
@@ -294,7 +271,7 @@ const AnnouncementEditor = ({ announcement = null, onSave, onCancel }) => {
           </div>
         </div>
 
-        {/* Preview Modal - Cleaned version without priority and expiry */}
+        {/* Preview Modal */}
         {showPreview && (
           <div className="preview-modal" onClick={() => setShowPreview(false)}>
             <div className="preview-content" onClick={e => e.stopPropagation()}>
@@ -316,7 +293,7 @@ const AnnouncementEditor = ({ announcement = null, onSave, onCancel }) => {
                 
                 <div className="preview-audience">
                   {audience === "ALL" ? (
-                    <span className="audience-badge all">🌐 All Modules</span>
+                    <span className="audience-badge all"><MdPublic /> All Modules</span>
                   ) : (
                     selectedModules.map(code => (
                       <span key={code} className="audience-badge">{code}</span>
@@ -326,18 +303,16 @@ const AnnouncementEditor = ({ announcement = null, onSave, onCancel }) => {
 
                 <div 
                   className="preview-content-html"
-                  dangerouslySetInnerHTML={{ 
-                    __html: quillRef.current?.root.innerHTML || "No content entered" 
-                  }} 
+                  dangerouslySetInnerHTML={{ __html: content }} 
                 />
 
                 {attachments.length > 0 && (
                   <div className="preview-attachments">
-                    <h4>📎 Attachments</h4>
+                    <h4><MdAttachFile /> Attachments</h4>
                     <div className="preview-attachment-list">
                       {attachments.map((file, idx) => (
                         <div key={idx} className="preview-attachment">
-                          <span className="attachment-icon">📄</span>
+                          <span className="attachment-icon"><MdDescription /></span>
                           <span className="attachment-name">{file.name}</span>
                         </div>
                       ))}

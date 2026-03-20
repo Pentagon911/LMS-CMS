@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import request from '../../../utils/requestMethods.jsx';
 import WeekCard from '../components/WeekCard.jsx';
 import './CourseContentPage.css';
+import { MdCalendarMonth, MdLibraryBooks } from 'react-icons/md';
 
 const CourseContentPage = () => {
   const { moduleCode } = useParams();
@@ -167,13 +168,13 @@ const CourseContentPage = () => {
           
           <div className="course-meta">
             <span className="meta-badge">
-              <span className="meta-icon">📚</span>
+              <span className="meta-icon"><MdCalendarMonth /></span>
               <span className="meta-label">Total Weeks:</span>
               {courseData.length}
             </span>
             
             <span className="meta-badge">
-              <span className="meta-icon">📊</span>
+              <span className="meta-icon"><MdLibraryBooks /></span>
               <span className="meta-label">Total Items:</span>
               {courseData.reduce((total, week) => total + (week.items?.length || 0), 0)}
             </span>

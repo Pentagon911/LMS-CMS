@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import request from '../../../utils/requestMethods.jsx';
 import './QuizPage.css';
+import { MdAccessAlarms, MdAccessTime, MdUpload, MdWarning } from 'react-icons/md';
 
 const QuizPage = () => {
   const { quizId } = useParams();
@@ -27,7 +28,7 @@ const QuizPage = () => {
         setLoading(true);
         // In real app: const data = await request.GET(`/api/quizzes/${quizId}`);
         // For now, using mock data
-        const data = await request.GET('/_data/quiz.json');
+        const data = await request.GET('/_data/quizzes/quiz002.json');
         setQuizData(data);
         
         // Parse time (e.g., "10m" to seconds)
@@ -197,7 +198,7 @@ const QuizPage = () => {
           <p className="quiz-course">{quizData.course}</p>
         </div>
         <div className={`quiz-timer ${timeRemaining < 60 ? 'timer-warning' : ''}`}>
-          <span className="timer-icon">⏰</span>
+          <span className="timer-icon"><MdAccessAlarms /></span>
           <span className="timer-time">{formatTime(timeRemaining)}</span>
         </div>
       </div>
@@ -280,7 +281,7 @@ const QuizPage = () => {
                   onClick={() => setShowConfirmSubmit(true)}
                   disabled={isSubmitted}
                 >
-                  📤 Submit Quiz
+                  <MdUpload /> Submit Quiz
                 </button>
               ) : (
                 <button 
@@ -346,7 +347,7 @@ const QuizPage = () => {
             onClick={() => setShowConfirmSubmit(true)}
             disabled={isSubmitted}
           >
-            📤 Submit Quiz
+            <MdUpload /> Submit Quiz
           </button>
         </div>
       </div>
@@ -359,7 +360,7 @@ const QuizPage = () => {
             <p>You have answered {answeredCount} out of {totalQuestions} questions.</p>
             {answeredCount < totalQuestions && (
               <p className="warning-text">
-                ⚠️ {totalQuestions - answeredCount} question(s) unanswered
+                <MdWarning /> {totalQuestions - answeredCount} question(s) unanswered
               </p>
             )}
             <div className="modal-actions">

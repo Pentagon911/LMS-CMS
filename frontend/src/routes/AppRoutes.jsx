@@ -9,10 +9,10 @@ import LMSDashboard from "../modules/lms/pages/Dashboard.jsx";
 
 //CMS Pages
 import CMSDashboard from "../modules/cms/pages/Dashboard.jsx";
-import QuizEditor from "../modules/cms/pages/Quiz.jsx";
+import QuizEditor from "../modules/cms/pages/QuizEditor.jsx";
 import Coursepage from "../modules/cms/pages/CoursesPage.jsx";
 import CourseContentPage from "../modules/cms/pages/CourseContentPage.jsx";
-import AnnouncementEditor from "../modules/cms/components/AnnouncementEditor.jsx";
+import AnnouncementEditor from "../modules/cms/pages/AnnouncementEditor.jsx";
 import Quiz from "../modules/cms/pages/QuizPage.jsx";
 
 // --- ProtectedRoute Component ---
