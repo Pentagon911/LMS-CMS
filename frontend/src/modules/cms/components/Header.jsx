@@ -186,26 +186,26 @@ const Header = () => {
                 )}
               </div>
               <span className="profile-name">{getDisplayName()}</span>
-              <span className={`arrow ${isProfileMenuOpen ? 'open' : ''}`}>▼</span>
+              <span className={`profile-arrow ${isProfileMenuOpen ? 'open' : ''}`}>▼</span>
             </button>
 
             {isProfileMenuOpen && (
-              <div className="dropdown">
-                <div className="dropdown-header">
-                  <div className="user-info">
+              <div className="profile-dropdown">
+                <div className="profile-dropdown-header">
+                  <div className="profile-user-info">
                     <strong>{getDisplayName()}</strong>
                     <span>{getUserEmail()}</span>
                     {user?.role && (
-                      <span className="user-role-badge">{user.role}</span>
+                      <span className="profile-user-role-badge">{user.role}</span>
                     )}
                   </div>
                 </div>
-                <Link to="/cms/edit-profile" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>
-                    <span className="mobile-icon"><MdPerson /></span>
-                    Profile
+                <Link to="/cms/edit-profile" className="profile-dropdown-item" onClick={() => setIsProfileMenuOpen(false)}>
+                  <span className="profile-dropdown-icon"><MdPerson /></span>
+                  Profile
                 </Link>
-                <button onClick={handleLogout} className="dropdown-item logout">
-                  <span className="item-icon"><MdLogout /></span>
+                <button onClick={handleLogout} className="profile-dropdown-item logout">
+                  <span className="profile-dropdown-icon"><MdLogout /></span>
                   Sign Out
                 </button>
               </div>

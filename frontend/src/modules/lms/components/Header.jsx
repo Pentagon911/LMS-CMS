@@ -1,22 +1,62 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { MdDashboard, MdPerson, MdVolunteerActivism, MdLogout, MdLibraryBooks, MdSchool, MdDarkMode, MdLightMode, MdAdminPanelSettings } from 'react-icons/md';
+import { MdDashboard, MdPerson, MdVolunteerActivism, MdLogout, MdLibraryBooks, MdSchool, MdDarkMode, MdLightMode, MdAdminPanelSettings, MdExpandMore, MdMenuBook, MdAssignment, MdEvent, MdGrade, MdPeople, MdAttachMoney, MdHelp, MdHome, MdUpload, MdMedicalServices, MdHelpOutline
+} from 'react-icons/md';
 import '../../cms/components/Header.css';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null);
   const [user, setUser] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Check localStorage for saved theme preference
     const savedTheme = localStorage.getItem('theme');
     return savedTheme === 'dark';
   });
   
   const profileMenuRef = useRef(null);
+  const dropdownRefs = useRef({});
   const location = useLocation();
   const navigate = useNavigate();
+
+  const dropdownData = {
+    'Acadamic Managements': {
+      admin: [
+        { name: 'Update Exam Timetables', path: '/lms/academics/time-tables', icon: <MdEvent /> },
+      ],
+      student: [
+        { name: 'Enrollments', path: '/lms/academics/enrollment', icon: <MdMenuBook /> },
+        { name: 'My Courses', path: '/lms/academics/my-courses', icon: <MdAssignment /> },
+        { name: 'Exam Results', path: '/lms/academics/results', icon: <MdGrade /> },
+        { name: 'Exam Timetables', path: '/lms/academics/time-tables', icon: <MdEvent /> },
+      ],
+      instructor: [
+          { name: 'Update Results', path: '/lms/update-results', icon: <MdUpload /> },
+          { name: 'Exam Timetables', path: '/lms/academics/time-tables', icon: <MdEvent /> },
+      ]
+    },
+    'Appeals/Welfare': {
+      admin: [
+        { name: 'Bursary Appeals', path: '/lms/appeals-and-welfare/bursary-appeals', icon: <MdAttachMoney /> },
+        { name: 'Hostel Appeals', path: '/lms/appeals-and-welfare/hostel-appeals', icon: <MdHome /> },
+        { name: 'Exam Appeals', path: '/lms/appeals-and-welfare/exam-appeals', icon: <MdHelpOutline /> },
+        { name: 'Medical Appeals', path: '/lms/appeals-and-welfare/medical-eppeals', icon: <MdMedicalServices /> }
+      ],
+      student: [
+        { name: 'Apply bursary', path: '/lms/appeals-and-welfare/bursary', icon: <MdAttachMoney /> },
+        { name: 'Apply Hostel Facility', path: '/lms/appeals-and-welfare/welfare-request', icon: <MdHome /> },
+        { name: 'Exam Appeals', path: '/lms/appeals-and-welfare/my-appeals', icon: <MdAssignment /> },
+        { name: 'Medical Leave', path: '/lms/appeals-and-welfare/medical-leave', icon: <MdHelp /> }
+      ]
+    },
+    'Server Managements': {
+      admin: [
+        { name: 'User Management', path: '/lms/server-management/users', icon: <MdPeople /> },
+        { name: 'Course Management', path: '/lms/server-management/courses', icon: <MdMenuBook /> },
+      ]
+    }
+  };
 
   // Get user from localStorage on component mount and when storage changes
   useEffect(() => {
@@ -33,7 +73,6 @@ const Header = () => {
 
     getUserFromStorage();
 
-    // Listen for storage changes (in case user logs in/out in another tab)
     window.addEventListener('storage', getUserFromStorage);
     return () => window.removeEventListener('storage', getUserFromStorage);
   }, []);
@@ -47,6 +86,20 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openDropdown) {
+        const dropdownElement = dropdownRefs.current[openDropdown];
+        if (dropdownElement && !dropdownElement.contains(event.target)) {
+          setOpenDropdown(null);
+        }
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openDropdown]);
+
   // Close profile menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -55,13 +108,14 @@ const Header = () => {
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => window.removeEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Close mobile menu on route change
+  // Close mobile menu and dropdowns on route change
   useEffect(() => {
     setIsMobileMenuOpen(false);
     setIsProfileMenuOpen(false);
+    setOpenDropdown(null);
   }, [location]);
 
   // Apply theme class to body when theme changes
@@ -81,21 +135,63 @@ const Header = () => {
 
   // Base navigation for all users
   const baseNavigation = [
-    { name: 'Dashboard', href: '/lms/dashboard', icon: <MdDashboard /> },
-    { name: 'Acadamic Managements', href: '/lms/academics', icon: <MdSchool /> },
+    { name: 'Dashboard', href: '/lms/dashboard', icon: <MdDashboard />, hasDropdown: false },
+    { name: 'Acadamic Managements', href: '/lms/academics', icon: <MdSchool />, hasDropdown: true },
   ];
 
   // Build navigation based on role
   const navigation = [...baseNavigation];
 
   if (isStudent || isAdmin) {
-    navigation.push({ name: 'Appeals/Welfare', href: '/lms/appeals-and-welfare', icon: <MdVolunteerActivism /> });
+    navigation.push({ 
+      name: 'Appeals/Welfare', 
+      href: '/lms/appeals-and-welfare', 
+      icon: <MdVolunteerActivism />, 
+      hasDropdown: true 
+    });
   }
   if (isAdmin) {
-    navigation.push({ name: 'Server Managements', href: '/lms/server-management', icon: <MdAdminPanelSettings /> });
+    navigation.push({ 
+      name: 'Server Managements', 
+      href: '/lms/server-management', 
+      icon: <MdAdminPanelSettings />, 
+      hasDropdown: true 
+    });
   }
 
+  // Get dropdown items based on role
+  const getDropdownItems = (menuName) => {
+    const menuData = dropdownData[menuName];
+    if (!menuData) return [];
+    
+    if (isAdmin && menuData.admin) {
+      return menuData.admin;
+    } else if (isStudent && menuData.student) {
+      return menuData.student;
+    }
+    return [];
+  };
+
   const isActive = (path) => location.pathname === path;
+  const isDropdownItemActive = (path) => location.pathname === path;
+
+  // Handle navigation with dropdown
+  const handleNavClick = (item, e) => {
+    if (item.hasDropdown) {
+      e.preventDefault();
+      // Toggle dropdown
+      setOpenDropdown(openDropdown === item.name ? null : item.name);
+    } else {
+      // For items without dropdown, navigate directly
+      navigate(item.href);
+    }
+  };
+
+  // Handle dropdown item click
+  const handleDropdownItemClick = (path) => {
+    navigate(path);
+    setOpenDropdown(null);
+  };
 
   // Get user display name
   const getDisplayName = () => {
@@ -119,11 +215,8 @@ const Header = () => {
 
   // Handle logout
   const handleLogout = () => {
-    // Clear localStorage
     localStorage.removeItem('user');
     localStorage.removeItem('token');
-    
-    // Redirect to login
     navigate('/login');
   };
 
@@ -144,14 +237,41 @@ const Header = () => {
         {/* Desktop Navigation */}
         <nav className="nav-menu">
           {navigation.map((item) => (
-            <Link
-              key={item.name}
-              to={item.href}
-              className={`nav-link ${isActive(item.href) ? 'active' : ''}`}
+            <div 
+              key={item.name} 
+              className={`nav-item ${item.hasDropdown ? 'has-dropdown' : ''}`}
+              ref={el => dropdownRefs.current[item.name] = el}
             >
-              <span className="nav-icon">{item.icon}</span>
-              <span className="nav-text">{item.name}</span>
-            </Link>
+              <Link
+                to={item.href}
+                className={`nav-link ${isActive(item.href) ? 'active' : ''} ${openDropdown === item.name ? 'dropdown-open' : ''}`}
+                onClick={(e) => handleNavClick(item, e)}
+              >
+                <span className="nav-icon">{item.icon}</span>
+                <span className="nav-text">{item.name}</span>
+                {item.hasDropdown && (
+                  <span className={`nav-dropdown-arrow ${openDropdown === item.name ? 'rotate' : ''}`}>
+                    <MdExpandMore />
+                  </span>
+                )}
+              </Link>
+              
+              {/* Dropdown Menu */}
+              {item.hasDropdown && openDropdown === item.name && (
+                <div className="nav-dropdown-menu">
+                  {getDropdownItems(item.name).map((dropdownItem) => (
+                    <button
+                      key={dropdownItem.path}
+                      className={`nav-dropdown-item ${isDropdownItemActive(dropdownItem.path) ? 'active' : ''}`}
+                      onClick={() => handleDropdownItemClick(dropdownItem.path)}
+                    >
+                      <span className="nav-dropdown-icon">{dropdownItem.icon}</span>
+                      <span className="nav-dropdown-text">{dropdownItem.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
         </nav>
 
@@ -182,26 +302,26 @@ const Header = () => {
                 )}
               </div>
               <span className="profile-name">{getDisplayName()}</span>
-              <span className={`arrow ${isProfileMenuOpen ? 'open' : ''}`}>▼</span>
+              <span className={`profile-arrow ${isProfileMenuOpen ? 'open' : ''}`}>▼</span>
             </button>
 
             {isProfileMenuOpen && (
-              <div className="dropdown">
-                <div className="dropdown-header">
-                  <div className="user-info">
+              <div className="profile-dropdown">
+                <div className="profile-dropdown-header">
+                  <div className="profile-user-info">
                     <strong>{getDisplayName()}</strong>
                     <span>{getUserEmail()}</span>
                     {user?.role && (
-                      <span className="user-role-badge">{user.role}</span>
+                      <span className="profile-user-role-badge">{user.role}</span>
                     )}
                   </div>
                 </div>
-                <Link to="/lms/edit-profile" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>
-                    <span className="mobile-icon"><MdPerson /></span>
-                    Profile
+                <Link to="/lms/edit-profile" className="profile-dropdown-item" onClick={() => setIsProfileMenuOpen(false)}>
+                  <span className="profile-dropdown-icon"><MdPerson /></span>
+                  Profile
                 </Link>
-                <button onClick={handleLogout} className="dropdown-item logout">
-                  <span className="item-icon"><MdLogout /></span>
+                <button onClick={handleLogout} className="profile-dropdown-item logout">
+                  <span className="profile-dropdown-icon"><MdLogout /></span>
                   Sign Out
                 </button>
               </div>
@@ -222,29 +342,71 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Mobile Navigation */}
+      {/* Mobile Navigation with nested dropdowns */}
       <div className={`mobile-nav ${isMobileMenuOpen ? 'open' : ''}`}>
         <div className="mobile-nav-content">
           {navigation.map((item) => (
-            <Link
-              key={item.name}
-              to={item.href}
-              className={`mobile-link ${isActive(item.href) ? 'active' : ''}`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <span className="mobile-icon">{item.icon}</span>
-              <span>{item.name}</span>
-            </Link>
+            <div key={item.name} className="mobile-nav-item">
+              <div 
+                className={`mobile-link-header ${openDropdown === item.name ? 'expanded' : ''}`}
+                onClick={() => {
+                  if (item.hasDropdown) {
+                    setOpenDropdown(openDropdown === item.name ? null : item.name);
+                  } else {
+                    navigate(item.href);
+                    setIsMobileMenuOpen(false);
+                  }
+                }}
+              >
+                <span className="mobile-icon">{item.icon}</span>
+                <span className="mobile-text">{item.name}</span>
+                {item.hasDropdown && (
+                  <span className={`mobile-arrow ${openDropdown === item.name ? 'rotate' : ''}`}>
+                    <MdExpandMore />
+                  </span>
+                )}
+              </div>
+              
+              {/* Mobile Submenu */}
+              {item.hasDropdown && openDropdown === item.name && (
+                <div className="mobile-submenu">
+                  {getDropdownItems(item.name).map((dropdownItem) => (
+                    <button
+                      key={dropdownItem.path}
+                      className={`mobile-submenu-item ${isDropdownItemActive(dropdownItem.path) ? 'active' : ''}`}
+                      onClick={() => {
+                        navigate(dropdownItem.path);
+                        setIsMobileMenuOpen(false);
+                        setOpenDropdown(null);
+                      }}
+                    >
+                      <span className="submenu-icon">{dropdownItem.icon}</span>
+                      <span className="submenu-text">{dropdownItem.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
+          
           <div className="mobile-divider"></div>
-          <Link to="/lms/edit-profile" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>
+          <div 
+            className="mobile-link-header"
+            onClick={() => {
+              navigate('/lms/edit-profile');
+              setIsMobileMenuOpen(false);
+            }}
+          >
             <span className="mobile-icon"><MdPerson /></span>
-            Profile
-          </Link>
-          <button onClick={handleLogout} className="mobile-link logout">
+            <span className="mobile-text">Profile</span>
+          </div>
+          <div 
+            className="mobile-link-header logout"
+            onClick={handleLogout}
+          >
             <span className="mobile-icon"><MdLogout /></span>
-            Sign Out
-          </button>
+            <span className="mobile-text">Sign Out</span>
+          </div>
         </div>
       </div>
     </header>
