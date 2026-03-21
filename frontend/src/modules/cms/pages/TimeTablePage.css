@@ -474,3 +474,84 @@ body.dark-mode .save-btn {
     width: 95%;
   }
 }
+/* File Input Styling */
+.form-group input[type="file"] {
+  padding: 0.5rem;
+  background: #f8fafd;
+  border: 1px solid #eef2f6;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.form-group input[type="file"]:hover {
+  background: #f1f4f9;
+  border-color: #d0d8e3;
+}
+
+.form-group input[type="file"]:focus {
+  outline: none;
+  border-color: #1a2632;
+  box-shadow: 0 0 0 3px rgba(26, 38, 50, 0.1);
+}
+
+/* Dark mode file input */
+body.dark-mode .form-group input[type="file"] {
+  background: #2a313c;
+  border-color: #323b48;
+  color: #e5e9f0;
+}
+
+body.dark-mode .form-group input[type="file"]:hover {
+  background: #323b48;
+  border-color: #3a4a5e;
+}
+
+body.dark-mode .form-group input[type="file"]:focus {
+  border-color: #3a4a5e;
+  box-shadow: 0 0 0 3px rgba(58, 74, 94, 0.3);
+}
+
+/* Custom file input styling (optional - for better cross-browser consistency) */
+.form-group input[type="file"]::file-selector-button {
+  padding: 0.4rem 0.8rem;
+  margin-right: 1rem;
+  background: #1a2632;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.form-group input[type="file"]::file-selector-button:hover {
+  background: #2c3e50;
+  transform: translateY(-1px);
+}
+
+body.dark-mode .form-group input[type="file"]::file-selector-button {
+  background: #2c3e50;
+  color: white;
+}
+
+body.dark-mode .form-group input[type="file"]::file-selector-button:hover {
+  background: #3a4a5e;
+}
+
+/* File note text */
+.file-note {
+  font-size: 0.8rem;
+  color: #7f8c9f;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #f8fafd;
+  border-radius: 6px;
+  border-left: 3px solid #1a2632;
+}
+
+body.dark-mode .file-note {
+  color: #a0a8b7;
+  background: #2a313c;
+  border-left-color: #3a4a5e;
+}

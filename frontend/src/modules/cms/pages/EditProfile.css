@@ -405,3 +405,237 @@ body.dark-mode .edit-profile-loading {
     font-size: 1.5rem;
   }
 }
+/* Section styling */
+.profile-section {
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1a2632;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-left: 3px solid #1a2632;
+  padding-left: 1rem;
+}
+
+body.dark-mode .section-title {
+  color: #e5e9f0;
+  border-left-color: #3a4a5e;
+}
+
+/* Divider */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #eef2f6, transparent);
+  margin: 2rem 0;
+}
+
+body.dark-mode .section-divider {
+  background: linear-gradient(90deg, transparent, #2a313c, transparent);
+}
+
+/* Password input wrapper */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  flex: 1;
+  padding-right: 2.5rem;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #7f8c9f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 1.1rem;
+  transition: color 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+  color: #1a2632;
+}
+
+body.dark-mode .password-toggle-btn {
+  color: #a0a8b7;
+}
+
+body.dark-mode .password-toggle-btn:hover {
+  color: #e5e9f0;
+}
+
+.password-hint {
+  display: block;
+  font-size: 0.75rem;
+  color: #7f8c9f;
+  margin-top: 0.25rem;
+}
+
+body.dark-mode .password-hint {
+  color: #a0a8b7;
+}
+
+/* Password change form */
+.password-change-form {
+  margin-top: 0.5rem;
+}
+
+/* Button styles for change password */
+.btn-change-password {
+  background: #2c3e50;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-change-password:hover:not(:disabled) {
+  background: #1a2632;
+  transform: translateY(-2px);
+}
+
+.btn-change-password:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+body.dark-mode .btn-change-password {
+  background: #3a4a5e;
+}
+
+body.dark-mode .btn-change-password:hover:not(:disabled) {
+  background: #2c3e50;
+}
+
+/* Account info section */
+.account-info-section {
+  margin-top: 2rem;
+  padding-top: 1rem;
+}
+
+/* Form buttons container */
+.form-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.btn-cancel {
+  background: #f5f7fa;
+  border: 1px solid #eef2f6;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  color: #5a6778;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-cancel:hover {
+  background: #eef2f6;
+  border-color: #d0d8e3;
+}
+
+body.dark-mode .btn-cancel {
+  background: #2a313c;
+  border-color: #323b48;
+  color: #a0a8b7;
+}
+
+body.dark-mode .btn-cancel:hover {
+  background: #323b48;
+  border-color: #3a4a5e;
+}
+
+.btn-save {
+  background: #1a2632;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-save:hover:not(:disabled) {
+  background: #2c3e50;
+  transform: translateY(-2px);
+}
+
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+body.dark-mode .btn-save {
+  background: #2c3e50;
+}
+
+body.dark-mode .btn-save:hover:not(:disabled) {
+  background: #3a4a5e;
+}
+
+/* Loading spinner small */
+.loading-spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .form-buttons {
+    flex-direction: column;
+  }
+  
+  .btn-cancel,
+  .btn-save,
+  .btn-change-password {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .section-title {
+    font-size: 1rem;
+  }
+}
