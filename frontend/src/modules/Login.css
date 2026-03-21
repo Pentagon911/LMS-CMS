@@ -1,6 +1,7 @@
 /* Login.css - Minimal & Professional with Dark Mode */
+/* Using unique lgn__ prefix to avoid style conflicts */
 
-.login-container {
+.lgn__container {
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -11,11 +12,11 @@
 }
 
 /* Dark mode background */
-body.dark-mode .login-container {
+body.dark-mode .lgn__container {
   background: linear-gradient(135deg, #1a1e24 0%, #0f1217 100%);
 }
 
-.login-card {
+.lgn__card {
   width: 100%;
   max-width: 440px;
   background: #ffffff;
@@ -27,19 +28,19 @@ body.dark-mode .login-container {
 }
 
 /* Dark mode card */
-body.dark-mode .login-card {
+body.dark-mode .lgn__card {
   background: #1e242c;
   border-color: #2a313c;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
 /* Header */
-.login-header {
+.lgn__header {
   text-align: center;
   margin-bottom: 2rem;
 }
 
-.logo-icon {
+.lgn__logo-icon {
   width: 64px;
   height: 64px;
   background: #1a2632;
@@ -52,33 +53,33 @@ body.dark-mode .login-card {
   color: white;
 }
 
-body.dark-mode .logo-icon {
+body.dark-mode .lgn__logo-icon {
   background: #2c3e50;
 }
 
-.login-header h1 {
+.lgn__header h1 {
   font-size: 1.8rem;
   font-weight: 700;
   margin: 0 0 0.3rem;
   color: #1a2632;
 }
 
-.login-header p {
+.lgn__header p {
   color: #5a6778;
   margin: 0;
   font-size: 0.95rem;
 }
 
-body.dark-mode .login-header h1 {
+body.dark-mode .lgn__header h1 {
   color: #e5e9f0;
 }
 
-body.dark-mode .login-header p {
+body.dark-mode .lgn__header p {
   color: #a0a8b7;
 }
 
 /* Error */
-.error-message {
+.lgn__error-message {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -91,18 +92,18 @@ body.dark-mode .login-header p {
   font-size: 0.9rem;
 }
 
-body.dark-mode .error-message {
+body.dark-mode .lgn__error-message {
   background: #3a2a2a;
   border-color: #5a3a3a;
   color: #ff8a80;
 }
 
 /* Form */
-.form-group {
+.lgn__form-group {
   margin-bottom: 1.5rem;
 }
 
-.form-group label {
+.lgn__form-group label {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -112,20 +113,20 @@ body.dark-mode .error-message {
   margin-bottom: 0.4rem;
 }
 
-body.dark-mode .form-group label {
+body.dark-mode .lgn__form-group label {
   color: #e5e9f0;
 }
 
-.label-icon {
+.lgn__label-icon {
   color: #7f8c9f;
   font-size: 1rem;
 }
 
-body.dark-mode .label-icon {
+body.dark-mode .lgn__label-icon {
   color: #a0a8b7;
 }
 
-.form-group input {
+.lgn__form-group input {
   width: 100%;
   padding: 0.8rem 1rem;
   border: 1px solid #eef2f6;
@@ -135,36 +136,36 @@ body.dark-mode .label-icon {
   background: #ffffff;
 }
 
-.form-group input:focus {
+.lgn__form-group input:focus {
   outline: none;
   border-color: #1a2632;
   box-shadow: 0 0 0 3px rgba(26, 38, 50, 0.1);
 }
 
-body.dark-mode .form-group input {
+body.dark-mode .lgn__form-group input {
   background: #2a313c;
   border-color: #323b48;
   color: #ffffff;
 }
 
-body.dark-mode .form-group input:focus {
+body.dark-mode .lgn__form-group input:focus {
   border-color: #3a4a5e;
   box-shadow: 0 0 0 3px rgba(58, 74, 94, 0.3);
 }
 
-body.dark-mode .form-group input::placeholder {
+body.dark-mode .lgn__form-group input::placeholder {
   color: #7f8c9f;
 }
 
 /* Radio Group */
-.radio-group {
+.lgn__radio-group {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
   margin-top: 0.5rem;
 }
 
-.radio-option {
+.lgn__radio-option {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -176,59 +177,59 @@ body.dark-mode .form-group input::placeholder {
   transition: all 0.2s ease;
 }
 
-.radio-option.selected {
+.lgn__radio-option.selected {
   border-color: #1a2632;
   background: #ffffff;
 }
 
-.radio-option input {
+.lgn__radio-option input {
   position: absolute;
   opacity: 0;
 }
 
-.radio-icon {
+.lgn__radio-icon {
   font-size: 1.5rem;
   color: #1a2632;
   margin-bottom: 0.5rem;
 }
 
-.radio-text {
+.lgn__radio-text {
   font-weight: 600;
   color: #1a2632;
   font-size: 0.9rem;
 }
 
-.radio-desc {
+.lgn__radio-desc {
   font-size: 0.75rem;
   color: #7f8c9f;
   text-align: center;
 }
 
 /* Dark mode radio options */
-body.dark-mode .radio-option {
+body.dark-mode .lgn__radio-option {
   background: #2a313c;
   border-color: #323b48;
 }
 
-body.dark-mode .radio-option.selected {
+body.dark-mode .lgn__radio-option.selected {
   border-color: #3a4a5e;
   background: #1e242c;
 }
 
-body.dark-mode .radio-icon {
+body.dark-mode .lgn__radio-icon {
   color: #e5e9f0;
 }
 
-body.dark-mode .radio-text {
+body.dark-mode .lgn__radio-text {
   color: #e5e9f0;
 }
 
-body.dark-mode .radio-desc {
+body.dark-mode .lgn__radio-desc {
   color: #a0a8b7;
 }
 
 /* Button */
-.login-btn {
+.lgn__login-btn {
   width: 100%;
   padding: 0.9rem;
   background: #1a2632;
@@ -246,54 +247,54 @@ body.dark-mode .radio-desc {
   margin-top: 1rem;
 }
 
-.login-btn:hover:not(:disabled) {
+.lgn__login-btn:hover:not(:disabled) {
   background: #2c3e50;
   transform: translateY(-2px);
 }
 
-.login-btn:disabled {
+.lgn__login-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-body.dark-mode .login-btn {
+body.dark-mode .lgn__login-btn {
   background: #2c3e50;
 }
 
-body.dark-mode .login-btn:hover:not(:disabled) {
+body.dark-mode .lgn__login-btn:hover:not(:disabled) {
   background: #3a4a5e;
 }
 
 /* Spinner */
-.spinner {
+.lgn__spinner {
   width: 18px;
   height: 18px;
   border: 2px solid rgba(255,255,255,0.3);
   border-top-color: white;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: lgn__spin 0.8s linear infinite;
 }
 
-@keyframes spin {
+@keyframes lgn__spin {
   to { transform: rotate(360deg); }
 }
 
 /* Responsive */
 @media (max-width: 480px) {
-  .login-card {
+  .lgn__card {
     padding: 1.5rem;
   }
   
-  .radio-group {
+  .lgn__radio-group {
     grid-template-columns: 1fr;
   }
   
-  .radio-option {
+  .lgn__radio-option {
     flex-direction: row;
     gap: 0.8rem;
   }
   
-  .radio-icon {
+  .lgn__radio-icon {
     margin-bottom: 0;
   }
 }
