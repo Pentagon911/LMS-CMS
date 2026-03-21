@@ -1,5 +1,6 @@
 #CMS/ models.py
 from django.db import models
+from django.db.models import Sum
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from lms.models import *
@@ -72,17 +73,27 @@ class Quiz(models.Model):
     # Prefix for generating custom quiz IDs
     QUIZ_ID_PREFIX  = 'quiz'
 
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('scheduled', 'Scheduled'),
+        ('active', 'Active'),
+    ]
+
     # Custom quiz ID (e.g., 'quiz001', 'quiz002')
     quizId = models.CharField(max_length=20,unique=True,blank=True)
+    courseCode = models.ForeignKey(Course,on_delete=models.CASCADE,related_name='course')
 
     #Which week this quiz belongs to
-    week = models.ForeignKey(Week,on_delete = models.CASCADE,related_name='quizzes')
+    week = models.ForeignKey(Week,on_delete = models.CASCADE,related_name='quizzes',null = True,blank = True)
     title = models.TextField()
     timeLimitMinutes = models.PositiveIntegerField(default=15)
+    description = models.TextField(blank=True)
 
     # Order of the quiz within the week
     order = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add = True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    start_time = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering  = ['order'] # Order quizzes by their order number
@@ -99,6 +110,47 @@ class Quiz(models.Model):
                 newNum = 1
             self.quizId = f"{self.QUIZ_ID_PREFIX}{newNum:03d}"
         super().save(*args, **kwargs)
+
+            
+    def schedule(self, start_datetime, week_id=None):
+        """Schedule quiz with start time and optionally add to week"""
+        from django.utils import timezone
+        
+        # Add to week if provided
+        if week_id:
+            self.add_to_week(week_id)
+        
+        self.status = 'scheduled'
+        self.start_time = start_datetime
+        self.save()
+
+    def start_quiz(self):
+        """Start quiz automatically when time comes"""
+        from django.utils import timezone
+        
+        if self.status == 'scheduled' and self.start_time and self.start_time <= timezone.now():
+            self.status = 'active'
+            self.save()
+            return True
+        
+        if not self.start_time:
+            self.start_time = timezone.now()
+            self.status = 'active'
+            self.save()
+            return True
+        
+        return False
+    
+    def is_available(self):
+        """Check if quiz is available to students"""
+        from django.utils import timezone
+        now = timezone.now()
+        
+        # Auto-start if scheduled and time has come
+        if self.status == 'scheduled' and self.start_time and now >= self.start_time:
+            self.start_quiz()
+        
+        return self.status == 'active'
 
     def __str__(self):
         return self.title
@@ -142,10 +194,6 @@ class Question(models.Model):
                 newNum = 1
             self.questionId = f"q{newNum}"
         super().save(*args, **kwargs)
-
-
-    def __str__(self):
-        return f"{self.questionId}: {self.text[:50]}"
     
 class Option(models.Model):
     """Option model - represents an answer option for a question"""
@@ -155,7 +203,7 @@ class Option(models.Model):
 
     # Custom option ID (e.g., 'A', 'B', 'C')
     optionId = models.CharField(max_length=3,blank = True)
-
+    points = models.PositiveIntegerField(default=1)
     order = models.PositiveIntegerField(default = 1)
     text = models.TextField()
     is_correct = models.BooleanField(default=False)
@@ -165,6 +213,7 @@ class Option(models.Model):
 
     def save(self,*args,**kwargs):
         """Override save to auto-generate optionId"""
+        self.points = 1 if self.is_correct else 0
         if not self.optionId:
              # Generate option_id like 'A', 'B', 'C', etc.
             lastOption = Option.objects.filter(question=self.question).order_by('-order').first()
@@ -212,6 +261,7 @@ class StudentAnswer(models.Model):
     selectedOptions = models.ManyToManyField(Option,blank = True)
     textAnswer = models.TextField(blank = True,null=True)
     isCorrect  = models.BooleanField(default = False)
+    pointsEarned = models.FloatField(default=0)
     answeredAt  = models.DateTimeField(auto_now_add=True)
 
     class Meta:
