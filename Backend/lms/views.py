@@ -211,3 +211,13 @@ def instructor_dashboard(request):
         "enrollments": EnrollmentSerializer(enrollments, many=True).data,
         "exams": ExamTimetableSerializer(exams, many=True).data,
     })
+
+
+
+
+
+#----------------------------------------------------------------------------------------------------#
+
+
+
+
