@@ -33,6 +33,7 @@ from users.permissions import (
 
 User = get_user_model()
 
+# all viewsets inherit from this base class to apply common permissions and behaviors
 class BaseModelViewSet(viewsets.ModelViewSet):
     """
     Base viewset that implements common permissions and behaviors.
