@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import ModuleCard from "../components/ModuleCard";
 import request from "../../../utils/requestMethods.jsx";
 import "./CoursesPage.css";
+import { MdAttachFile, MdCampaign, MdDescription } from "react-icons/md";
 
 // Announcement Card component
 const AnnouncementCard = ({ announcement }) => {
@@ -36,7 +37,7 @@ const AnnouncementCard = ({ announcement }) => {
     <div className={`announcement-card ${expanded ? 'expanded' : ''}`}>
       <div className="announcement-header" onClick={() => setExpanded(!expanded)}>
         <div className="announcement-title-section">
-          <span className="announcement-badge">📢</span>
+          <span className="announcement-badge">< MdCampaign /></span>
           <h3 className="announcement-title">{announcement.title}</h3>
         </div>
         <span className="announcement-time">{formatDate(announcement.createdAt)}</span>
@@ -60,7 +61,7 @@ const AnnouncementCard = ({ announcement }) => {
       {/* Attachments */}
       {expanded && announcement.attachments?.length > 0 && (
         <div className="announcement-attachments">
-          <span className="attachments-label">📎 Attachments:</span>
+          <span className="attachments-label"><MdAttachFile /> Attachments:</span>
           <div className="attachments-list">
             {announcement.attachments.map((att, idx) => (
               <a 
@@ -71,7 +72,7 @@ const AnnouncementCard = ({ announcement }) => {
                 className="attachment-link"
                 onClick={(e) => e.stopPropagation()}
               >
-                <span className="attachment-icon">📄</span>
+                <span className="attachment-icon"><MdDescription /></span>
                 {att.fileName}
                 {att.fileSize && (
                   <span className="file-size">({(att.fileSize / 1024).toFixed(0)} KB)</span>
@@ -138,7 +139,7 @@ const Announcements = () => {
   return (
     <div className="announcements-container">
       <div className="announcements-header">
-        <h2 className="announcements-title">📢 Announcements</h2>
+        <h2 className="announcements-title"><MdCampaign /> Announcements</h2>
         <span className="announcements-count">{announcements.length} total</span>
       </div>
       

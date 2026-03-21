@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { MdPerson, MdBadge, MdAdminPanelSettings, MdCalendarToday } from "react-icons/md";
 import "./Dashboard.css";
 
 const Dashboard = () => {
@@ -86,7 +87,7 @@ const Dashboard = () => {
       {/* Welcome Section */}
       <div className="welcome-section">
         <h1 className="welcome-title">
-          Welcome back, {userData.first_name}! 👋
+          Welcome back, {userData.first_name}!
         </h1>
         <p className="welcome-subtitle">
           Here's what's happening with your account today.
@@ -113,7 +114,7 @@ const Dashboard = () => {
                 className="role-badge"
                 style={{ backgroundColor: getRoleBadgeColor(userData.role) }}
               >
-                {userData.role || 'User'}
+                {userData.role === 'instructor'? "Lecturer/Instructor":userData.role || 'User'}
               </div>
             </div>
           </div>
@@ -146,7 +147,7 @@ const Dashboard = () => {
           <h3>Account Overview</h3>
           <div className="stats-grid">
             <div className="stat-item">
-              <div className="stat-icon">👤</div>
+              <div className="stat-icon"><MdPerson /></div>
               <div className="stat-info">
                 <span className="stat-label">User ID</span>
                 <span className="stat-value">{userData.id}</span>
@@ -154,7 +155,7 @@ const Dashboard = () => {
             </div>
             
             <div className="stat-item">
-              <div className="stat-icon">📋</div>
+              <div className="stat-icon"><MdBadge /></div>
               <div className="stat-info">
                 <span className="stat-label">Role</span>
                 <span className="stat-value role-text">{userData.role == 'instructor'? 'Lecturer/Instructor':userData.role}</span>
@@ -163,7 +164,7 @@ const Dashboard = () => {
 
             {userData.profile?.admin_id && (
               <div className="stat-item">
-                <div className="stat-icon">🆔</div>
+                <div className="stat-icon"><MdAdminPanelSettings /></div>
                 <div className="stat-info">
                   <span className="stat-label">Admin ID</span>
                   <span className="stat-value">{userData.profile.admin_id}</span>
@@ -172,7 +173,7 @@ const Dashboard = () => {
             )}
 
             <div className="stat-item">
-              <div className="stat-icon">📅</div>
+              <div className="stat-icon"><MdCalendarToday /></div>
               <div className="stat-info">
                 <span className="stat-label">Account Age</span>
                 <span className="stat-value">

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { MdDashboard, MdMenuBook, MdQuiz, MdPerson, MdCampaign, MdLogout, MdLibraryBooks, MdDarkMode, MdLightMode, MdTableChart } from 'react-icons/md';
 import './Header.css';
 
 const Header = () => {
@@ -7,6 +8,12 @@ const Header = () => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Check localStorage for saved theme preference
+    const savedTheme = localStorage.getItem('theme');
+    return savedTheme === 'dark';
+  });
+  
   const profileMenuRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -48,7 +55,7 @@ const Header = () => {
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => window.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // Close mobile menu on route change
@@ -57,25 +64,40 @@ const Header = () => {
     setIsProfileMenuOpen(false);
   }, [location]);
 
-  // Check if user is not a student (admin, lecturer, etc.)
-  const canAccessAnnouncements = user?.role && user.role !== 'student';
+  // Apply theme class to body when theme changes
+  useEffect(() => {
+    if (isDarkMode) {
+      document.body.classList.add('dark-mode');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.body.classList.remove('dark-mode');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  // Check user roles
+  const isInstructor = user?.role === 'instructor' || user?.role === 'lecturer';
+  const isAdmin = user?.role === 'admin';
 
   // Base navigation for all users
   const baseNavigation = [
-    { name: 'Dashboard', href: '/cms/dashboard', icon: '📊' },
-    { name: 'Courses', href: '/cms/courses', icon: '📚' },
+    { name: 'Dashboard', href: '/cms/dashboard', icon: <MdDashboard /> },
+    { name: 'Courses', href: '/cms/courses', icon: <MdLibraryBooks /> },
+    { name: 'Time-Tables', href: '/cms/time-tables', icon: <MdTableChart />},
   ];
 
-  // Grades tab - show for all users (students can see their grades)
-  const gradesTab = { name: 'Grades', href: '/grades', icon: '📝' };
-
-  // Announcements tab - only for non-students
-  const announcementsTab = { name: 'Announcements', href: '/cms/announcements', icon: '💬' };
-
   // Build navigation based on role
-  const navigation = canAccessAnnouncements 
-    ? [...baseNavigation, gradesTab, announcementsTab]
-    : [...baseNavigation, gradesTab];
+  const navigation = [...baseNavigation];
+
+  // Add Quiz Editor for Instructors only
+  if (isInstructor) {
+    navigation.push({ name: 'Quiz Editor', href: '/cms/quiz-editor', icon: <MdQuiz /> });
+  }
+
+  // Add Announcements for Instructors and Admins
+  if (isInstructor || isAdmin) {
+    navigation.push({ name: 'Announcements', href: '/cms/announcements', icon: <MdCampaign /> });
+  }
 
   const isActive = (path) => location.pathname === path;
 
@@ -109,14 +131,19 @@ const Header = () => {
     navigate('/login');
   };
 
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+  };
+
   return (
     <header className={`header ${isScrolled ? 'header-scrolled' : ''}`}>
       <div className="header-container">
         {/* Logo */}
-        <Link to="/cms/dashboard" className="logo">
-          <span className="logo-icon">📚</span>
-          <span className="logo-text">LMS Portal</span>
-        </Link>
+        <div className="logo">
+          <span className="logo-icon"><MdMenuBook /></span>
+          <span className="logo-text">CMS Portal</span>
+        </div>
 
         {/* Desktop Navigation */}
         <nav className="nav-menu">
@@ -134,17 +161,14 @@ const Header = () => {
 
         {/* Right Section */}
         <div className="header-right">
-          {/* Notification Icons - Show for all users */}
-          <div className="action-icons">
-            <button className="icon-btn">
-              <span className="icon">🔔</span>
-              <span className="badge">3</span>
-            </button>
-            <button className="icon-btn">
-              <span className="icon">💬</span>
-              <span className="badge">5</span>
-            </button>
-          </div>
+          {/* Dark/Light Mode Toggle Button */}
+          <button 
+            className="theme-toggle-btn" 
+            onClick={toggleDarkMode}
+            aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
+          >
+            {isDarkMode ? <MdLightMode /> : <MdDarkMode />}
+          </button>
 
           {/* Profile Menu */}
           <div className="profile-section" ref={profileMenuRef}>
@@ -162,32 +186,26 @@ const Header = () => {
                 )}
               </div>
               <span className="profile-name">{getDisplayName()}</span>
-              <span className={`arrow ${isProfileMenuOpen ? 'open' : ''}`}>▼</span>
+              <span className={`profile-arrow ${isProfileMenuOpen ? 'open' : ''}`}>▼</span>
             </button>
 
             {isProfileMenuOpen && (
-              <div className="dropdown">
-                <div className="dropdown-header">
-                  <div className="user-info">
+              <div className="profile-dropdown">
+                <div className="profile-dropdown-header">
+                  <div className="profile-user-info">
                     <strong>{getDisplayName()}</strong>
                     <span>{getUserEmail()}</span>
                     {user?.role && (
-                      <span className="user-role-badge">{user.role}</span>
+                      <span className="profile-user-role-badge">{user.role}</span>
                     )}
                   </div>
                 </div>
-                <div className="divider"></div>
-                <Link to="/profile" className="dropdown-item">
-                  <span className="item-icon">👤</span>
+                <Link to="/cms/edit-profile" className="profile-dropdown-item" onClick={() => setIsProfileMenuOpen(false)}>
+                  <span className="profile-dropdown-icon"><MdPerson /></span>
                   Profile
                 </Link>
-                <Link to="/settings" className="dropdown-item">
-                  <span className="item-icon">⚙️</span>
-                  Settings
-                </Link>
-                <div className="divider"></div>
-                <button onClick={handleLogout} className="dropdown-item logout">
-                  <span className="item-icon">🚪</span>
+                <button onClick={handleLogout} className="profile-dropdown-item logout">
+                  <span className="profile-dropdown-icon"><MdLogout /></span>
                   Sign Out
                 </button>
               </div>
@@ -223,16 +241,12 @@ const Header = () => {
             </Link>
           ))}
           <div className="mobile-divider"></div>
-          <Link to="/profile" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>
-            <span className="mobile-icon">👤</span>
+          <Link to="/cms/edit-profile" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>
+            <span className="mobile-icon"><MdPerson /></span>
             Profile
           </Link>
-          <Link to="/settings" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>
-            <span className="mobile-icon">⚙️</span>
-            Settings
-          </Link>
           <button onClick={handleLogout} className="mobile-link logout">
-            <span className="mobile-icon">🚪</span>
+            <span className="mobile-icon"><MdLogout /></span>
             Sign Out
           </button>
         </div>

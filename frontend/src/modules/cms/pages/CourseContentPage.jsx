@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import request from '../../../utils/requestMethods.jsx';
 import WeekCard from '../components/WeekCard.jsx';
 import './CourseContentPage.css';
+import { MdCalendarMonth, MdLibraryBooks } from 'react-icons/md';
 
 const CourseContentPage = () => {
   const { moduleCode } = useParams();
@@ -13,6 +14,8 @@ const CourseContentPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
+  const [showAddWeekModal, setShowAddWeekModal] = useState(false);
+  const [newWeekName, setNewWeekName] = useState('');
 
   // Get user from localStorage
   useEffect(() => {
@@ -128,6 +131,17 @@ const CourseContentPage = () => {
     }
   };
 
+  const handleAddWeek = () => {
+    if (!newWeekName.trim()) return; 
+    const newWeek = {
+      week: newWeekName,
+      items: []
+    };
+    setCourseData([...courseData, newWeek]);
+    setShowAddWeekModal(false);
+    setNewWeekName('');
+  };
+
   const isLecturer = user?.role && user?.role !== 'student';
 
   if (loading) {
@@ -167,13 +181,13 @@ const CourseContentPage = () => {
           
           <div className="course-meta">
             <span className="meta-badge">
-              <span className="meta-icon">📚</span>
+              <span className="meta-icon"><MdCalendarMonth /></span>
               <span className="meta-label">Total Weeks:</span>
               {courseData.length}
             </span>
             
             <span className="meta-badge">
-              <span className="meta-icon">📊</span>
+              <span className="meta-icon"><MdLibraryBooks /></span>
               <span className="meta-label">Total Items:</span>
               {courseData.reduce((total, week) => total + (week.items?.length || 0), 0)}
             </span>
@@ -196,35 +210,45 @@ const CourseContentPage = () => {
 
       {/* Floating Action Button for Lecturers */}
       {isLecturer && (
-        <button 
-          className="fab-btn"
-          onClick={() => {
-            const lastWeekIndex = courseData.length - 1;
-            
-            const type = window.prompt("Enter type (content, quiz, announcement):", "content");
-            
-            if (type && ['content', 'quiz', 'announcement'].includes(type)) {
-              const title = window.prompt("Enter title:", "New Item");
-              
-              if (title) {
-                const newItem = {
-                  type: type,
-                  title: title,
-                  ...(type === 'content' && { format: 'PDF', fileUrl: '/files/new_content.pdf' }),
-                  ...(type === 'quiz' && { quizId: `quiz-${Date.now()}` }),
-                  ...(type === 'announcement' && { message: "New announcement" })
-                };
-                
-                handleAddContent(lastWeekIndex, newItem);
-              }
-            } else if (type) {
-              alert("Invalid type. Please enter content, quiz, or announcement.");
-            }
-          }}
-          title="Quick Add"
-        >
-          +
-        </button>
+      <button className="add-week-btn" onClick={() => setShowAddWeekModal(true)}>
+        + Add New Week
+      </button>
+      )}
+
+      {/* Add Week Modal */}
+      {showAddWeekModal && (
+        <div className="modal-overlay" onClick={() => setShowAddWeekModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Add New Week</h3>
+              <button className="close-btn" onClick={() => setShowAddWeekModal(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label>Week Name</label>
+                <input
+                  type="text"
+                  value={newWeekName}
+                  onChange={(e) => setNewWeekName(e.target.value)}
+                  placeholder="e.g., Week 1: Introduction"
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="modal-actions">
+              <button className="cancel-btn" onClick={() => setShowAddWeekModal(false)}>
+                Cancel
+              </button>
+              <button 
+                className="confirm-btn" 
+                onClick={handleAddWeek}
+                disabled={!newWeekName.trim()}
+              >
+                Add Week
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

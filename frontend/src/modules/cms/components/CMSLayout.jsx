@@ -1,31 +1,48 @@
 // components/CMSLayout.jsx
+import { useEffect, useState } from "react";
 import Header from "./Header";
 
 const CMSLayout = ({ children }) => {
-  // Mock user data for CMS
-  const user = {
-    name: 'CMS Admin',
-    email: 'admin@cms.com',
-    avatar: null,
-  };
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem('theme') === 'dark';
+  });
 
-  const handleLogout = () => {
-    console.log('Logout from CMS');
-    // Add your logout logic here
-  };
+  useEffect(() => {
+    const checkTheme = () => {
+      setIsDarkMode(localStorage.getItem('theme') === 'dark');
+    };
+    window.addEventListener('storage', checkTheme);
+    const interval = setInterval(checkTheme, 100);
+    return () => {
+      window.removeEventListener('storage', checkTheme);
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
     <>
-      <Header user={user} onLogout={handleLogout} />
-      {/* Add gradient background to the main content area */}
-      <main 
-        style={{ 
-          paddingTop: '70px',
-          minHeight: '100vh',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-        }}
-      >
-        {children}
+      <Header />
+      <main style={{
+        paddingTop: '70px',
+        minHeight: '100vh',
+        background: isDarkMode 
+          ? 'linear-gradient(135deg, #1a1e24 0%, #0f1217 100%)'
+          : 'linear-gradient(135deg, #f5f7fa 0%, #e9ecf2 100%)',
+        transition: 'background 0.3s ease'
+      }}>
+        <div style={{
+          maxWidth: '1400px',
+          margin: '0 auto',
+          padding: '24px 32px',
+          '@media (max-width: 768px)': {
+            padding: '20px 24px'
+          },
+          '@media (max-width: 480px)': {
+            padding: '16px'
+          }
+        }}>
+          {children}
+        </div>
       </main>
     </>
   );

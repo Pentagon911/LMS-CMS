@@ -1,9 +1,9 @@
 from django.contrib import admin
-from .models import Course, Enrollment, ExamTimetable, ExamResult, SystemSetting
+from .models import *
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ('code', 'name', 'credits', 'instructor', 'created_at')
+    list_display = ('code', 'name', 'credits', 'color', 'instructor', 'created_at')
     search_fields = ('code', 'name')
     list_filter = ('credits', 'instructor')
 
@@ -27,3 +27,23 @@ class ExamResultAdmin(admin.ModelAdmin):
 class SystemSettingAdmin(admin.ModelAdmin):
     list_display = ('key', 'value', 'updated_at')
     search_fields = ('key',)
+
+
+
+
+
+
+# TEMP
+admin.site.register(Faculty)
+admin.site.register(Department)
+admin.site.register(Batch)
+admin.site.register(Module)
+
+admin.site.register(BursaryAppeal)
+admin.site.register(HostelAppeal)
+admin.site.register(ExamRewriteAppeal)
+admin.site.register(MedicalLeaveAppeal)
+admin.site.register(ResultReEvaluationAppeal)
+
+admin.site.register(AppealReviewQueue)
+admin.site.register(AppealAttachment)

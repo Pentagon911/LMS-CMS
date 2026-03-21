@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import AddContentModal from "./AddContentModal.jsx";
+import {MdDescription,MdQuiz,MdCampaign,MdFolder,MdAttachFile,MdLink,MdAccessTime,MdAssignment,MdCalendarToday,MdClose,MdAdd,MdExpandMore,MdChevronRight} from "react-icons/md";
 import "./WeekCard.css";
 
 const WeekCard = ({ data, isLecturer, onContentClick }) => {
@@ -33,10 +34,10 @@ const WeekCard = ({ data, isLecturer, onContentClick }) => {
   // Get icon based on content type (removed assignment)
   const getTypeIcon = (type) => {
     switch(type) {
-      case 'content': return '📄';
-      case 'quiz': return '❓';
-      case 'announcement': return '📢';
-      default: return '📁';
+      case 'content': return <MdDescription />;
+      case 'quiz': return <MdQuiz />;
+      case 'announcement': return <MdCampaign />;
+      default: return <MdFolder />;
     }
   };
 
@@ -86,23 +87,23 @@ const WeekCard = ({ data, isLecturer, onContentClick }) => {
           <div className="content-meta">
             {item.type === 'content' && (
               <>
-                <span className="meta-item">📎 {item.format || 'File'}</span>
+                <span className="meta-item"><MdAttachFile /> {item.format || 'File'}</span>
                 {item.fileSize && <span className="meta-item">{formatFileSize(item.fileSize)}</span>}
-                {item.fileUrl && <span className="meta-item">🔗 View</span>}
+                {item.fileUrl && <span className="meta-item"><MdLink /> View</span>}
               </>
             )}
 
             {item.type === 'quiz' && (
               <>
-                <span className="meta-item">⏱️ {item.duration || '15 min'}</span>
+                <span className="meta-item"><MdAccessTime /> {item.duration || '15 min'}</span>
                 {item.questionsCount && <span className="meta-item">{item.questionsCount} questions</span>}
-                <span className="meta-item">📝 {item.quizId ? 'Available' : 'No ID'}</span>
+                <span className="meta-item"><MdAssignment /> {item.quizId ? 'Available' : 'No ID'}</span>
               </>
             )}
 
             {item.type === 'announcement' && (
               <>
-                <span className="meta-item">📆 {item.date || new Date().toLocaleDateString()}</span>
+                <span className="meta-item"><MdCalendarToday /> {item.date || new Date().toLocaleDateString()}</span>
                 {item.message && (
                   <span className="meta-item">
                     {item.message.length > 30 ? item.message.substring(0, 30) + '...' : item.message}
@@ -129,7 +130,7 @@ const WeekCard = ({ data, isLecturer, onContentClick }) => {
             }}
             title="Remove item"
           >
-            ✕
+            <MdClose size={20} />
           </button>
         )}
       </div>
@@ -155,12 +156,12 @@ const WeekCard = ({ data, isLecturer, onContentClick }) => {
               }}
               title="Add content"
             >
-              +
+              <MdAdd />
             </button>
           )}
           
           <button className="expand-btn">
-            {expanded ? '▼' : '▶'}
+            {expanded ? <MdExpandMore />:<MdChevronRight />}
           </button>
         </div>
       </div>

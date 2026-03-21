@@ -1,0 +1,66 @@
+/* components/TextEditor.css */
+
+.text-editor {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #eef2f6;
+  background: #ffffff;
+  transition: all 0.3s ease;
+}
+
+/* Dark mode */
+body.dark-mode .text-editor {
+  background: #1e242c;
+  border-color: #2a313c;
+}
+
+/* Quill editor custom styles */
+.text-editor .ql-toolbar {
+  border: none;
+  border-bottom: 1px solid #eef2f6;
+  background: #f8fafd;
+  border-radius: 12px 12px 0 0;
+}
+
+body.dark-mode .text-editor .ql-toolbar {
+  background: #2a313c;
+  border-bottom-color: #323b48;
+}
+
+body.dark-mode .text-editor .ql-toolbar button {
+  color: #e5e9f0;
+}
+
+body.dark-mode .text-editor .ql-toolbar button:hover {
+  color: #ffffff;
+}
+
+.text-editor .ql-container {
+  border: none;
+  height: calc(100% - 42px);
+  font-size: 1rem;
+  background: #ffffff;
+}
+
+body.dark-mode .text-editor .ql-container {
+  background: #1e242c;
+}
+
+body.dark-mode .text-editor .ql-editor {
+  color: #e5e9f0;
+}
+
+.text-editor .ql-editor {
+  min-height: 200px;
+  color: #1a2632;
+}
+
+.text-editor .ql-editor.ql-blank::before {
+  color: #7f8c9f;
+  font-style: normal;
+}
+
+body.dark-mode .text-editor .ql-editor.ql-blank::before {
+  color: #a0a8b7;
+}

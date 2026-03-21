@@ -145,14 +145,24 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
     """
     Retrieve or update user details.
     Users can update their own profile, admins can update any profile.
+    - GET Current user profile
+    - GET Specific user profile (if authorized)
+    - PUT/PATCH Update current user
+    - PUT/PATCH Update specific user (admin only)
     """
     queryset = User.objects.all()
-    # permission_classes = [permissions.IsAuthenticated, IsAdminOrSelf]
+    permission_classes = [permissions.IsAuthenticated, IsAdminOrSelf]
     
     def get_serializer_class(self):
         if self.request.method in ['PUT', 'PATCH']:
             return UserUpdateSerializer
         return UserDetailSerializer
+    
+    def get_object(self):
+        """Handle both /me/ and /<pk>/ patterns"""
+        if self.kwargs.get('pk') == 'me' or 'pk' not in self.kwargs:
+            return self.request.user
+        return super().get_object()
     
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
@@ -173,7 +183,7 @@ class UserListView(generics.ListAPIView):
     Only accessible by admin users.
     """
     serializer_class = UserDetailSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAdminUser]
     
     def get_queryset(self):
         queryset = User.objects.all()
@@ -210,22 +220,11 @@ class UserListView(generics.ListAPIView):
         return queryset.order_by('-date_joined')
 
 
-class UserProfileView(generics.RetrieveAPIView):
-    """
-    Get current authenticated user's profile.
-    """
-    serializer_class = UserDetailSerializer
-    # permission_classes = [permissions.IsAuthenticated]
-    
-    def get_object(self):
-        return self.request.user
-
-
 class UpdateProfilePictureView(APIView):
     """
     Update current user's profile picture.
     """
-    # permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
     
     def post(self, request):
         user = request.user
@@ -270,7 +269,7 @@ class StudentListView(generics.ListAPIView):
     Accessible by admin and instructor.
     """
     serializer_class = UserDetailSerializer
-    # permission_classes = [permissions.IsAuthenticated, IsRoleAllowed]
+    permission_classes = [permissions.IsAuthenticated, IsRoleAllowed]
     allowed_roles = ['admin', 'instructor']
     
     def get_queryset(self):
@@ -283,7 +282,7 @@ class InstructorListView(generics.ListAPIView):
     Only accessible by admin.
     """
     serializer_class = UserDetailSerializer
-    # permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
     
     def get_queryset(self):
         return User.objects.filter(role=User.Role.INSTRUCTOR).order_by('-date_joined')
@@ -295,7 +294,7 @@ class AdminListView(generics.ListAPIView):
     Only accessible by admin.
     """
     serializer_class = UserDetailSerializer
-    # permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
     
     def get_queryset(self):
         return User.objects.filter(role=User.Role.ADMIN).order_by('-date_joined')
@@ -306,7 +305,7 @@ class UserStatsView(APIView):
     Get user statistics.
     Only accessible by admin.
     """
-    # permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
     
     def get(self, request):
         total_users = User.objects.count()
@@ -335,7 +334,7 @@ class BulkUserCreateView(APIView):
     Bulk create users.
     Only accessible by admin.
     """
-    # permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
     
     def post(self, request):
         users_data = request.data.get('users', [])
@@ -371,15 +370,3 @@ class BulkUserCreateView(APIView):
             'total_errors': len(errors)
         }, status=status.HTTP_201_CREATED if created_users else status.HTTP_400_BAD_REQUEST)
 
-
-class ProfileDetailView(generics.RetrieveAPIView):
-    """
-    Get detailed profile information for a specific user based on their role.
-    """
-    serializer_class = UserDetailSerializer
-    # permission_classes = [permissions.IsAuthenticated, IsStaffOrReadOnly]
-    
-    def get_object(self):
-        if 'pk' in self.kwargs:
-            return get_object_or_404(User, pk=self.kwargs['pk'])
-        return self.request.user

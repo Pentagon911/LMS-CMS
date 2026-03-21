@@ -13,8 +13,8 @@ class IsAdminOrSelf(permissions.BasePermission):
             return True
         
         # Write permissions are only allowed to the user themselves or admin
-        return obj == request.user or request.user.role == 'admin'
-    
+        return obj == request.user or request.user.is_admin
+
 
 class IsRoleAllowed(permissions.BasePermission):
     """
@@ -50,7 +50,7 @@ class IsAdminUser(permissions.BasePermission):
         return (
             request.user and 
             request.user.is_authenticated and 
-            request.user.role == 'admin'
+            request.user.is_admin
         )
 
 
@@ -63,7 +63,7 @@ class IsStudentUser(permissions.BasePermission):
         return (
             request.user and 
             request.user.is_authenticated and 
-            request.user.role == 'student'
+            request.user.is_student
         )
 
 
@@ -76,13 +76,13 @@ class IsInstructorUser(permissions.BasePermission):
         return (
             request.user and 
             request.user.is_authenticated and 
-            request.user.role == 'instructor'
+            request.user.is_instructor
         )
 
 
 class IsStaffOrReadOnly(permissions.BasePermission):
     """
-    Custom permission to only allow staff (teachers, instructors, admin) 
+    Custom permission to only allow staff (lecturers, instructors, admin) 
     to edit, but anyone authenticated can read.
     """
     
