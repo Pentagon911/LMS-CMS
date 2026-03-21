@@ -177,7 +177,6 @@ class AppealStatus(models.TextChoices):
     UNDER_REVIEW = 'UNDER_REVIEW', 'Under Review'
     APPROVED = 'APPROVED', 'Approved'
     REJECTED = 'REJECTED', 'Rejected'
-    NEEDS_INFO = 'NEEDS_INFO', 'Needs More Information'
     PROCESSED = 'PROCESSED', 'Processed'
 
 
@@ -230,6 +229,7 @@ class BaseAppeal(TimeStampedModel):
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True, 
+        limit_choices_to={'role__in':[User.Role.INSTRUCTOR, User.Role.ADMIN]},
         related_name='%(class)s_reviewed'
     )
     review_notes = models.TextField(blank=True)
@@ -259,8 +259,6 @@ class BaseAppeal(TimeStampedModel):
         elif decision == 'reject':
             self.status = AppealStatus.REJECTED
             self.on_rejection()
-        elif decision == 'needs_info':
-            self.status = AppealStatus.NEEDS_INFO
         
         self.save()
     
@@ -454,15 +452,18 @@ class AppealReviewQueue(models.Model):
     # Status
     is_processed = models.BooleanField(default=False)
     processed_at = models.DateTimeField(null=True, blank=True)
-    
+    created_at = models.DateTimeField(auto_now_add=True, blank=True)
+
     class Meta:
         db_table = 'appeal_review_queue'
         indexes = [
             models.Index(fields=['content_type', 'object_id']),
             models.Index(fields=['category']),
             models.Index(fields=['department', 'faculty', 'academic_year']),
+            models.Index(fields=['created_at']),
         ]
-    
+        ordering = ['-created_at']
+
     def __str__(self):
         return f"{self.category} - {self.content_type}"
 
@@ -492,3 +493,4 @@ class AppealAttachment(models.Model):
     
     class Meta:
         db_table = 'appeal_attachments'
+

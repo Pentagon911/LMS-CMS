@@ -1,25 +1,17 @@
 #lms/views.py
 from django.shortcuts import get_object_or_404
 from django.db import connection
+from django.db.models import Q, Count
 from django.contrib.auth import get_user_model
-
-from rest_framework import viewsets, status, permissions
+from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.contrib.contenttypes.models import ContentType
+from django.utils import timezone
+from rest_framework import viewsets, status, permissions, generics
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied, ValidationError
-
-from .models import (
-    Course, Enrollment, ExamTimetable, ExamResult, SystemSetting
-)
-from .serializers import (
-    CourseSerializer,
-    EnrollmentSerializer,
-    ExamTimetableSerializer,
-    ExamResultSerializer,
-    SystemSettingSerializer,
-    UserManageSerializer
-)
 from users.permissions import (
     IsAdminOrInstructor,
     IsAdminOrSelf,
@@ -29,7 +21,11 @@ from users.permissions import (
     IsInstructorUser,
     IsStaffOrReadOnly
 )
+from .models import *
+from .serializers import *
+import logging
 
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
@@ -218,6 +214,648 @@ def instructor_dashboard(request):
 
 #----------------------------------------------------------------------------------------------------#
 
+# ---------- HELPER FUNCTIONS ---------- #
+def calculate_priority(appeal):
+    """Calculate priority based on appeal type and criteria"""
+    # Bursary appeals with low income
+    if hasattr(appeal, 'family_income_bracket') and appeal.family_income_bracket == 'LOW':
+        return 'HIGH'
+    # Appeals with medical conditions
+    if hasattr(appeal, 'has_medical_condition') and appeal.has_medical_condition:
+        return 'HIGH'
+    # Medical-related appeals
+    if hasattr(appeal, 'reason_type') and appeal.reason_type == 'MEDICAL':
+        return 'HIGH'
+    return 'MEDIUM'
+
+def create_review_queue_entry(appeal, appeal_model, category, is_processed=False):
+    """Helper to create review queue entry"""
+    content_type = ContentType.objects.get_for_model(appeal_model)
+    return AppealReviewQueue.objects.create(
+        content_type=content_type,
+        object_id=appeal.id,
+        category=category,
+        priority=calculate_priority(appeal),
+        department=appeal.department,
+        faculty=appeal.faculty,
+        batch=appeal.batch,
+        academic_year=appeal.academic_year,
+        is_processed=is_processed
+    )
+
+def mark_queue_as_processed(appeal, appeal_model):
+    """Mark queue entry as processed"""
+    content_type = ContentType.objects.get_for_model(appeal_model)
+    queue_entry = AppealReviewQueue.objects.get(
+        content_type=content_type,
+        object_id=appeal.id,
+        is_processed=False
+    )
+    queue_entry.is_processed = True
+    queue_entry.processed_at = timezone.now()
+    queue_entry.save()
+    return queue_entry
+
+def check_duplicate_appeal(student, appeal_model, statuses=None):
+    """Check if student has duplicate pending appeal"""
+    if statuses is None:
+        statuses = [AppealStatus.PENDING, AppealStatus.UNDER_REVIEW]
+    return appeal_model.objects.filter(
+        student=student,
+        status__in=statuses
+    ).exists()
+
+# -------------------------------------- #
+
+# ---------- ACADEMIC STRUCTURE VIEWS ----------
+
+class FacultyListCreateView(generics.ListCreateAPIView):
+    queryset = Faculty.objects.all()
+    serializer_class = FacultySerializer
+    permission_classes = [IsAdminUser]
 
 
+class FacultyDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Faculty.objects.all()
+    serializer_class = FacultySerializer
+    permission_classes = [IsAdminUser]
+
+
+class DepartmentListCreateView(generics.ListCreateAPIView):
+    queryset = Department.objects.all()
+    serializer_class = DepartmentSerializer
+    permission_classes = [IsAdminUser]
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        faculty_id = self.request.query_params.get('faculty')
+        if faculty_id:
+            queryset = queryset.filter(faculty_id=faculty_id)
+        return queryset
+
+
+class DepartmentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Department.objects.all()
+    serializer_class = DepartmentSerializer
+    permission_classes = [IsAdminUser]
+
+
+class BatchListCreateView(generics.ListCreateAPIView):
+    queryset = Batch.objects.all()
+    serializer_class = BatchSerializer
+    permission_classes = [IsAdminUser]
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        department_id = self.request.query_params.get('department')
+        if department_id:
+            queryset = queryset.filter(department_id=department_id)
+        return queryset
+
+
+class BatchDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Batch.objects.all()
+    serializer_class = BatchSerializer
+    permission_classes = [IsAdminUser]
+
+
+class CourseListCreateView(generics.ListCreateAPIView):
+    queryset = Course.objects.all()
+    serializer_class = CourseSerializer
+    permission_classes = [IsAdminUser]
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        department_id = self.request.query_params.get('department')
+        if department_id:
+            queryset = queryset.filter(department_id=department_id)
+        semester = self.request.query_params.get('semester')
+        if semester:
+            queryset = queryset.filter(semester=semester)
+        return queryset
+
+
+class CourseDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Course.objects.all()
+    serializer_class = CourseSerializer
+    permission_classes = [IsAdminUser]
+
+
+class ModuleListCreateView(generics.ListCreateAPIView):
+    queryset = Module.objects.all()
+    serializer_class = ModuleSerializer
+    permission_classes = [IsAdminOrInstructor]
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        course_id = self.request.query_params.get('course')
+        if course_id:
+            queryset = queryset.filter(course_id=course_id)
+        return queryset
+
+
+class ModuleDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Module.objects.all()
+    serializer_class = ModuleSerializer
+    permission_classes = [IsAdminOrInstructor]
+
+
+# ---------- BASE APPEAL VIEW WITH COMMON FUNCTIONALITY ----------
+
+class BaseAppealCreateView(generics.ListCreateAPIView):
+    """Base view for appeal creation with common functionality"""
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_student:
+            return self.model.objects.filter(student=user)
+        return self.model.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        """Handle file uploads with PDF validation"""
+        serializer = self.get_serializer(data=request.data)
+        
+        try:
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except serializers.ValidationError as e:
+            logger.warning(f"PDF validation failed: {e.detail}")
+            return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
+    
+    def perform_create(self, serializer):
+        # Check for duplicate pending appeal
+        if check_duplicate_appeal(self.request.user, self.model):
+            raise serializers.ValidationError(
+                {'error': f'You already have a pending {self.model.__name__.lower().replace("appeal", "")} appeal'}
+            )
+        
+        # Save appeal
+        appeal = serializer.save(student=self.request.user)
+        
+        # Create review queue entry
+        create_review_queue_entry(appeal, self.model, self.category)
+
+
+class BaseAppealDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Base view for appeal detail with common functionality"""
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    
+    def get_object(self):
+        obj = super().get_object()
+        user = self.request.user
+        # Students can only access their own appeals
+        if user.is_student and obj.student != user:
+            self.permission_denied(self.request)
+        return obj
+    
+    def update(self, request, *args, **kwargs):
+        """Handle file updates with PDF validation"""
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        
+        try:
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response(serializer.data)
+        except serializers.ValidationError as e:
+            logger.warning(f"PDF validation failed on update: {e.detail}")
+            return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
+        
+
+# ---------- CONCRETE APPEAL VIEWS ----------
+
+class BursaryAppealListCreateView(BaseAppealCreateView):
+    """Create or list bursary appeals"""
+    model = BursaryAppeal
+    serializer_class = BursaryAppealSerializer
+    category = 'financial'
+
+
+class BursaryAppealDetailView(BaseAppealDetailView):
+    """Retrieve, update or delete a specific bursary appeal"""
+    queryset = BursaryAppeal.objects.all()
+    serializer_class = BursaryAppealSerializer
+
+
+class HostelAppealListCreateView(BaseAppealCreateView):
+    """Create or list hostel appeals"""
+    model = HostelAppeal
+    serializer_class = HostelAppealSerializer
+    category = 'welfare'
+
+
+class HostelAppealDetailView(BaseAppealDetailView):
+    """Retrieve, update or delete a specific hostel appeal"""
+    queryset = HostelAppeal.objects.all()
+    serializer_class = HostelAppealSerializer
+
+
+class ExamRewriteAppealListCreateView(BaseAppealCreateView):
+    """Create or list exam rewrite appeals"""
+    model = ExamRewriteAppeal
+    serializer_class = ExamRewriteAppealSerializer
+    category = 'academic'
+
+
+class ExamRewriteAppealDetailView(BaseAppealDetailView):
+    """Retrieve, update or delete a specific exam rewrite appeal"""
+    queryset = ExamRewriteAppeal.objects.all()
+    serializer_class = ExamRewriteAppealSerializer
+
+
+class MedicalLeaveAppealListCreateView(BaseAppealCreateView):
+    """Create or list medical leave appeals"""
+    model = MedicalLeaveAppeal
+    serializer_class = MedicalLeaveAppealSerializer
+    category = 'medical'
+
+
+class MedicalLeaveAppealDetailView(BaseAppealDetailView):
+    """Retrieve, update or delete a specific medical leave appeal"""
+    queryset = MedicalLeaveAppeal.objects.all()
+    serializer_class = MedicalLeaveAppealSerializer
+
+
+class ResultReEvaluationAppealListCreateView(BaseAppealCreateView):
+    """Create or list result re-evaluation appeals"""
+    model = ResultReEvaluationAppeal
+    serializer_class = ResultReEvaluationAppealSerializer
+    category = 'academic'
+
+
+class ResultReEvaluationAppealDetailView(BaseAppealDetailView):
+    """Retrieve, update or delete a specific re-evaluation appeal"""
+    queryset = ResultReEvaluationAppeal.objects.all()
+    serializer_class = ResultReEvaluationAppealSerializer
+
+
+# ---------- STUDENT APPEAL AGGREGATION ----------
+
+class StudentMyAppealsView(APIView):
+    """Get all appeals for the current student"""
+    permission_classes = [permissions.IsAuthenticated, IsStudentUser]
+    
+    def get(self, request):
+        student = request.user
+
+        bursary = BursaryAppeal.objects.filter(student=student).select_related('department', 'faculty', 'batch')
+        hostel = HostelAppeal.objects.filter(student=student).select_related('department', 'faculty', 'batch')
+        exam = ExamRewriteAppeal.objects.filter(student=student).select_related('department', 'faculty', 'batch', 'course', 'module')
+        medical = MedicalLeaveAppeal.objects.filter(student=student).select_related('department', 'faculty', 'batch')
+        reeval = ResultReEvaluationAppeal.objects.filter(student=student).select_related('department', 'faculty', 'batch', 'exam_result')
+
+        return Response({
+            'bursary': BursaryAppealSerializer(bursary, many=True).data,
+            'hostel': HostelAppealSerializer(hostel, many=True).data,
+            'exam_rewrite': ExamRewriteAppealSerializer(exam, many=True).data,
+            'medical_leave': MedicalLeaveAppealSerializer(medical, many=True).data,
+            'result_reevaluation': ResultReEvaluationAppealSerializer(reeval, many=True).data,
+        })
+
+
+# ---------- ADMIN APPEAL REVIEW VIEWS ----------
+
+class AdminPendingAppealsView(generics.ListAPIView):
+    """Base view for pending appeals by category"""
+    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    
+    def get_queryset(self):
+        return self.model.objects.filter(status=AppealStatus.PENDING).select_related(
+            'student', 'department', 'faculty', 'batch'
+        )
+
+
+class AdminPendingBursaryView(AdminPendingAppealsView):
+    """View all pending bursary appeals"""
+    model = BursaryAppeal
+    serializer_class = BursaryAppealSerializer
+
+
+class AdminPendingHostelView(AdminPendingAppealsView):
+    """View all pending hostel appeals"""
+    model = HostelAppeal
+    serializer_class = HostelAppealSerializer
+
+
+class AdminPendingExamRewriteView(AdminPendingAppealsView):
+    """View all pending exam rewrite appeals"""
+    model = ExamRewriteAppeal
+    serializer_class = ExamRewriteAppealSerializer
+
+
+class AdminPendingMedicalLeaveView(AdminPendingAppealsView):
+    """View all pending medical leave appeals"""
+    model = MedicalLeaveAppeal
+    serializer_class = MedicalLeaveAppealSerializer
+
+
+class AdminPendingReevalView(AdminPendingAppealsView):
+    """View all pending re-evaluation appeals"""
+    model = ResultReEvaluationAppeal
+    serializer_class = ResultReEvaluationAppealSerializer
+
+
+# ---------- BASE ADMIN ACTION VIEW ----------
+
+class BaseAdminActionView(APIView):
+    """Base view for admin actions - supports approve, reject"""
+    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    
+    def post(self, request, pk):
+        appeal = get_object_or_404(self.model, pk=pk)
+        
+        # Get decision from request
+        decision = request.data.get('decision')
+        notes = request.data.get('notes', '')
+        
+        # Validate decision
+        if decision not in ['approve', 'reject']:
+            return Response(
+                {'error': 'Decision must be "approve" or "reject"'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Process type-specific fields based on decision
+        if decision == 'approve':
+            self._process_approval(appeal, request.data)
+        elif decision == 'reject':
+            self._process_rejection(appeal, request.data)
+        
+        # Call the review method with the decision
+        appeal.review(request.user, decision, notes)
+        
+        # If decision is approve, reject mark queue as processed
+        mark_queue_as_processed(appeal, self.model)
+        
+        return Response(self.serializer_class(appeal).data)
+    
+    def _process_approval(self, appeal, data):
+        """Override for approval-specific processing"""
+        pass
+    
+    def _process_rejection(self, appeal, data):
+        """Override for rejection-specific processing"""
+        pass
+    
+    def _process_needs_info(self, appeal, data):
+        """Override for needs_info-specific processing"""
+        pass
+
+
+# ---------- CONCRETE VIEWS WITH ALL DECISIONS ----------
+
+class AdminProcessBursaryView(BaseAdminActionView):
+    """Process bursary appeal - approve/reject"""
+    model = BursaryAppeal
+    serializer_class = BursaryAppealSerializer
+    
+    def _process_approval(self, appeal, data):
+        """Handle bursary approval - set approved amount"""
+        approved_amount = data.get('approved_amount')
+        if approved_amount:
+            appeal.approved_amount = approved_amount
+    
+    def _process_rejection(self, appeal, data):
+        """Handle bursary rejection - nothing specific needed"""
+        pass
+
+
+class AdminProcessHostelView(BaseAdminActionView):
+    """Process hostel appeal - approve/reject"""
+    model = HostelAppeal
+    serializer_class = HostelAppealSerializer
+    
+    def _process_approval(self, appeal, data):
+        """Handle hostel approval - allocate room"""
+        appeal.allocated_room_number = data.get('room_number')
+        appeal.allocated_hostel = data.get('hostel_name')
+        appeal.check_in_date = data.get('check_in_date')
+        appeal.check_out_date = data.get('check_out_date')
+        appeal.save()
+    
+    def _process_rejection(self, appeal, data):
+        """Handle hostel rejection - nothing specific needed"""
+        pass
+
+
+class AdminProcessExamRewriteView(BaseAdminActionView):
+    """Process exam rewrite appeal - approve/reject"""
+    model = ExamRewriteAppeal
+    serializer_class = ExamRewriteAppealSerializer
+    
+    def _process_approval(self, appeal, data):
+        """Handle exam rewrite approval - schedule new exam"""
+        appeal.new_exam_date = data.get('new_exam_date')
+        appeal.exam_venue = data.get('exam_venue')
+        appeal.save()
+    
+    def _process_rejection(self, appeal, data):
+        """Handle exam rewrite rejection - nothing specific needed"""
+        pass
+
+
+class AdminProcessMedicalLeaveView(BaseAdminActionView):
+    """Process medical leave appeal - approve/reject"""
+    model = MedicalLeaveAppeal
+    serializer_class = MedicalLeaveAppealSerializer
+    
+    def _process_approval(self, appeal, data):
+        """Handle medical leave approval - set approved days"""
+        appeal.approved_leave_days = data.get('approved_leave_days')
+        appeal.save()
+    
+    def _process_rejection(self, appeal, data):
+        """Handle medical leave rejection - nothing specific needed"""
+        pass
+
+
+class AdminProcessReevalView(BaseAdminActionView):
+    """Process result re-evaluation appeal - approve/reject"""
+    model = ResultReEvaluationAppeal
+    serializer_class = ResultReEvaluationAppealSerializer
+    
+    def _process_approval(self, appeal, data):
+        """Handle re-evaluation approval - update grade"""
+        appeal.new_marks = data.get('new_marks')
+        appeal.new_grade = data.get('new_grade')
+        appeal.review_comments = data.get('review_comments', '')
+        appeal.save()
+    
+    def _process_rejection(self, appeal, data):
+        """Handle re-evaluation rejection - nothing specific needed"""
+        pass
+
+
+# ---------- REVIEW QUEUE VIEWS ----------
+
+class AppealReviewQueueListView(generics.ListAPIView):
+    serializer_class = AppealReviewQueueSerializer
+    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    
+    def get_queryset(self):
+        queryset = AppealReviewQueue.objects.filter(is_processed=False)
+        
+        category = self.request.query_params.get('category')
+        if category:
+            queryset = queryset.filter(category=category)
+        
+        department = self.request.query_params.get('department')
+        if department:
+            queryset = queryset.filter(department_id=department)
+        
+        return queryset.order_by('-created_at')
+
+
+class AppealReviewQueueAssignView(APIView):
+    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    
+    def post(self, request, pk):
+        queue_item = get_object_or_404(AppealReviewQueue, pk=pk)
+        queue_item.assigned_to = request.user
+        queue_item.save()
+        
+        # Update the actual appeal status
+        if queue_item.appeal:
+            queue_item.appeal.status = AppealStatus.UNDER_REVIEW
+            queue_item.appeal.save()
+        
+        return Response({'status': 'assigned'})
+
+
+class AppealReviewQueueProcessView(APIView):
+    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    
+    def post(self, request, pk):
+        queue_item = get_object_or_404(AppealReviewQueue, pk=pk)
+        queue_item.is_processed = True
+        queue_item.processed_at = timezone.now()
+        queue_item.save()
+        
+        return Response({'status': 'processed'})
+
+
+# ---------- ATTACHMENT VIEWS WITH VALIDATION ----------
+
+class AppealAttachmentCreateView(generics.CreateAPIView):
+    """Create attachment for an appeal with PDF validation"""
+    serializer_class = AppealAttachmentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        
+        try:
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except serializers.ValidationError as e:
+            logger.warning(f"Attachment PDF validation failed: {e.detail}")
+            return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
+    
+    def perform_create(self, serializer):
+        serializer.save(uploaded_by=self.request.user)
+
+
+class AppealAttachmentListView(generics.ListAPIView):
+    """List attachments for a specific appeal"""
+    serializer_class = AppealAttachmentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        appeal_id = self.kwargs['appeal_id']
+        # Find which appeal type
+        for model in [BursaryAppeal, HostelAppeal, ExamRewriteAppeal, MedicalLeaveAppeal, ResultReEvaluationAppeal]:
+            try:
+                appeal = model.objects.get(pk=appeal_id)
+                content_type = ContentType.objects.get_for_model(model)
+                return AppealAttachment.objects.filter(
+                    content_type=content_type, 
+                    appeal_id=appeal_id
+                )
+            except model.DoesNotExist:
+                continue
+        return AppealAttachment.objects.none()
+
+
+class AppealAttachmentDeleteView(generics.DestroyAPIView):
+    """Delete an attachment"""
+    queryset = AppealAttachment.objects.all()
+    permission_classes = [permissions.IsAuthenticated, IsAdminOrSelf]
+    
+    def delete(self, request, *args, **kwargs):
+        attachment = self.get_object()
+        
+        # Check permission
+        if attachment.uploaded_by != request.user and not request.user.is_admin:
+            return Response(
+                {'error': 'You do not have permission to delete this attachment'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Delete the file from storage
+        if attachment.file:
+            attachment.file.delete(save=False)
+        
+        attachment.delete()
+        
+        return Response(
+            {'message': 'Attachment deleted successfully'},
+            status=status.HTTP_204_NO_CONTENT
+        )
+
+
+# ---------- APPEAL DASHBOARD VIEWS ----------
+
+class AdminDashboardView(APIView):
+    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    
+    def get(self, request):
+        return Response({
+            'pending_appeals': {
+                'bursary': BursaryAppeal.objects.filter(status=AppealStatus.PENDING).count(),
+                'hostel': HostelAppeal.objects.filter(status=AppealStatus.PENDING).count(),
+                'exam_rewrite': ExamRewriteAppeal.objects.filter(status=AppealStatus.PENDING).count(),
+                'medical_leave': MedicalLeaveAppeal.objects.filter(status=AppealStatus.PENDING).count(),
+                'result_reeval': ResultReEvaluationAppeal.objects.filter(status=AppealStatus.PENDING).count(),
+            },
+            'total_appeals': AppealReviewQueue.objects.count(),
+            'unprocessed_queue': AppealReviewQueue.objects.filter(is_processed=False).count(),
+        })
+
+
+class StudentDashboardView(APIView):
+    permission_classes = [permissions.IsAuthenticated, IsStudentUser]
+    
+    def get(self, request):
+        student = request.user
+        return Response({
+            'my_appeals': {
+                'total': BursaryAppeal.objects.filter(student=student).count() +
+                         HostelAppeal.objects.filter(student=student).count() +
+                         ExamRewriteAppeal.objects.filter(student=student).count() +
+                         MedicalLeaveAppeal.objects.filter(student=student).count() +
+                         ResultReEvaluationAppeal.objects.filter(student=student).count(),
+                'pending': BursaryAppeal.objects.filter(student=student, status=AppealStatus.PENDING).count() +
+                          HostelAppeal.objects.filter(student=student, status=AppealStatus.PENDING).count() +
+                          ExamRewriteAppeal.objects.filter(student=student, status=AppealStatus.PENDING).count() +
+                          MedicalLeaveAppeal.objects.filter(student=student, status=AppealStatus.PENDING).count() +
+                          ResultReEvaluationAppeal.objects.filter(student=student, status=AppealStatus.PENDING).count(),
+                'approved': BursaryAppeal.objects.filter(student=student, status=AppealStatus.APPROVED).count() +
+                           HostelAppeal.objects.filter(student=student, status=AppealStatus.APPROVED).count() +
+                           ExamRewriteAppeal.objects.filter(student=student, status=AppealStatus.APPROVED).count() +
+                           MedicalLeaveAppeal.objects.filter(student=student, status=AppealStatus.APPROVED).count() +
+                           ResultReEvaluationAppeal.objects.filter(student=student, status=AppealStatus.APPROVED).count(),
+                'rejected': BursaryAppeal.objects.filter(student=student, status=AppealStatus.REJECTED).count() +
+                           HostelAppeal.objects.filter(student=student, status=AppealStatus.REJECTED).count() +
+                           ExamRewriteAppeal.objects.filter(student=student, status=AppealStatus.REJECTED).count() +
+                           MedicalLeaveAppeal.objects.filter(student=student, status=AppealStatus.REJECTED).count() +
+                           ResultReEvaluationAppeal.objects.filter(student=student, status=AppealStatus.REJECTED).count(),
+            }
+        })
 

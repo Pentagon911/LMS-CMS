@@ -22,6 +22,6 @@ urlpatterns = [
     path('users/', include('users.urls')),
     path('cms/',include('CMS.urls')),
     path('lms/', include('lms.urls')),
+    path('lms/',include('lms.appeal_urls')),
 
-    # path('', include('api.urls')),
 ]
