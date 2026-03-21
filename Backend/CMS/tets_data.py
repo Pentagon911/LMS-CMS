@@ -6,8 +6,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Backend.settings')
 django.setup()
 
 from django.contrib.auth import get_user_model
-from lms.models import Course, Enrollment
-from CMS.models import Week, Video, Pdf, Link, Quiz, Question, Option
+from lms.models import Course, Enrollment, Faculty, Department, Batch
+from CMS.models import Week
 
 User = get_user_model()
 
@@ -15,110 +15,219 @@ print("=" * 50)
 print("CREATING TEST DATA")
 print("=" * 50)
 
-# 1. CREATE USERS
-print("\n📝 Creating users...")
-
-instructor, _ = User.objects.get_or_create(
-    username='instructor',
-    defaults={'email': 'instructor@test.com', 'first_name': 'Dr.', 'last_name': 'Smith'}
+# ========== CREATE FACULTY ==========
+print("\n📚 Creating Faculty...")
+faculty, created = Faculty.objects.get_or_create(
+    code='ENG',
+    defaults={
+        'name': 'Faculty of Engineering',
+        'description': 'Engineering faculty'
+    }
 )
-if instructor.password != 'test123':
-    instructor.set_password('test123')
-    instructor.role = 'instructor'
-    instructor.save()
-print(f"✅ Instructor: {instructor.username} (password: test123)")
+print(f"✅ Faculty: {faculty.name}")
 
-student, _ = User.objects.get_or_create(
-    username='student',
-    defaults={'email': 'student@test.com', 'first_name': 'John', 'last_name': 'Doe'}
+# ========== CREATE DEPARTMENT ==========
+print("\n📖 Creating Department...")
+department, created = Department.objects.get_or_create(
+    code='CS',
+    defaults={
+        'name': 'Computer Science',
+        'faculty': faculty,
+        'description': 'Computer Science Department'
+    }
 )
-if student.password != 'test123':
-    student.set_password('test123')
-    student.role = 'student'
+print(f"✅ Department: {department.name}")
+
+# ========== CREATE BATCH ==========
+print("\n📅 Creating Batch...")
+batch, created = Batch.objects.get_or_create(
+    year=2024,
+    department=department,
+    defaults={
+        'name': 'Batch 2024'
+    }
+)
+print(f"✅ Batch: {batch.name}")
+
+# ========== CREATE INSTRUCTORS ==========
+print("\n👨‍🏫 Creating instructors...")
+
+instructor1, created = User.objects.get_or_create(
+    username='dr_smith',
+    defaults={
+        'email': 'smith@university.com',
+        'first_name': 'John',
+        'last_name': 'Smith',
+        'role': 'instructor'
+    }
+)
+instructor1.set_password('instructor123')
+instructor1.save()
+print(f"✅ {instructor1.username} (Dr. John Smith)")
+
+instructor2, created = User.objects.get_or_create(
+    username='prof_johnson',
+    defaults={
+        'email': 'johnson@university.com',
+        'first_name': 'Jane',
+        'last_name': 'Johnson',
+        'role': 'instructor'
+    }
+)
+instructor2.set_password('instructor123')
+instructor2.save()
+print(f"✅ {instructor2.username} (Prof. Jane Johnson)")
+
+# ========== CREATE STUDENTS ==========
+print("\n🎓 Creating students...")
+
+students = [
+    ('john_doe', 'John', 'Doe', 'john@student.com'),
+    ('jane_smith', 'Jane', 'Smith', 'jane@student.com'),
+    ('bob_wilson', 'Bob', 'Wilson', 'bob@student.com'),
+]
+
+for username, first, last, email in students:
+    student, created = User.objects.get_or_create(
+        username=username,
+        defaults={
+            'email': email,
+            'first_name': first,
+            'last_name': last,
+            'role': 'student'
+        }
+    )
+    student.set_password('student123')
     student.save()
-print(f"✅ Student: {student.username} (password: test123)")
+    print(f"✅ {student.username} ({first} {last})")
 
-student2, _ = User.objects.get_or_create(
-    username='student2',
-    defaults={'email': 'student2@test.com', 'first_name': 'Jane', 'last_name': 'Smith'}
-)
-if student2.password != 'test123':
-    student2.set_password('test123')
-    student2.role = 'student'
-    student2.save()
-print(f"✅ Student2: {student2.username} (password: test123)")
+# ========== CREATE COURSES ==========
+print("\n📖 Creating courses...")
 
-# 2. CREATE COURSES
-print("\n📚 Creating courses...")
-
-course1, _ = Course.objects.get_or_create(
+course1, created = Course.objects.get_or_create(
     code='CS101',
     defaults={
         'name': 'Data Structures',
-        'description': 'Learn about arrays, linked lists, stacks, queues, trees, and graphs',
+        'description': 'Learn arrays, linked lists, stacks, queues, trees, and graphs',
         'credits': 3,
-        'instructor': instructor,
+        'instructor': instructor1,
+        'department': department,
+        'semester': 1,
+        'batch': batch,
         'color': '#4CAF50'
     }
 )
-print(f"✅ Course: {course1.code} - {course1.name}")
+print(f"✅ {course1.code}: {course1.name}")
 
-course2, _ = Course.objects.get_or_create(
+course2, created = Course.objects.get_or_create(
     code='CS201',
     defaults={
         'name': 'Algorithms',
-        'description': 'Learn about sorting, searching, dynamic programming, and graph algorithms',
+        'description': 'Learn sorting, searching, dynamic programming, graph algorithms',
         'credits': 3,
-        'instructor': instructor,
+        'instructor': instructor2,
+        'department': department,
+        'semester': 2,
+        'batch': batch,
         'color': '#2196F3'
     }
 )
-print(f"✅ Course: {course2.code} - {course2.name}")
+print(f"✅ {course2.code}: {course2.name}")
 
-# 3. ENROLL STUDENTS
+course3, created = Course.objects.get_or_create(
+    code='CS101P',
+    defaults={
+        'name': 'Python Programming',
+        'description': 'Learn Python fundamentals: variables, loops, functions, OOP',
+        'credits': 3,
+        'instructor': instructor1,
+        'department': department,
+        'semester': 1,
+        'batch': batch,
+        'color': '#FF9800'
+    }
+)
+print(f"✅ {course3.code}: {course3.name}")
+
+# ========== ENROLL STUDENTS ==========
 print("\n📝 Enrolling students...")
 
-Enrollment.objects.get_or_create(student=student, course=course1, defaults={'status': 'enrolled'})
-Enrollment.objects.get_or_create(student=student, course=course2, defaults={'status': 'enrolled'})
-Enrollment.objects.get_or_create(student=student2, course=course1, defaults={'status': 'enrolled'})
-print(f"✅ {student.username} enrolled in {course1.code}, {course2.code}")
-print(f"✅ {student2.username} enrolled in {course1.code}")
+# John Doe enrolls in CS101 and CS101P
+Enrollment.objects.get_or_create(student=User.objects.get(username='john_doe'), course=course1, defaults={'status': 'enrolled'})
+Enrollment.objects.get_or_create(student=User.objects.get(username='john_doe'), course=course3, defaults={'status': 'enrolled'})
+print(f"✅ john_doe enrolled in {course1.code}, {course3.code}")
 
-# 4. CREATE WEEKS
+# Jane Smith enrolls in all courses
+Enrollment.objects.get_or_create(student=User.objects.get(username='jane_smith'), course=course1, defaults={'status': 'enrolled'})
+Enrollment.objects.get_or_create(student=User.objects.get(username='jane_smith'), course=course2, defaults={'status': 'enrolled'})
+Enrollment.objects.get_or_create(student=User.objects.get(username='jane_smith'), course=course3, defaults={'status': 'enrolled'})
+print(f"✅ jane_smith enrolled in {course1.code}, {course2.code}, {course3.code}")
+
+# Bob Wilson enrolls in CS201 only
+Enrollment.objects.get_or_create(student=User.objects.get(username='bob_wilson'), course=course2, defaults={'status': 'enrolled'})
+print(f"✅ bob_wilson enrolled in {course2.code}")
+
+# ========== CREATE WEEKS ==========
 print("\n📅 Creating weeks...")
 
-weeks = []
-for i in range(1, 6):
-    week, _ = Week.objects.get_or_create(
+# Weeks for CS101 (Data Structures)
+for week_num in range(1, 5):
+    Week.objects.get_or_create(
         course=course1,
-        order=i,
-        defaults={'topic': f'Week {i}', 'description': f'Content for week {i}'}
+        order=week_num,
+        defaults={
+            'topic': f'Week {week_num}: {"Introduction" if week_num == 1 else "Arrays" if week_num == 2 else "Linked Lists" if week_num == 3 else "Stacks & Queues"}',
+            'description': f'Week {week_num} content for Data Structures'
+        }
     )
-    weeks.append(week)
-    print(f"✅ Week {i} created")
+print(f"✅ Created 4 weeks for {course1.code}")
 
-# 5. CREATE QUIZZES
-print("\n📝 Creating quizzes...")
+# Weeks for CS201 (Algorithms)
+for week_num in range(1, 4):
+    Week.objects.get_or_create(
+        course=course2,
+        order=week_num,
+        defaults={
+            'topic': f'Week {week_num}: {"Introduction to Algorithms" if week_num == 1 else "Sorting" if week_num == 2 else "Searching"}',
+            'description': f'Week {week_num} content for Algorithms'
+        }
+    )
+print(f"✅ Created 3 weeks for {course2.code}")
 
-# Quiz for Week 2 (Arrays)
-quiz1, _ = Quiz.objects.get_or_create(
-    week=weeks[1],
-    title='Arrays Quiz',
-    defaults={'timeLimitMinutes': 15, 'order': 1}
-)
-print(f"✅ Quiz: {quiz1.title}")
+# Weeks for CS101P (Python Programming)
+for week_num in range(1, 4):
+    Week.objects.get_or_create(
+        course=course3,
+        order=week_num,
+        defaults={
+            'topic': f'Week {week_num}: {"Python Basics" if week_num == 1 else "Control Flow" if week_num == 2 else "Functions & OOP"}',
+            'description': f'Week {week_num} content for Python Programming'
+        }
+    )
+print(f"✅ Created 3 weeks for {course3.code}")
 
-# Quiz for Week 3 (Linked Lists)
-quiz2, _ = Quiz.objects.get_or_create(
-    week=weeks[2],
-    title='Linked Lists Quiz',
-    defaults={'timeLimitMinutes': 20, 'order': 1}
-)
-print(f"✅ Quiz: {quiz2.title}")
-
+# ========== SUMMARY ==========
 print("\n" + "=" * 50)
-print("✅ TEST DATA CREATED!")
+print("SUMMARY")
 print("=" * 50)
-print("\n🔑 Login:")
-print("  Instructor: instructor / test123")
-print("  Student:    student / test123")
+
+print("\n👨‍🏫 INSTRUCTORS:")
+print(f"  • dr_smith / instructor123")
+print(f"  • prof_johnson / instructor123")
+
+print("\n👩‍🎓 STUDENTS:")
+print(f"  • john_doe / student123")
+print(f"  • jane_smith / student123")
+print(f"  • bob_wilson / student123")
+
+print("\n📚 COURSES:")
+print(f"  • CS101: Data Structures (Dr. Smith)")
+print(f"  • CS201: Algorithms (Prof. Johnson)")
+print(f"  • CS101P: Python Programming (Dr. Smith)")
+
+print("\n📝 ENROLLMENTS:")
+print(f"  • john_doe → CS101, CS101P")
+print(f"  • jane_smith → CS101, CS201, CS101P")
+print(f"  • bob_wilson → CS201")
+
+print("\n✅ All data created successfully!")

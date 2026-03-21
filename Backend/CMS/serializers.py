@@ -11,7 +11,7 @@ class contentSerializer(serializers.ModelSerializer):
 
     item_type = serializers.ReadOnlyField()
     class Meta:
-        fields = ['id','week', 'title', 'description', 'item_type', 'created_at']
+        fields = ['id', 'title', 'description', 'item_type', 'created_at']
         read_only_fields = ['id', 'created_at', 'item_type']
 
 class pdfSerializer(contentSerializer):
@@ -98,13 +98,17 @@ class BaseQuestionSerializer(serializers.ModelSerializer):
     question = serializers.CharField(source = 'text')
     multipleAnswers = serializers.SerializerMethodField()
     image = serializers.ImageField(allow_null = True,required = False)
-
+    totalPoints = serializers.SerializerMethodField()
     class Meta:
         model = Question
         fields = ['questionId','question','image','multipleAnswers']
 
     def get_multipleAnswers(self,obj):
         return "true" if obj.questionTypes == 'multiple' else "false"
+
+    def get_totalPoints(self, obj):
+        """Count number of correct options (each = 1 point)"""
+        return obj.options.filter(is_correct=True).count()
 
 class BaseQuizSerializer(serializers.ModelSerializer):
     """
@@ -164,7 +168,7 @@ class InstructorOptionSerializer(BaseOptionSerializer):
     
     is_correct = serializers.BooleanField()
     class Meta(BaseOptionSerializer.Meta):
-        fields = ['id','text','is_correct']
+        fields = ['id','text','is_correct','points']
 
 class InstructorQuestionSerializer(BaseQuestionSerializer):
     """Instructor view of questions - includes options with correct answers"""
@@ -211,7 +215,7 @@ class OptionCreateSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Option
-        fields = ['text','is_correct','order']
+        fields = ['text','is_correct','order','points']
 
     def validate(self, data):
         # Validate that option has text
@@ -259,10 +263,18 @@ class QuizCreateSerializer(serializers.ModelSerializer):
     """
 
     questions = QuestionCreateSerializer(many = True)
-    
+    courseCode = serializers.PrimaryKeyRelatedField(  # ← Use this
+        queryset=Course.objects.all(),
+        write_only=True,
+        required=True
+    )
+
+    start_time = serializers.DateTimeField(required=False, allow_null=True)
+    status = serializers.ChoiceField(choices=Quiz.STATUS_CHOICES, default='draft', required=False)
+
     class Meta:
         model = Quiz
-        fields = ['title', 'timeLimitMinutes', 'order','week','questions']
+        fields = ['title', 'timeLimitMinutes', 'order','week','questions','courseCode','start_time','description','status']
 
     def create(self,validated_data):
         """
@@ -271,11 +283,21 @@ class QuizCreateSerializer(serializers.ModelSerializer):
         """
 
         questionsData = validated_data.pop('questions')
-
         week = validated_data.pop('week')
+        courseCode = validated_data.pop('courseCode', None)
+        start_time = validated_data.pop('start_time', None) 
+        status = validated_data.pop('status', 'draft') 
+        
+        # Determine status based on start_time
+        if start_time:
+            from django.utils import timezone
+            if start_time <= timezone.now():
+                status = 'active'
+            else:
+                status = 'scheduled'
                
-        quiz = Quiz.objects.create(week = week,**validated_data)
-
+        quiz = Quiz.objects.create(week = week,courseCode=courseCode,**validated_data)
+        
         # Create each question with its options
         for questionData in questionsData:
             # Extract options data
@@ -470,7 +492,7 @@ class WeekSerializer(serializers.ModelSerializer):
     quizzes = serializers.SerializerMethodField()
     class Meta:
         model = Week
-        fields = ['id', 'topic', 'description', 'created_at', 'videos', 'pdfs', 'links','quizzes']
+        fields = ['id', 'topic', 'description', 'created_at', 'videos', 'pdfs', 'links','quizzes','announcements']
         read_only_fields = ['id', 'created_at']
 
     def get_videos(self, obj):

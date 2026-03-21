@@ -1,10 +1,12 @@
 from django.shortcuts import render
+from rest_framework.parsers import MultiPartParser, FormParser
 from users.permissions import *
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
+from datetime import datetime
 from lms.models import *
 from .models import *
 from .serializers import *
@@ -72,7 +74,6 @@ class CourseViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(course,context = {'request':request})
         return Response(serializer.data)            
 
-
 class QuizViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Quiz operations
@@ -127,7 +128,11 @@ class QuizViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception = True)
 
         quiz = serializer.save()
-        return Response(self.get_serializer(quiz).data,status = 201)
+        return Response({
+            'id': quiz.id,
+            'quizId': quiz.quizId,
+            'message': 'Quiz created successfully'}, 
+            status=status.HTTP_201_CREATED)
     
 
     def update(self,request,*args,**kwargs):
@@ -136,59 +141,166 @@ class QuizViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-        return Response(serializer.data)
+        return Response({
+            'id': instance.id,
+            'quizId': instance.quizId,
+            'message': 'Quiz updated successfully'}, 
+            status=status.HTTP_200_OK)
     
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
-    @action(detail = True,methods = ['post'])
-    def submit(self,request,pk =None):
+    
+    @action(detail=True, methods=['post'])
+    def submit(self, request, pk=None):
         quiz = self.get_object()
 
+        # Check if already attempted
         alreadyAttempt = QuizAttempt.objects.filter(
-            student = request.user,
-            quiz = quiz,
-            endAt__isnull = False
+            student=request.user,
+            quiz=quiz,
+            endAt__isnull=False
         ).first()
 
         if alreadyAttempt:
-            return Response({'error':'You have already Attempt to this quiz.'},
-                            status = status.HTTP_400_BAD_REQUEST
-                            )
-        attempt = QuizAttempt.objects.create(student = request.user,quiz = quiz,startedAt = timezone.now())
+            return Response({'error': 'You have already attempted this quiz.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        
+        # Create attempt
+        attempt = QuizAttempt.objects.create(
+            student=request.user,
+            quiz=quiz,
+            startedAt=timezone.now()
+        )
 
-        answerData = request.data.get('answers',[])
-        score = 0
-        totalQuestion = quiz.questions.count()
+        answerData = request.data.get('answers', [])
+        
+        # Calculate total possible points (sum of all correct options)
+        total_points = 0
+        for question in quiz.questions.all():
+            total_points += question.options.filter(is_correct=True).count()
+        
+        earned_points = 0
 
         for ans in answerData:
             try:
-                question = Question.objects.get(id = ans['questionId'])
+                question = Question.objects.get(id=ans['questionId'])
             except Question.DoesNotExist:
                 continue
 
-            studentAnswer = StudentAnswer.objects.create(attempt = attempt,question = question,textAnswer = ans.get('textAnswer'))
+            studentAnswer = StudentAnswer.objects.create(
+                attempt=attempt,
+                question=question,
+                textAnswer=ans.get('textAnswer', '')
+            )
+            
+            points_earned = 0
 
-            if 'selectedOptions'  in ans and ans['selectedOptions'] :
-                options = Option.objects.filter(id__in = ans['selectedOptions'])
-                studentAnswer.selectedOptions.set(options)
+            if 'selectedOptions' in ans and ans['selectedOptions']:
+                selected_options = Option.objects.filter(id__in=ans['selectedOptions'])
+                studentAnswer.selectedOptions.set(selected_options)
 
-                correctAnswers = question.options.filter(is_correct = True)
-
-                if set(options) == set(correctAnswers):
-                    studentAnswer.isCorrect = True
-                    score +=1
+                # Count how many selected options are correct
+                correct_selected = selected_options.filter(is_correct=True)
+                points_earned = correct_selected.count()
+                earned_points += points_earned
                 
+                # Check if all correct options were selected
+                total_correct = question.options.filter(is_correct=True).count()
+                if points_earned == total_correct and selected_options.count() == total_correct:
+                    studentAnswer.isCorrect = True
+                
+                studentAnswer.points_earned = points_earned
                 studentAnswer.save()
+
+        # Calculate final score
+        if total_points > 0:
+            final_score = (earned_points / total_points) * 100
+        else:
+            final_score = 0
+        
         attempt.endAt = timezone.now()
-        attempt.score = (score/totalQuestion)*100 if totalQuestion > 0 else 0
+        attempt.score = final_score
         attempt.save()
+        
         return Response({
             'message': 'Quiz submitted successfully',
-            'score': attempt.score,
-            'correct': score,
-            'total': totalQuestion
+            'score': round(final_score, 2),
+            'points_earned': earned_points,
+            'total_points': total_points,
+            'percentage': f"{round(final_score, 1)}%"
         }, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['get'])
+    def draft_quizzes(self, request):
+        """Get all draft quizzes (not assigned to any week)"""
+
+        drafts = Quiz.objects.filter(
+            status='draft',
+            week__isnull=True  # Not assigned to any week
+        )
+        
+        return Response({
+            'quizzes': [{
+                'id': q.id,
+                'quizId': q.quizId,
+                'title': q.title,
+                'description': q.description,
+                'timeLimitMinutes': q.timeLimitMinutes,
+                'questionsCount': q.questions.count(),
+                'totalPoints': q.total_points if hasattr(q, 'total_points') else 0
+            } for q in drafts]
+        })
+    
+    @action(detail=True, methods=['post'])
+    def add_to_week(self, request, pk=None):
+        """Add existing quiz to a week (update only provided fields)"""
+        quiz = self.get_object()
+        
+        # Get week ID
+        week_id = request.data.get('week_id')
+        if not week_id:
+            return Response({'error': 'week_id required'}, status=400)
+        
+        # Validate week
+        try:
+            week = Week.objects.get(id=week_id)
+        except Week.DoesNotExist:
+            return Response({'error': f'Week {week_id} not found'}, status=404)
+        
+        quiz.week = week
+        
+        # Update ONLY if field is provided (not None)
+        if 'title' in request.data:
+            quiz.title = request.data['title']
+        
+        if 'timeLimit' in request.data:
+            quiz.timeLimitMinutes = request.data['timeLimit']
+        
+        if 'start_time' in request.data and request.data['start_time']:
+            try:
+                start_datetime = datetime.fromisoformat(request.data['start_time'].replace('Z', '+00:00'))
+                quiz.start_time = start_datetime
+                quiz.status = 'scheduled'
+            except ValueError:
+                return Response({'error': 'Invalid start_time format'}, status=400)
+        
+        quiz.save()
+        
+        return Response({
+            'id': quiz.id,
+            'quizId': quiz.quizId,
+            'title': quiz.title,
+            'timeLimitMinutes': quiz.timeLimitMinutes,
+            'start_time': quiz.start_time,
+            'status': quiz.status,
+            'week': {
+                'id': week.id,
+                'order': week.order,
+                'topic': week.topic
+            },
+            'message': f'Quiz added to Week {week.order}'
+        })
     
 class QuestionViewSet(viewsets.ModelViewSet):
     """
@@ -274,6 +386,132 @@ class StudentAnswerViewSet(viewsets.ModelViewSet):
             return StudentAnswer.objects.filter(attempt__student = self.request.user)
         
         return StudentAnswer.objects.all()
+
+class WeekViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing weeks and their content"""
+    queryset = Week.objects.all()
+    serializer_class = WeekSerializer
+    permission_classes = [IsAuthenticated]
     
-
-
+    def get_permissions(self):
+        """Set permissions based on action"""
+        if self.action in ['upload_video', 'upload_pdf', 'add_link', 'delete_content']:
+            # Only instructors can upload content
+            permission_classes = [IsAuthenticated, IsInstructorUser]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+    
+    def get_queryset(self):
+        """Filter weeks by course if course_id provided"""
+        queryset = Week.objects.all()
+        course_id = self.request.query_params.get('course_id')
+        if course_id:
+            queryset = queryset.filter(course_id=course_id)
+        return queryset.order_by('order')
+    
+    @action(detail=True, methods=['post'], parser_classes=[MultiPartParser, FormParser])
+    def upload_video(self, request, pk=None):
+        """Upload video to week"""
+        week = self.get_object()
+        
+        serializer = videoSerializer(data=request.data)
+        if serializer.is_valid():
+            video = serializer.save(week=week)
+            return Response({
+                'id': video.id,
+                'title': video.title,
+                'description': video.description,
+                'fileUrl': video.file.url,
+                'fileSize': video.fileSize,
+                'createdAt': video.created_at,
+                'message': 'Video uploaded successfully'
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=True, methods=['post'], parser_classes=[MultiPartParser, FormParser])
+    def upload_pdf(self, request, pk=None):
+        """Upload PDF to week"""
+        week = self.get_object()
+        
+        serializer = pdfSerializer(data=request.data)
+        if serializer.is_valid():
+            pdf = serializer.save(week=week)
+            return Response({
+                'id': pdf.id,
+                'title': pdf.title,
+                'description': pdf.description,
+                'fileUrl': pdf.file.url,
+                'fileSize': pdf.fileSize,
+                'createdAt': pdf.created_at,
+                'message': 'PDF uploaded successfully'
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=True, methods=['post'])
+    def add_link(self, request, pk=None):
+        """Add external link to week"""
+        week = self.get_object()
+        
+        serializer = LinkSerializer(data=request.data)
+        if serializer.is_valid():
+            link = serializer.save(week=week)
+            return Response({
+                'id': link.id,
+                'title': link.title,
+                'description': link.description,
+                'url': link.link_url,
+                'createdAt': link.created_at,
+                'message': 'Link added successfully'
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=True, methods=['delete'])
+    def delete_content(self, request, pk=None):
+        """Delete content from week"""
+        week = self.get_object()
+        content_type = request.data.get('content_type')
+        content_id = request.data.get('content_id')
+        
+        if content_type == 'video':
+            try:
+                video = Video.objects.get(id=content_id, week=week)
+                video.delete()
+                return Response({'message': 'Video deleted successfully'}, status=status.HTTP_200_OK)
+            except Video.DoesNotExist:
+                return Response({'error': 'Video not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        elif content_type == 'pdf':
+            try:
+                pdf = Pdf.objects.get(id=content_id, week=week)
+                pdf.delete()
+                return Response({'message': 'PDF deleted successfully'}, status=status.HTTP_200_OK)
+            except Pdf.DoesNotExist:
+                return Response({'error': 'PDF not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        elif content_type == 'link':
+            try:
+                link = Link.objects.get(id=content_id, week=week)
+                link.delete()
+                return Response({'message': 'Link deleted successfully'}, status=status.HTTP_200_OK)
+            except Link.DoesNotExist:
+                return Response({'error': 'Link not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        return Response({'error': 'Invalid content_type. Use video, pdf, or link'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=True, methods=['get'])
+    def content(self, request, pk=None):
+        """Get all content for a week"""
+        week = self.get_object()
+        
+        return Response({
+            'week': {
+                'id': week.id,
+                'order': week.order,
+                'topic': week.topic,
+                'description': week.description
+            },
+            'videos': videoSerializer(week.video_set.all(), many=True).data,
+            'pdfs': pdfSerializer(week.pdf_set.all(), many=True).data,
+            'links': LinkSerializer(week.link_set.all(), many=True).data
+        }) 
