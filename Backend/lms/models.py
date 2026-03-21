@@ -64,7 +64,7 @@ class Batch(models.Model):
 class Course(models.Model):
     """Course"""
     code = models.CharField(max_length=20, unique=True)
-    color = models.CharField(null=True,blank =True)
+    color = models.CharField(max_length=20, null=True, blank=True)
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     credits = models.PositiveSmallIntegerField()
@@ -387,7 +387,8 @@ class ResultReEvaluationAppeal(BaseAppeal):
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True, 
-        related_name='reevaluation_reviews'
+        related_name='reevaluation_reviews',
+        limit_choices_to={'role' : User.Role.INSTRUCTOR}
     )
     new_marks = models.FloatField(null=True, blank=True)
     new_grade = models.CharField(max_length=2, null=True, blank=True)
@@ -417,7 +418,19 @@ class AppealReviewQueue(models.Model):
     ]
     
     # Generic relation to any appeal type
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(
+            ContentType, 
+            on_delete=models.CASCADE,
+            limit_choices_to={
+            'model__in': [
+                'bursaryappeal',
+                'hostelappeal', 
+                'examrewriteappeal',
+                'medicalleaveappeal',
+                'resultreevaluationappeal'
+            ]
+        },
+    )
     object_id = models.PositiveIntegerField()
     appeal = GenericForeignKey('content_type', 'object_id')
     
@@ -456,7 +469,19 @@ class AppealReviewQueue(models.Model):
 
 class AppealAttachment(models.Model):
     """Additional attachments for appeals"""
-    appeal_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    appeal_type = models.ForeignKey(
+        ContentType, 
+        on_delete=models.CASCADE,
+        limit_choices_to={
+            'model__in': [
+                'bursaryappeal',
+                'hostelappeal',
+                'examrewriteappeal',
+                'medicalleaveappeal',
+                'resultreevaluationappeal'
+            ]
+        }
+    )
     appeal_id = models.PositiveIntegerField()
     appeal = GenericForeignKey('appeal_type', 'appeal_id')
     
