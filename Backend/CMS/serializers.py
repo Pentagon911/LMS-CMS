@@ -70,12 +70,33 @@ class LinkSerializer(contentSerializer):
             raise serializers.ValidationError("URL must start with http:// or https://")
         return value
     
-class announcementSerializer(serializers.ModelSerializer):
-    """Serializer for course announcements"""
+class AnnouncementSerializer(serializers.ModelSerializer):
+    
+    created_by_name = serializers.CharField(source='created_by.username', read_only=True)
 
+    # For batch
+    batch_id = serializers.CharField(source='batch.id', read_only=True)
+    
+    # For course
+    course_code = serializers.CharField(source='course.code', read_only=True)
+    
+    # For week
+    week_number = serializers.IntegerField(source='week.order', read_only=True)
+    
+    image_url = serializers.SerializerMethodField()
+    pdf_url = serializers.SerializerMethodField()
+    
     class Meta:
         model = Announcement
-        fields = ['id','description','createdAt']
+        fields = [
+            'id', 'announcement_type', 'title', 'content','image', 'image_url', 'pdf', 'pdf_url', 'batch_id', 'course_code', 'week_number','created_at', 'created_by_name']
+        read_only_fields = ['id', 'created_at', 'created_by']
+    
+    def get_image_url(self, obj):
+        return obj.image.url if obj.image else None
+    
+    def get_pdf_url(self, obj):
+        return obj.pdf.url if obj.pdf else None
 
 
 # ========== BASE Serilizers for Quiz Operations ==========
@@ -473,9 +494,9 @@ class courseDashboardSerializer(serializers.ModelSerializer):
         for announcement in week.announcements.all():
             items.append({
                 'type': 'announcement',
-                'title': announcement.description[:50],
-                'message': announcement.description,
-                'date': announcement.createdAt.strftime('%Y-%m-%d')
+                'title': announcement.content[:50],
+                'message': announcement.content,
+                'date': announcement.created_at.strftime('%Y-%m-%d')
             })
         
         return items
@@ -488,7 +509,7 @@ class WeekSerializer(serializers.ModelSerializer):
     videos = serializers.SerializerMethodField()
     pdfs = serializers.SerializerMethodField()
     links = serializers.SerializerMethodField()
-    announcements = announcementSerializer(many = True)
+    announcements = AnnouncementSerializer(many = True)
     quizzes = serializers.SerializerMethodField()
     class Meta:
         model = Week
