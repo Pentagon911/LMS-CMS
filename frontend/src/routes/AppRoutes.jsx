@@ -4,9 +4,11 @@ import LMSLayout from "../modules/lms/components/LMSLayout.jsx";
 
 // LMS Pages
 import Login from "../modules/Login.jsx";
-import MyAccount from "../modules/lms/pages/MyAccount.jsx";
 import LMSDashboard from "../modules/lms/pages/Dashboard.jsx";
 import LMSEditProfile from "../modules/lms/pages/EditProfile.jsx";
+import ExamTimeTablePage from "../modules/lms/pages/TimeTablePage.jsx";
+import UserManagement from "../modules/lms/pages/UserManagement.jsx";
+import CourseManagement from "../modules/lms/pages/CourseManagement.jsx";
 
 //CMS Pages
 import CMSDashboard from "../modules/cms/pages/Dashboard.jsx";
@@ -50,7 +52,9 @@ function AppRoutes() {
       {/* LMS Routes */}
       <Route path="/lms/dashboard" element={<LMSLayout> <LMSDashboard /> </LMSLayout>} />
       <Route path="/lms/edit-profile" element={<LMSLayout> <LMSEditProfile/> </LMSLayout>} />
-      <Route path="/lms/myAccount" element={<LMSLayout> <MyAccount /> </LMSLayout>} />
+      <Route path="/lms/academics/time-tables" element={<LMSLayout> <ExamTimeTablePage /> </LMSLayout>} />
+      <Route path="/lms/server-management/users" element={<LMSLayout> <UserManagement /> </LMSLayout>} />
+      <Route path="/lms/server-management/courses" element={<LMSLayout> <CourseManagement /> </LMSLayout>} />
 
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/login" replace />} />
