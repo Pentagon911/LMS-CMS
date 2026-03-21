@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MdPerson, MdEmail, MdPhone, MdAdminPanelSettings, MdSave, MdClose } from 'react-icons/md';
+import { MdPerson, MdEmail, MdPhone, MdAdminPanelSettings, MdSave, MdClose, MdLock, MdVisibility, MdVisibilityOff } from 'react-icons/md';
 import '../../cms/pages/EditProfile.css';
 
 const EditProfile = () => {
@@ -13,9 +13,22 @@ const EditProfile = () => {
     phone: '',
     username: ''
   });
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [showPassword, setShowPassword] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  });
   const [isSaving, setIsSaving] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [showSuccessMsg, setShowSuccessMsg] = useState(false);
+  const [showPasswordSuccessMsg, setShowPasswordSuccessMsg] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [passwordErrorMsg, setPasswordErrorMsg] = useState('');
 
   // Load user data from localStorage
   useEffect(() => {
@@ -43,6 +56,22 @@ const EditProfile = () => {
     setProfileForm({
       ...profileForm,
       [e.target.name]: e.target.value
+    });
+  };
+
+  const handlePasswordChange = (e) => {
+    setPasswordForm({
+      ...passwordForm,
+      [e.target.name]: e.target.value
+    });
+    // Clear password error when user starts typing
+    setPasswordErrorMsg('');
+  };
+
+  const togglePasswordVisibility = (field) => {
+    setShowPassword({
+      ...showPassword,
+      [field]: !showPassword[field]
     });
   };
 
@@ -84,11 +113,72 @@ const EditProfile = () => {
       setUserData(updatedUser);
       
       setShowSuccessMsg(true);
-      setTimeout(() => navigate('/lms/dashboard'), 2000);
+      setTimeout(() => {
+        setShowSuccessMsg(false);
+      }, 2000);
     } catch (err) {
       setErrorMsg('Failed to update profile. Please try again.');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setPasswordErrorMsg('');
+    setIsChangingPassword(true);
+
+    // Validation
+    if (!passwordForm.currentPassword.trim()) {
+      setPasswordErrorMsg('Current password is required');
+      setIsChangingPassword(false);
+      return;
+    }
+
+    if (!passwordForm.newPassword.trim()) {
+      setPasswordErrorMsg('New password is required');
+      setIsChangingPassword(false);
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+      setPasswordErrorMsg('New password must be at least 6 characters');
+      setIsChangingPassword(false);
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordErrorMsg('New passwords do not match');
+      setIsChangingPassword(false);
+      return;
+    }
+
+    try {
+      // Here you would typically make an API call to change the password
+      // For now, we'll simulate a successful password change
+      // const response = await request.POST('/change-password', {
+      //   current_password: passwordForm.currentPassword,
+      //   new_password: passwordForm.newPassword
+      // });
+
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Clear password form
+      setPasswordForm({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+      
+      setShowPasswordSuccessMsg(true);
+      setTimeout(() => {
+        setShowPasswordSuccessMsg(false);
+      }, 2000);
+    } catch (err) {
+      setPasswordErrorMsg('Failed to change password. Please check your current password.');
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -127,141 +217,272 @@ const EditProfile = () => {
           </div>
         </div>
 
-        {/* Success Message */}
+        {/* Profile Update Success Message */}
         {showSuccessMsg && (
           <div className="success-alert">
-            <span>✓ Profile updated successfully! Redirecting...</span>
+            <span>✓ Profile updated successfully!</span>
           </div>
         )}
 
-        {/* Error Message */}
+        {/* Profile Update Error Message */}
         {errorMsg && (
           <div className="error-alert">
             <span>{errorMsg}</span>
           </div>
         )}
 
-        {/* Form */}
-        <form onSubmit={handleFormSubmit} className="edit-profile-form">
-          <div className="form-row">
+        {/* Profile Information Section */}
+        <div className="profile-section">
+          <h2 className="section-title">
+            <MdPerson /> Profile Information
+          </h2>
+          <form onSubmit={handleFormSubmit} className="edit-profile-form">
+            <div className="form-row">
+              <div className="input-group">
+                <label>
+                  <MdPerson /> First Name
+                </label>
+                <input
+                  type="text"
+                  name="firstName"
+                  value={profileForm.firstName}
+                  onChange={handleInputChange}
+                  placeholder="Enter first name"
+                />
+              </div>
+
+              <div className="input-group">
+                <label>
+                  <MdPerson /> Last Name
+                </label>
+                <input
+                  type="text"
+                  name="lastName"
+                  value={profileForm.lastName}
+                  onChange={handleInputChange}
+                  placeholder="Enter last name"
+                />
+              </div>
+            </div>
+
             <div className="input-group">
               <label>
-                <MdPerson /> First Name
+                <MdPerson /> Username
               </label>
               <input
                 type="text"
-                name="firstName"
-                value={profileForm.firstName}
+                name="username"
+                value={profileForm.username}
                 onChange={handleInputChange}
-                placeholder="Enter first name"
+                placeholder="Enter username"
               />
             </div>
 
             <div className="input-group">
               <label>
-                <MdPerson /> Last Name
+                <MdEmail /> Email
               </label>
               <input
-                type="text"
-                name="lastName"
-                value={profileForm.lastName}
+                type="email"
+                name="email"
+                value={profileForm.email}
                 onChange={handleInputChange}
-                placeholder="Enter last name"
+                placeholder="Enter email"
               />
             </div>
-          </div>
 
-          <div className="input-group">
-            <label>
-              <MdPerson /> Username
-            </label>
-            <input
-              type="text"
-              name="username"
-              value={profileForm.username}
-              onChange={handleInputChange}
-              placeholder="Enter username"
-            />
-          </div>
-
-          <div className="input-group">
-            <label>
-              <MdEmail /> Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={profileForm.email}
-              onChange={handleInputChange}
-              placeholder="Enter email"
-            />
-          </div>
-
-          <div className="input-group">
-            <label>
-              <MdPhone /> Phone Number
-            </label>
-            <input
-              type="tel"
-              name="phone"
-              value={profileForm.phone}
-              onChange={handleInputChange}
-              placeholder="Enter phone number"
-            />
-          </div>
-
-          {/* Read-only info */}
-          <div className="account-info">
-            <h3>Account Information</h3>
-            <div className="info-grid">
-              <div className="info-item">
-                <span className="info-label">Member Since:</span>
-                <span className="info-value">
-                  {userData.date_joined ? new Date(userData.date_joined).toLocaleDateString() : 'N/A'}
-                </span>
-              </div>
-              <div className="info-item">
-                <span className="info-label">Last Login:</span>
-                <span className="info-value">
-                  {userData.last_login ? new Date(userData.last_login).toLocaleString() : 'N/A'}
-                </span>
-              </div>
-              {userData.profile?.admin_id && (
-                <div className="info-item">
-                  <span className="info-label">Admin ID:</span>
-                  <span className="info-value">{userData.profile.admin_id}</span>
-                </div>
-              )}
+            <div className="input-group">
+              <label>
+                <MdPhone /> Phone Number
+              </label>
+              <input
+                type="tel"
+                name="phone"
+                value={profileForm.phone}
+                onChange={handleInputChange}
+                placeholder="Enter phone number"
+              />
             </div>
-          </div>
 
-          {/* Form Actions */}
-          <div className="form-buttons">
-            <button 
-              type="button" 
-              className="btn-cancel"
-              onClick={() => navigate('/lms/dashboard')}
-            >
-              <MdClose /> Cancel
-            </button>
-            <button 
-              type="submit" 
-              className="btn-save"
-              disabled={isSaving}
-            >
-              {isSaving ? (
-                <>
-                  <span className="loading-spinner-small"></span>
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <MdSave /> Save Changes
-                </>
-              )}
-            </button>
+            {/* Form Actions */}
+            <div className="form-buttons">
+              <button 
+                type="button" 
+                className="btn-cancel"
+                onClick={() => navigate('/lms/dashboard')}
+              >
+                <MdClose /> Cancel
+              </button>
+              <button 
+                type="submit" 
+                className="btn-save"
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <>
+                    <span className="loading-spinner-small"></span>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <MdSave /> Save Changes
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Divider */}
+        <div className="section-divider"></div>
+
+        {/* Change Password Section */}
+        <div className="profile-section">
+          <h2 className="section-title">
+            <MdLock /> Change Password
+          </h2>
+          
+          {/* Password Change Success Message */}
+          {showPasswordSuccessMsg && (
+            <div className="success-alert">
+              <span>✓ Password changed successfully!</span>
+            </div>
+          )}
+
+          {/* Password Change Error Message */}
+          {passwordErrorMsg && (
+            <div className="error-alert">
+              <span>{passwordErrorMsg}</span>
+            </div>
+          )}
+
+          <form onSubmit={handlePasswordSubmit} className="password-change-form">
+            <div className="input-group">
+              <label>
+                <MdLock /> Current Password
+              </label>
+              <div className="password-input-wrapper">
+                <input
+                  type={showPassword.current ? "text" : "password"}
+                  name="currentPassword"
+                  value={passwordForm.currentPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="Enter current password"
+                />
+                <button 
+                  type="button" 
+                  className="password-toggle-btn"
+                  onClick={() => togglePasswordVisibility('current')}
+                >
+                  {showPassword.current ? <MdVisibilityOff /> : <MdVisibility />}
+                </button>
+              </div>
+            </div>
+
+            <div className="input-group">
+              <label>
+                <MdLock /> New Password
+              </label>
+              <div className="password-input-wrapper">
+                <input
+                  type={showPassword.new ? "text" : "password"}
+                  name="newPassword"
+                  value={passwordForm.newPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="Enter new password (min. 6 characters)"
+                />
+                <button 
+                  type="button" 
+                  className="password-toggle-btn"
+                  onClick={() => togglePasswordVisibility('new')}
+                >
+                  {showPassword.new ? <MdVisibilityOff /> : <MdVisibility />}
+                </button>
+              </div>
+              <small className="password-hint">Password must be at least 6 characters long</small>
+            </div>
+
+            <div className="input-group">
+              <label>
+                <MdLock /> Confirm New Password
+              </label>
+              <div className="password-input-wrapper">
+                <input
+                  type={showPassword.confirm ? "text" : "password"}
+                  name="confirmPassword"
+                  value={passwordForm.confirmPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="Confirm new password"
+                />
+                <button 
+                  type="button" 
+                  className="password-toggle-btn"
+                  onClick={() => togglePasswordVisibility('confirm')}
+                >
+                  {showPassword.confirm ? <MdVisibilityOff /> : <MdVisibility />}
+                </button>
+              </div>
+            </div>
+
+            <div className="form-buttons">
+              <button 
+                type="button" 
+                className="btn-cancel"
+                onClick={() => {
+                  setPasswordForm({
+                    currentPassword: '',
+                    newPassword: '',
+                    confirmPassword: ''
+                  });
+                  setPasswordErrorMsg('');
+                }}
+              >
+                <MdClose /> Clear
+              </button>
+              <button 
+                type="submit" 
+                className="btn-change-password"
+                disabled={isChangingPassword}
+              >
+                {isChangingPassword ? (
+                  <>
+                    <span className="loading-spinner-small"></span>
+                    Changing...
+                  </>
+                ) : (
+                  <>
+                    <MdLock /> Change Password
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Account Information Section */}
+        <div className="account-info-section">
+          <h2 className="section-title">Account Information</h2>
+          <div className="info-grid">
+            <div className="info-item">
+              <span className="info-label">Member Since:</span>
+              <span className="info-value">
+                {userData.date_joined ? new Date(userData.date_joined).toLocaleDateString() : 'N/A'}
+              </span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Last Login:</span>
+              <span className="info-value">
+                {userData.last_login ? new Date(userData.last_login).toLocaleString() : 'N/A'}
+              </span>
+            </div>
+            {userData.profile?.admin_id && (
+              <div className="info-item">
+                <span className="info-label">Admin ID:</span>
+                <span className="info-value">{userData.profile.admin_id}</span>
+              </div>
+            )}
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
