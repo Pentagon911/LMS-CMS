@@ -9,15 +9,37 @@ class StudentProfile(models.Model):
     user = models.OneToOneField(
         User, 
         on_delete=models.CASCADE,
-        related_name='student_profile'
+        related_name='student_profile',
+        limit_choices_to={'role':User.Role.STUDENT}
     )
     
     # Academic Information
     student_id = models.CharField(max_length=20, unique=True)
     enrollment_date = models.DateField(auto_now_add=True)
     current_semester = models.IntegerField(default=1)
-    department = models.CharField(max_length=100)
-    program = models.CharField(max_length=100)
+    faculty = models.ForeignKey(
+        'lms.Faculty',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='students',
+    )
+    department = models.ForeignKey(
+        'lms.Department',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='students',
+    )
+    batch = models.ForeignKey(
+        'lms.Batch',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='students',
+        help_text="Academic batch/year of the student"
+    )
+    program = models.CharField(max_length=100, blank=True)
     joined_date = models.DateTimeField(default=timezone.now)
     
     cgpa = models.FloatField(null=True, blank=True)
@@ -25,7 +47,11 @@ class StudentProfile(models.Model):
     
     class Meta:
         db_table = 'student_profiles'
-    
+        indexes = [
+            models.Index(fields=['student_id']),
+            models.Index(fields=['faculty', 'department', 'batch']),
+        ]
+
     def __str__(self):
         return f"Student: {self.user.get_full_name()} - {self.student_id}"
 
@@ -34,7 +60,8 @@ class AdminProfile(models.Model):
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
-        related_name='admin_profile'
+        related_name='admin_profile',
+        limit_choices_to={'role':User.Role.ADMIN}
     )
     
     # Employment Details
@@ -43,7 +70,10 @@ class AdminProfile(models.Model):
 
     class Meta:
         db_table = 'admin_profiles'
-    
+        indexes = [
+            models.Index(fields=['admin_id']),
+        ]
+
     def __str__(self):
         return f"Administrator: {self.user.get_full_name()} - {self.admin_id}"
 
@@ -52,12 +82,27 @@ class InstructorProfile(models.Model):
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
-        related_name='instructor_profile'
+        related_name='instructor_profile',
+        limit_choices_to={'role':User.Role.INSTRUCTOR}
     )
     
     # Instructor Information
     instructor_id = models.CharField(max_length=20, unique=True)
-    department = models.CharField(max_length=100)
+    faculty = models.ForeignKey(
+        'lms.Faculty',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='instructors',
+    )
+    department = models.ForeignKey(
+        'lms.Department',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='instructors',
+        help_text="Primary department of the instructor"
+    )
     expertise = JSONField(
         models.CharField(max_length=100),
         blank=True,
@@ -76,6 +121,10 @@ class InstructorProfile(models.Model):
     
     class Meta:
         db_table = 'instructor_profiles'
+        indexes = [
+            models.Index(fields=['instructor_id']),
+            models.Index(fields=['faculty', 'department']),
+        ]
     
     def __str__(self):
         return f"Instructor: {self.user.get_full_name()} - {self.instructor_id}"

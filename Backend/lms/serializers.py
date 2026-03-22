@@ -157,16 +157,15 @@ class BaseAppealSerializer(serializers.ModelSerializer):
     department_name = serializers.CharField(source='department.name', read_only=True)
     faculty_name = serializers.CharField(source='faculty.name', read_only=True)
     batch_name = serializers.CharField(source='batch.name', read_only=True)
-    status_display = serializers.CharField(source='get_status_display', read_only=True)
     appeal_type_display = serializers.CharField(source='get_appeal_type_display', read_only=True)
     supporting_documents = serializers.FileField(validators=[validate_pdf_file], required=False, allow_null=True)
     
     class Meta:
         abstract = True
         fields = [
-            'id', 'appeal_id', 'appeal_type', 'appeal_type_display', 'status', 'status_display',
-            'student', 'student_name', 'academic_year', 'department', 'department_name',
-            'faculty', 'faculty_name', 'batch', 'batch_name', 'title', 'description',
+            'id', 'appeal_id', 'appeal_type', 'appeal_type_display', 'status',
+            'student', 'student_name', 'academic_year', 'department_name',
+            'faculty_name', 'batch_name', 'title', 'description',
             'supporting_documents', 'review_notes', 'created_at', 'updated_at'
         ]
         read_only_fields = ['appeal_id', 'status', 'reviewed_by', 'reviewed_at', 'created_at', 'updated_at']
