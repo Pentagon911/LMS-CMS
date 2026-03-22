@@ -67,11 +67,6 @@ const data = JSON.parse(text);
         localStorage.setItem('user', JSON.stringify(data.user));
       }
 
-      // Store user role for role-based routing
-      if (data.user && data.user.role) {
-        localStorage.setItem('user_role', data.user.role);
-      }
-
       // Redirect based on user type selection
       if (userType === 'lms') {
         navigate('/lms/dashboard');
