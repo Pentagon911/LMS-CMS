@@ -99,26 +99,23 @@ const Announcements = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchAnnouncements = async () => {
-      try {
-        setLoading(true);
-        // Using your request.GET method
-        const data = await request.GET('/_data/announcement.json');
-        console.log("Announcements loaded:", data);
-        
-        // Ensure data is an array
-        setAnnouncements(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Failed to load announcements", err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+useEffect(() => {
+  const fetchAnnouncements = async () => {
+    try {
+      setLoading(true);
+      const data = await request.GET('/cms/courses/'); 
+      setAnnouncements(Array.isArray(data) ? data : []);
+      setError('');
+    } catch (err) {
+      console.error("Failed to load announcements", err);
+      setError(err.message || 'Failed to load announcements');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchAnnouncements();
-  }, []);
+  fetchAnnouncements();
+}, []);
 
   if (loading) {
     return (
@@ -168,24 +165,25 @@ const CoursesPage = () => {
   const scrollRef = useRef(null);
   const navigate = useNavigate();
 
-  // Fetch modules JSON
+// Fetch modules using request method
   useEffect(() => {
-    fetch("/_data/moduleCard.json")
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP error! ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
+    const fetchModules = async () => {
+      try {
+        setLoading(true);
+        
+        const data = await request.GET('/cms/courses/'); 
         setModules(data);
-        setLoading(false);
+        setError('');
         setTimeout(checkScrollButtons, 100);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("Failed to load modules", err);
-        setError(err.message);
+        setError(err.message || 'Failed to load modules');
+      } finally {
         setLoading(false);
-      });
+      }
+    };
 
+    fetchModules();
     window.addEventListener("resize", checkScrollButtons);
     return () => window.removeEventListener("resize", checkScrollButtons);
   }, []);
