@@ -47,3 +47,5 @@ admin.site.register(ResultReEvaluationAppeal)
 
 admin.site.register(AppealReviewQueue)
 admin.site.register(AppealAttachment)
+
+admin.site.register(Program)

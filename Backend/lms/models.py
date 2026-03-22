@@ -1,3 +1,4 @@
+#lms/models.py
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -60,6 +61,14 @@ class Batch(models.Model):
     def __str__(self):
         return f"{self.name} - {self.department.name}"
 
+class Program(models.Model):
+    name = models.CharField(max_length=100)
+    code = models.CharField(max_length=10, unique=True)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='programs')
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.name
 
 class Course(models.Model):
     """Course"""
@@ -78,6 +87,10 @@ class Course(models.Model):
     department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='courses')
     semester = models.IntegerField()
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='courses', null=True)
+    program = models.ForeignKey(Program, on_delete=models.CASCADE, related_name='courses', null=True, blank=True)
+    gpa_applicable = models.BooleanField(default=True)
+    OFFERING_CHOICES = [('compulsory', 'Compulsory'), ('elective', 'Elective')]
+    offering_type = models.CharField(max_length=20, choices=OFFERING_CHOICES, default='compulsory')
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

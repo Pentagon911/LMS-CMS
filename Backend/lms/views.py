@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
+# all viewsets inherit from this base class to apply common permissions and behaviors
 class BaseModelViewSet(viewsets.ModelViewSet):
     """
     Base viewset that implements common permissions and behaviors.
@@ -41,19 +42,33 @@ class BaseModelViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated()]
 
 # ViewSets for Course, Enrollment, ExamTimetable, ExamResult, SystemSetting
+from users.permissions import IsAdminUser  # ensure this import is present
+
 class CourseViewSet(BaseModelViewSet):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
 
+    def get_permissions(self):
+        if self.action == 'destroy':
+            return [IsAdminUser()]          # only admin can delete
+        return super().get_permissions()    
+
     @action(detail=True, methods=['get'], permission_classes=[IsAdminOrInstructor])
     def enrollments(self, request, pk=None):
         course = self.get_object()
-        # Ensure instructors can only view enrollments for their own courses
         if request.user.role == 'instructor' and course.instructor != request.user:
             raise PermissionDenied("You can only view enrollments for your own courses.")
         enrollments = course.enrollments.all()
         serializer = EnrollmentSerializer(enrollments, many=True)
         return Response(serializer.data)
+    
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'admin':
+            return Course.objects.all()
+        if user.role == 'instructor':
+            return Course.objects.filter(instructor=user)
+        return Course.objects.filter(enrollments__student=user).distinct()
     
     def perform_update(self, serializer):
         instance = self.get_object()
@@ -102,6 +117,67 @@ class EnrollmentViewSet(BaseModelViewSet):
         courses = Course.objects.filter(enrollments__student=request.user)
         return Response(CourseSerializer(courses, many=True).data)
     
+    @action(detail=False, methods=['get'], permission_classes=[IsStudentUser])
+    def current_semester_modules(self, request):
+        student = request.user
+        profile = student.student_profile
+        if not profile.program:
+            return Response({"error": "Student not assigned to a program."}, status=400)
+
+        courses = Course.objects.filter(
+            program=profile.program,
+            semester=profile.current_semester
+        )
+
+        enrolled = courses.filter(enrollments__student=student, enrollments__status='enrolled')
+        available = courses.exclude(enrollments__student=student)
+
+        return Response({
+            'enrolled': CourseSerializer(enrolled, many=True).data,
+            'available': CourseSerializer(available, many=True).data,
+        })
+
+    @action(detail=False, methods=['get'], permission_classes=[IsStudentUser])
+    def enrollment_history(self, request):
+        student = request.user
+        profile = student.student_profile
+        enrollments = Enrollment.objects.filter(student=student, status='enrolled').select_related('course')
+
+        groups = {}
+        for enrollment in enrollments:
+            course = enrollment.course
+            sem = course.semester
+            if sem not in groups:
+                groups[sem] = {'courses': [], 'total_credits': 0, 'gpa_credits': 0}
+            groups[sem]['courses'].append(course)
+            groups[sem]['total_credits'] += course.credits
+            if course.gpa_applicable:
+                groups[sem]['gpa_credits'] += course.credits
+
+        history = []
+        for sem in sorted(groups.keys()):
+            data = groups[sem]
+            history.append({
+                'semester': sem,
+                'courses': CourseSerializer(data['courses'], many=True).data,
+                'total_credits': data['total_credits'],
+                'gpa_credits': data['gpa_credits'],
+            })
+
+        total_credits = sum(g['total_credits'] for g in groups.values())
+        total_gpa_credits = sum(g['gpa_credits'] for g in groups.values())
+
+        return Response({
+            'student': {
+                'name': student.get_full_name(),
+                'index_number': student.username,
+                'program': profile.program.name if profile.program else None,
+            },
+            'history': history,
+            'total_credits': total_credits,
+            'total_gpa_credits': total_gpa_credits,
+        })
+    
 
 class ExamTimetableViewSet(BaseModelViewSet):
     queryset = ExamTimetable.objects.all()
@@ -146,6 +222,62 @@ class ExamResultViewSet(BaseModelViewSet):
             raise ValidationError("Student is not enrolled in this course")
 
         serializer.save()
+
+    @action(detail=False, methods=['get'], permission_classes=[IsStudentUser])
+    def my_results(self, request):
+        student = request.user
+        profile = student.student_profile
+        results = ExamResult.objects.filter(student=student).select_related('exam__course')
+
+        groups = {}
+        for result in results:
+            course = result.exam.course
+            sem = course.semester
+            if sem not in groups:
+                groups[sem] = {'results': [], 'total_credits': 0, 'total_grade_points': 0}
+            groups[sem]['results'].append(result)
+            if course.gpa_applicable:
+                groups[sem]['total_credits'] += course.credits
+                grade_point = self._grade_to_point(result.grade)
+                groups[sem]['total_grade_points'] += grade_point * course.credits
+
+        semester_results = []
+        cumulative_credits = 0
+        cumulative_points = 0
+        for sem in sorted(groups.keys()):
+            data = groups[sem]
+            sgpa = data['total_grade_points'] / data['total_credits'] if data['total_credits'] else 0
+            cumulative_credits += data['total_credits']
+            cumulative_points += data['total_grade_points']
+            cgpa = cumulative_points / cumulative_credits if cumulative_credits else 0
+
+            semester_results.append({
+                'semester': sem,
+                'results': ExamResultSerializer(data['results'], many=True).data,
+                'sgpa': round(sgpa, 2),
+                'cgpa': round(cgpa, 2),
+            })
+
+        return Response({
+            'student': {
+                'name': student.get_full_name(),
+                'index_number': student.username,
+                'intake_batch': profile.batch.name if profile.batch else None,
+                'program': profile.program.name if profile.program else None,
+            },
+            'semester_results': semester_results,
+            'final_cgpa': round(cumulative_points / cumulative_credits, 2) if cumulative_credits else 0,
+        })
+
+    def _grade_to_point(self, grade):
+        mapping = {
+            'A+': 4.0, 'A': 4.0, 'A-': 3.7,
+            'B+': 3.3, 'B': 3.0, 'B-': 2.7,
+            'C+': 2.3, 'C': 2.0, 'C-': 1.7,
+            'D+': 1.3, 'D': 1.0, 'F': 0.0,
+        }
+        return mapping.get(grade, 0.0)
+
 
 
 class SystemSettingViewSet(BaseModelViewSet):
@@ -903,4 +1035,3 @@ class StudentDashboardView(APIView):
                            reeval_counts['rejected'],
             }
         })
-
