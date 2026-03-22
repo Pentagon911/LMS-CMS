@@ -87,7 +87,7 @@ class CourseViewSet(viewsets.ModelViewSet):
             })
 
             announcements.sort(key=lambda x: x['created_at'], reverse=True)
-            return announcements[:3]
+        return announcements[:3]
     
     @action(detail = True, methods = ['get'],url_path='dashboard')
     def dashboard(self,request,pk = None):
