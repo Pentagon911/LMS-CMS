@@ -776,7 +776,7 @@ class AppealAttachmentListView(generics.ListAPIView):
                 appeal = model.objects.get(pk=appeal_id)
                 content_type = ContentType.objects.get_for_model(model)
                 return AppealAttachment.objects.filter(
-                    content_type=content_type, 
+                    appeal_type=content_type, 
                     appeal_id=appeal_id
                 )
             except model.DoesNotExist:
@@ -817,16 +817,25 @@ class AdminDashboardView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsAdminUser]
     
     def get(self, request):
+        # Get all pending counts using aggregation
+        pending = {
+            'bursary': BursaryAppeal.objects.filter(status=AppealStatus.PENDING).count(),
+            'hostel': HostelAppeal.objects.filter(status=AppealStatus.PENDING).count(),
+            'exam_rewrite': ExamRewriteAppeal.objects.filter(status=AppealStatus.PENDING).count(),
+            'medical_leave': MedicalLeaveAppeal.objects.filter(status=AppealStatus.PENDING).count(),
+            'result_reeval': ResultReEvaluationAppeal.objects.filter(status=AppealStatus.PENDING).count(),
+        }
+        
+        # Get queue statistics in one query
+        queue_stats = AppealReviewQueue.objects.aggregate(
+            total=Count('id'),
+            unprocessed=Count('id', filter=Q(is_processed=False))
+        )
+        
         return Response({
-            'pending_appeals': {
-                'bursary': BursaryAppeal.objects.filter(status=AppealStatus.PENDING).count(),
-                'hostel': HostelAppeal.objects.filter(status=AppealStatus.PENDING).count(),
-                'exam_rewrite': ExamRewriteAppeal.objects.filter(status=AppealStatus.PENDING).count(),
-                'medical_leave': MedicalLeaveAppeal.objects.filter(status=AppealStatus.PENDING).count(),
-                'result_reeval': ResultReEvaluationAppeal.objects.filter(status=AppealStatus.PENDING).count(),
-            },
-            'total_appeals': AppealReviewQueue.objects.count(),
-            'unprocessed_queue': AppealReviewQueue.objects.filter(is_processed=False).count(),
+            'pending_appeals': pending,
+            'total_appeals': queue_stats['total'],
+            'unprocessed_queue': queue_stats['unprocessed'],
         })
 
 
@@ -835,28 +844,64 @@ class StudentDashboardView(APIView):
     
     def get(self, request):
         student = request.user
+        
+        # Query each model once and aggregate in Python
+        bursary_qs = BursaryAppeal.objects.filter(student=student)
+        hostel_qs = HostelAppeal.objects.filter(student=student)
+        exam_qs = ExamRewriteAppeal.objects.filter(student=student)
+        medical_qs = MedicalLeaveAppeal.objects.filter(student=student)
+        reeval_qs = ResultReEvaluationAppeal.objects.filter(student=student)
+        
+        # Get all counts in one go per model using aggregation
+        bursary_counts = bursary_qs.aggregate(
+            total=Count('id'),
+            pending=Count('id', filter=Q(status=AppealStatus.PENDING)),
+            approved=Count('id', filter=Q(status=AppealStatus.APPROVED)),
+            rejected=Count('id', filter=Q(status=AppealStatus.REJECTED))
+        )
+        
+        hostel_counts = hostel_qs.aggregate(
+            total=Count('id'),
+            pending=Count('id', filter=Q(status=AppealStatus.PENDING)),
+            approved=Count('id', filter=Q(status=AppealStatus.APPROVED)),
+            rejected=Count('id', filter=Q(status=AppealStatus.REJECTED))
+        )
+        
+        exam_counts = exam_qs.aggregate(
+            total=Count('id'),
+            pending=Count('id', filter=Q(status=AppealStatus.PENDING)),
+            approved=Count('id', filter=Q(status=AppealStatus.APPROVED)),
+            rejected=Count('id', filter=Q(status=AppealStatus.REJECTED))
+        )
+        
+        medical_counts = medical_qs.aggregate(
+            total=Count('id'),
+            pending=Count('id', filter=Q(status=AppealStatus.PENDING)),
+            approved=Count('id', filter=Q(status=AppealStatus.APPROVED)),
+            rejected=Count('id', filter=Q(status=AppealStatus.REJECTED))
+        )
+        
+        reeval_counts = reeval_qs.aggregate(
+            total=Count('id'),
+            pending=Count('id', filter=Q(status=AppealStatus.PENDING)),
+            approved=Count('id', filter=Q(status=AppealStatus.APPROVED)),
+            rejected=Count('id', filter=Q(status=AppealStatus.REJECTED))
+        )
+        
         return Response({
             'my_appeals': {
-                'total': BursaryAppeal.objects.filter(student=student).count() +
-                         HostelAppeal.objects.filter(student=student).count() +
-                         ExamRewriteAppeal.objects.filter(student=student).count() +
-                         MedicalLeaveAppeal.objects.filter(student=student).count() +
-                         ResultReEvaluationAppeal.objects.filter(student=student).count(),
-                'pending': BursaryAppeal.objects.filter(student=student, status=AppealStatus.PENDING).count() +
-                          HostelAppeal.objects.filter(student=student, status=AppealStatus.PENDING).count() +
-                          ExamRewriteAppeal.objects.filter(student=student, status=AppealStatus.PENDING).count() +
-                          MedicalLeaveAppeal.objects.filter(student=student, status=AppealStatus.PENDING).count() +
-                          ResultReEvaluationAppeal.objects.filter(student=student, status=AppealStatus.PENDING).count(),
-                'approved': BursaryAppeal.objects.filter(student=student, status=AppealStatus.APPROVED).count() +
-                           HostelAppeal.objects.filter(student=student, status=AppealStatus.APPROVED).count() +
-                           ExamRewriteAppeal.objects.filter(student=student, status=AppealStatus.APPROVED).count() +
-                           MedicalLeaveAppeal.objects.filter(student=student, status=AppealStatus.APPROVED).count() +
-                           ResultReEvaluationAppeal.objects.filter(student=student, status=AppealStatus.APPROVED).count(),
-                'rejected': BursaryAppeal.objects.filter(student=student, status=AppealStatus.REJECTED).count() +
-                           HostelAppeal.objects.filter(student=student, status=AppealStatus.REJECTED).count() +
-                           ExamRewriteAppeal.objects.filter(student=student, status=AppealStatus.REJECTED).count() +
-                           MedicalLeaveAppeal.objects.filter(student=student, status=AppealStatus.REJECTED).count() +
-                           ResultReEvaluationAppeal.objects.filter(student=student, status=AppealStatus.REJECTED).count(),
+                'total': bursary_counts['total'] + hostel_counts['total'] + 
+                         exam_counts['total'] + medical_counts['total'] + 
+                         reeval_counts['total'],
+                'pending': bursary_counts['pending'] + hostel_counts['pending'] + 
+                          exam_counts['pending'] + medical_counts['pending'] + 
+                          reeval_counts['pending'],
+                'approved': bursary_counts['approved'] + hostel_counts['approved'] + 
+                           exam_counts['approved'] + medical_counts['approved'] + 
+                           reeval_counts['approved'],
+                'rejected': bursary_counts['rejected'] + hostel_counts['rejected'] + 
+                           exam_counts['rejected'] + medical_counts['rejected'] + 
+                           reeval_counts['rejected'],
             }
         })
 

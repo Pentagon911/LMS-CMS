@@ -154,6 +154,7 @@ class ExamResult(models.Model):
     score = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(100)])
     grade = models.CharField(max_length=2, blank=True)
     is_reevaluated = models.BooleanField(default=False, null=True)
+    
     class Meta:
         unique_together = ('student', 'exam')
 
