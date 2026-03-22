@@ -1,3 +1,4 @@
+#lms/serializers.py
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import *
@@ -5,15 +6,22 @@ from .validators import validate_pdf_file
 
 User = get_user_model()
 
+
+class ProgramSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Program
+        fields = ['id', 'name', 'code', 'department', 'description']
+
+
 class CourseSerializer(serializers.ModelSerializer):
     instructor_name = serializers.CharField(source='instructor.get_full_name', read_only=True)
-
+    program_name = serializers.CharField(source='program.name', read_only=True)
     class Meta:
         model = Course
         fields = [
             'id', 'code', 'name', 'description',
             'credits', 'instructor', 'instructor_name',
-            'created_at', 'updated_at', 'color'
+            'created_at', 'updated_at', 'color', 'program_name', 'gpa_applicable', 'offering_type', 'semester', 'department', 'program'
         ]
 
 class EnrollmentSerializer(serializers.ModelSerializer):
@@ -27,7 +35,7 @@ class EnrollmentSerializer(serializers.ModelSerializer):
             'id', 'student', 'course',
             'student_name', 'course_code',
             'status', 'grade',
-            'enrollment_date', 'updated_at'
+            'enrollment_date'
         ]
 
     # def validate(self, data):

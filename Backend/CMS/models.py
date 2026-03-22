@@ -78,7 +78,7 @@ class Quiz(models.Model):
 
     # Custom quiz ID (e.g., 'quiz001', 'quiz002')
     quizId = models.CharField(max_length=20,unique=True,blank=True)
-    courseCode = models.ForeignKey(Course,on_delete=models.CASCADE,related_name='course')
+    courseCode = models.ForeignKey(Course,on_delete=models.CASCADE,related_name='course', default='') # added default value for avoiding integrity error when creating quiz without course code 
 
     #Which week this quiz belongs to
     week = models.ForeignKey(Week,on_delete = models.CASCADE,related_name='quizzes',null = True,blank = True)
