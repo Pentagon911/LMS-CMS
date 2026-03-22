@@ -44,10 +44,11 @@ const Header = () => {
         { name: 'Medical Appeals', path: '/lms/appeals-and-welfare/medical-eppeals', icon: <MdMedicalServices /> }
       ],
       student: [
+        { name: 'My Appeals', path: '/lms/appeals-and-welfare/my-appeals', icon: <MdAssignment /> },
         { name: 'Apply bursary', path: '/lms/appeals-and-welfare/bursary', icon: <MdAttachMoney /> },
         { name: 'Apply Hostel Facility', path: '/lms/appeals-and-welfare/welfare-request', icon: <MdHome /> },
-        { name: 'Exam Appeals', path: '/lms/appeals-and-welfare/my-appeals', icon: <MdAssignment /> },
-        { name: 'Medical Leave', path: '/lms/appeals-and-welfare/medical-leave', icon: <MdHelp /> }
+        { name: 'Medical Leave', path: '/lms/appeals-and-welfare/medical-leave', icon: <MdHelp /> },
+        { name: 'Exam-Rewrite', path: '/lms/appeals-and-welfare/exam-rewrite', icon: <MdEvent/>}
       ]
     },
     'Server Managements': {
@@ -132,6 +133,7 @@ const Header = () => {
   // Check user roles
   const isAdmin = user?.role === 'admin';
   const isStudent = user?.role === 'student';
+  const isInstructor = user?.role === 'instructor';
 
   // Base navigation for all users
   const baseNavigation = [

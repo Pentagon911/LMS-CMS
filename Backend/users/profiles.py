@@ -17,11 +17,32 @@ class StudentProfile(models.Model):
     student_id = models.CharField(max_length=20, unique=True)
     enrollment_date = models.DateField(auto_now_add=True)
     current_semester = models.IntegerField(default=1)
-    department = models.CharField(max_length=100)
-    program = models.ForeignKey('lms.Program', on_delete=models.SET_NULL, null=True, blank=True)
-    faculty = models.ForeignKey('lms.Faculty', on_delete=models.SET_NULL, null=True, blank=True)
+    
+    faculty = models.ForeignKey(
+        'lms.Faculty',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='students',
+    )
+    department = models.ForeignKey(
+        'lms.Department',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='students',
+    )
+    batch = models.ForeignKey(
+        'lms.Batch',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='students',
+        help_text="Academic batch/year of the student"
+    )
+    program = models.CharField(max_length=100, blank=True)
     joined_date = models.DateTimeField(default=timezone.now)
-    batch = models.ForeignKey('lms.Batch', on_delete=models.SET_NULL, null=True, blank=True)
+    
     cgpa = models.FloatField(null=True, blank=True)
     completed_credits = models.IntegerField(default=0)
     

@@ -1,0 +1,143 @@
+.update-results-container {
+  padding: 2rem;
+  background: #f8fafd;
+  min-height: 100vh;
+}
+body.dark-mode .update-results-container {
+  background: #0f1217;
+}
+.update-results-header {
+  margin-bottom: 2rem;
+}
+.update-results-header h1 {
+  font-size: 1.8rem;
+  color: #1a2632;
+}
+body.dark-mode .update-results-header h1 {
+  color: #e5e9f0;
+}
+.selection-panel {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  border: 1px solid #eef2f6;
+}
+body.dark-mode .selection-panel {
+  background: #1e242c;
+  border-color: #2a313c;
+}
+.form-group {
+  flex: 1;
+  min-width: 150px;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #1a2632;
+}
+body.dark-mode .form-group label {
+  color: #e5e9f0;
+}
+.form-group select {
+  width: 100%;
+  padding: 0.7rem;
+  border: 1px solid #eef2f6;
+  border-radius: 8px;
+  background: white;
+}
+body.dark-mode .form-group select {
+  background: #2a313c;
+  border-color: #323b48;
+  color: #e5e9f0;
+}
+.load-btn {
+  padding: 0.7rem 1.5rem;
+  background: #1a2632;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.load-btn:hover:not(:disabled) {
+  background: #2c3e50;
+}
+.marks-table-container {
+  overflow-x: auto;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #eef2f6;
+  padding: 1rem;
+}
+body.dark-mode .marks-table-container {
+  background: #1e242c;
+  border-color: #2a313c;
+}
+.marks-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.marks-table th,
+.marks-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #eef2f6;
+}
+.marks-table th {
+  background: #f8fafd;
+  font-weight: 600;
+  color: #1a2632;
+}
+body.dark-mode .marks-table th {
+  background: #2a313c;
+  color: #e5e9f0;
+}
+.marks-table td input {
+  width: 100px;
+  padding: 0.5rem;
+  border: 1px solid #eef2f6;
+  border-radius: 6px;
+}
+body.dark-mode .marks-table td input {
+  background: #2a313c;
+  border-color: #323b48;
+  color: #e5e9f0;
+}
+.actions {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: flex-end;
+}
+.submit-btn {
+  padding: 0.7rem 1.5rem;
+  background: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.submit-btn:hover:not(:disabled) {
+  background: #219653;
+}
+.message {
+  margin-top: 1rem;
+  padding: 0.8rem;
+  border-radius: 8px;
+  text-align: center;
+}
+.message.success {
+  background: #e8f5e9;
+  color: #388e3c;
+}
+.message.error {
+  background: #fee9e7;
+  color: #d32f2f;
+}
