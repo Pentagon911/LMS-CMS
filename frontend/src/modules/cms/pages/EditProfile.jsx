@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import request from "../../../utils/requestMethods";
 import { MdPerson, MdEmail, MdPhone, MdAdminPanelSettings, MdSave, MdClose } from 'react-icons/md';
 import './EditProfile.css';
 
@@ -46,52 +47,88 @@ const EditProfile = () => {
     });
   };
 
-  const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    setErrorMsg('');
-    setIsSaving(true);
+const handleFormSubmit = async (e) => {
+  e.preventDefault();
+  setErrorMsg('');
+  setIsSaving(true);
 
-    // Validation
-    if (!profileForm.firstName.trim()) {
-      setErrorMsg('First name is required');
-      setIsSaving(false);
-      return;
-    }
-    
-    if (!profileForm.lastName.trim()) {
-      setErrorMsg('Last name is required');
-      setIsSaving(false);
-      return;
-    }
-    
-    if (!profileForm.email.trim()) {
-      setErrorMsg('Email is required');
-      setIsSaving(false);
-      return;
-    }
+  // Validation
+  if (!profileForm.firstName.trim()) {
+    setErrorMsg('First name is required');
+    setIsSaving(false);
+    return;
+  }
+  
+  if (!profileForm.lastName.trim()) {
+    setErrorMsg('Last name is required');
+    setIsSaving(false);
+    return;
+  }
+  
+  if (!profileForm.email.trim()) {
+    setErrorMsg('Email is required');
+    setIsSaving(false);
+    return;
+  }
 
-    try {
-      // Update localStorage
-      const updatedUser = {
-        ...userData,
-        first_name: profileForm.firstName,
-        last_name: profileForm.lastName,
-        email: profileForm.email,
-        phone_number: profileForm.phone,
-        username: profileForm.username
-      };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      setUserData(updatedUser);
-      
-      setShowSuccessMsg(true);
-      setTimeout(() => navigate('/cms/dashboard'), 2000);
-    } catch (err) {
+  try {
+    // Prepare data for API update
+    const updateData = {
+      first_name: profileForm.firstName,
+      last_name: profileForm.lastName,
+      email: profileForm.email,
+      phone_number: profileForm.phone || '',
+      username: profileForm.username
+    };
+
+    // Make API call to update user profile
+    const response = await request.PATCH(`/users/profile/me/`, updateData);
+    
+    console.log('Profile update response:', response);
+
+    // Update localStorage with new user data from API response
+    const updatedUser = {
+      ...userData,
+      ...response, // Use response data from API
+      // Ensure we have all fields
+      first_name: response.first_name || profileForm.firstName,
+      last_name: response.last_name || profileForm.lastName,
+      email: response.email || profileForm.email,
+      phone_number: response.phone_number || profileForm.phone,
+      username: response.username || profileForm.username
+    };
+    
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    setUserData(updatedUser);
+    
+    setShowSuccessMsg(true);
+    setTimeout(() => navigate('/cms/dashboard'), 2000);
+  } catch (err) {
+    console.error('Profile update error:', err);
+    
+    // Handle different error scenarios
+    if (err.status === 400) {
+      // Validation errors from backend
+      if (err.data && typeof err.data === 'object') {
+        const errors = Object.values(err.data).flat();
+        setErrorMsg(errors.join(', ') || 'Invalid data provided');
+      } else {
+        setErrorMsg('Please check your input and try again.');
+      }
+    } else if (err.status === 401) {
+      setErrorMsg('Session expired. Please login again.');
+      // Optionally redirect to login
+      setTimeout(() => navigate('/login'), 2000);
+    } else if (err.status === 404) {
+      setErrorMsg('User not found. Please login again.');
+      setTimeout(() => navigate('/login'), 2000);
+    } else {
       setErrorMsg('Failed to update profile. Please try again.');
-    } finally {
-      setIsSaving(false);
     }
-  };
-
+  } finally {
+    setIsSaving(false);
+  }
+};
   const getUserInitials = () => {
     const first = profileForm.firstName?.charAt(0) || '';
     const last = profileForm.lastName?.charAt(0) || '';

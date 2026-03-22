@@ -232,7 +232,7 @@ const EditProfile = () => {
         )}
 
         {/* Profile Information Section */}
-        <div className="profile-section">
+        <div className="edit-profile-form-section">
           <h2 className="section-title">
             <MdPerson /> Profile Information
           </h2>
@@ -337,7 +337,7 @@ const EditProfile = () => {
         <div className="section-divider"></div>
 
         {/* Change Password Section */}
-        <div className="profile-section">
+        <div className="edit-profile-form-section">
           <h2 className="section-title">
             <MdLock /> Change Password
           </h2>

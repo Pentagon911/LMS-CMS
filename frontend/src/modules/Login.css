@@ -298,3 +298,48 @@ body.dark-mode .lgn__login-btn:hover:not(:disabled) {
     margin-bottom: 0;
   }
 }
+/* Password wrapper and toggle button */
+.lgn__password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.lgn__password-wrapper input {
+  width: 100%;
+  padding-right: 45px; /* Make room for the toggle button */
+}
+
+.lgn__password-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #7f8c9f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 1.2rem;
+  transition: color 0.2s ease;
+}
+
+.lgn__password-toggle:hover {
+  color: #1a2632;
+}
+
+/* Optional: Add focus state for better accessibility */
+.lgn__password-toggle:focus {
+  outline: none;
+  color: #1a2632;
+}
+
+/* Dark mode support - add if you have dark mode */
+body.dark-mode .lgn__password-toggle {
+  color: #a0a8b7;
+}
+
+body.dark-mode .lgn__password-toggle:hover {
+  color: #e5e9f0;
+}

@@ -1,19 +1,19 @@
-import request from '../utils/requestMethods.jsx';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {MdLibraryBooks,MdWarning,MdPerson,MdLock,MdFlag,MdMenuBook,MdDescription,MdRocketLaunch,MdContentPaste} from "react-icons/md";
+import {MdLibraryBooks,MdWarning,MdPerson,MdLock,MdFlag,MdMenuBook,MdDescription,MdRocketLaunch,MdVisibility,MdVisibilityOff} from "react-icons/md";
 import './Login.css';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [userType, setUserType] = useState('lms'); // 'lms' or 'cms'
+  const [userType, setUserType] = useState('lms');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   
   const navigate = useNavigate();
 
-  // API login handler
+  // API login handler using fetch directly
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -27,19 +27,49 @@ const Login = () => {
     }
 
     try {
-      // Make API call using requestMethods
-     // const data = await request.POST('/login', {
-     //   username: username,
-     //   password: password,
-     // });
-      const data = await request.GET('/_data/credential.json');
+      // Make fetch request directly
+      const response = await fetch('http://localhost:8000/users/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: username,
+          password: password,
+        }),
+      });
 
-      // Store user data in localStorage
-      localStorage.setItem('user', JSON.stringify(data));
+      // Check if response is ok
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Invalid username or password');
+      }
+
+      // Parse the response data
+      const text = await response.text();
+console.log("RAW RESPONSE:", text);
+const data = JSON.parse(text);
+
+      // const data = await response.json();
+      console.log('Login response:', data);
+
+      // Store tokens
+      if (data.access) {
+        localStorage.setItem('access_token', data.access);
+      }
       
-      // Store auth token if your API returns one
-      if (data.token) {
-        localStorage.setItem('token', data.token);
+      if (data.refresh) {
+        localStorage.setItem('refresh_token', data.refresh);
+      }
+      
+      // Store user data
+      if (data.user) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+      }
+
+      // Store user role for role-based routing
+      if (data.user && data.user.role) {
+        localStorage.setItem('user_role', data.user.role);
       }
 
       // Redirect based on user type selection
@@ -51,16 +81,15 @@ const Login = () => {
 
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || 'Invalid username or password');
+      setError(err.message || 'An error occurred during login');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // For demo purposes - remove this in production
-  const handleDemoLogin = () => {
-    setUsername('admin');
-    setPassword('admin');
+  // Toggle password visibility
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
@@ -100,14 +129,24 @@ const Login = () => {
               <span className="lgn__label-icon"><MdLock /></span>
               Password
             </label>
-            <input
-              type="password"
-              id="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
-            />
+            <div className="lgn__password-wrapper">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+              />
+              <button
+                type="button"
+                className="lgn__password-toggle"
+                onClick={togglePasswordVisibility}
+                tabIndex={-1}
+              >
+                {showPassword ? <MdVisibilityOff /> : <MdVisibility />}
+              </button>
+            </div>
           </div>
 
           <div className="lgn__form-group">
@@ -138,7 +177,7 @@ const Login = () => {
                   onChange={(e) => setUserType(e.target.value)}
                 />
                 <span className="lgn__radio-icon"><MdMenuBook /></span>
-                <span className="lgn__radio-text"> CMS Portal</span>
+                <span className="lgn__radio-text">CMS Portal</span>
                 <div className="lgn__radio-desc">Content Management System</div>
               </label>
             </div>

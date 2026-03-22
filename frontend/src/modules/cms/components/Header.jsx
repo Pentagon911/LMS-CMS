@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { MdDashboard, MdMenuBook, MdQuiz, MdPerson, MdCampaign, MdLogout, MdLibraryBooks, MdDarkMode, MdLightMode, MdTableChart } from 'react-icons/md';
+import { getUserFromToken } from '../../../utils/auth';
 import './Header.css';
 
 const Header = () => {
@@ -9,7 +10,6 @@ const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Check localStorage for saved theme preference
     const savedTheme = localStorage.getItem('theme');
     return savedTheme === 'dark';
   });
@@ -18,25 +18,120 @@ const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Get user from localStorage on component mount and when storage changes
+  // Check if token is valid and not expired
+  const isTokenValid = () => {
+    const tokenData = getUserFromToken();
+    if (!tokenData) return false;
+    
+    try {
+      const currentTime = Date.now() / 1000;
+      // Check if token is expired
+      if (tokenData.exp && tokenData.exp < currentTime) {
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.error('Token validation error:', err);
+      return false;
+    }
+  };
+
+  // Check if user is authenticated
+  const isAuthenticated = () => {
+    const tokenValid = isTokenValid();
+    const userExists = localStorage.getItem('user') !== null;
+    
+    return tokenValid && userExists;
+  };
+
+  // Handle authentication redirect
+  const checkAuthAndRedirect = () => {
+    if (!isAuthenticated()) {
+      // Clear invalid data
+      localStorage.removeItem('user');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user_role');
+      
+      // Don't redirect if already on login page
+      if (location.pathname !== '/login') {
+        navigate('/login');
+      }
+      return false;
+    }
+    return true;
+  };
+
+  // Get user from localStorage
+  const getUserFromStorage = () => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        return JSON.parse(storedUser);
+      } catch (error) {
+        console.error("Failed to parse user from localStorage", error);
+        return null;
+      }
+    }
+    return null;
+  };
+
+  // Get user data and validate authentication
   useEffect(() => {
-    const getUserFromStorage = () => {
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        try {
-          setUser(JSON.parse(storedUser));
-        } catch (error) {
-          console.error("Failed to parse user from localStorage", error);
+    const loadUserAndValidate = () => {
+      // First check if authenticated
+      if (!isAuthenticated()) {
+        setUser(null);
+        // Only redirect if not on login page
+        if (location.pathname !== '/login') {
+          navigate('/login');
+        }
+        return;
+      }
+      
+      // Get user data
+      const userData = getUserFromStorage();
+      if (userData) {
+        setUser(userData);
+      } else {
+        setUser(null);
+        // If user data is missing but token exists, something is wrong
+        if (location.pathname !== '/login') {
+          navigate('/login');
         }
       }
     };
 
-    getUserFromStorage();
+    loadUserAndValidate();
 
     // Listen for storage changes (in case user logs in/out in another tab)
-    window.addEventListener('storage', getUserFromStorage);
-    return () => window.removeEventListener('storage', getUserFromStorage);
-  }, []);
+    const handleStorageChange = (e) => {
+      if (e.key === 'user' || e.key === 'access_token' || e.key === 'refresh_token') {
+        loadUserAndValidate();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [location.pathname, navigate]);
+
+  // Periodically check token validity (every 30 seconds)
+  useEffect(() => {
+    const tokenCheckInterval = setInterval(() => {
+      if (location.pathname !== '/login') {
+        if (!isAuthenticated()) {
+          // Clear invalid data
+          localStorage.removeItem('user');
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('user_role');
+          navigate('/login');
+        }
+      }
+    }, 30000); // Check every 30 seconds
+    
+    return () => clearInterval(tokenCheckInterval);
+  }, [location.pathname, navigate]);
 
   // Handle scroll effect
   useEffect(() => {
@@ -106,12 +201,15 @@ const Header = () => {
     if (user?.first_name && user?.last_name) {
       return `${user.first_name} ${user.last_name}`;
     }
+    if (user?.first_name) {
+      return user.first_name;
+    }
     return user?.username || user?.name || 'User';
   };
 
   // Get user email
   const getUserEmail = () => {
-    return user?.email || 'user@example.com';
+    return user?.email || 'No email provided';
   };
 
   // Get user initial for avatar
@@ -123,9 +221,11 @@ const Header = () => {
 
   // Handle logout
   const handleLogout = () => {
-    // Clear localStorage
+    // Clear all localStorage items
     localStorage.removeItem('user');
-    localStorage.removeItem('token');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_role');
     
     // Redirect to login
     navigate('/login');
@@ -135,6 +235,11 @@ const Header = () => {
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
   };
+
+  // Don't render header if not authenticated (prevents flash of content)
+  if (!isAuthenticated() && location.pathname !== '/login') {
+    return null;
+  }
 
   return (
     <header className={`header ${isScrolled ? 'header-scrolled' : ''}`}>
