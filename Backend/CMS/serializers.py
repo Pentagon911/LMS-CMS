@@ -413,9 +413,7 @@ class studentAnswerSerializer(serializers.ModelSerializer):
 class courseListSerializer(serializers.ModelSerializer):
     """Serializer for course list view"""
 
-    code = serializers.CharField(source = Course.code)
-    title = serializers.CharField(source = Course.name)
-    color = serializers.CharField(source = Course.color)
+    title = serializers.CharField(source = 'name')
     class Meta:
         model = Course
         fields = ['id','code', 'title','color']

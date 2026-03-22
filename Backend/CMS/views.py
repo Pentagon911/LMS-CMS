@@ -3,7 +3,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from users.permissions import *
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.response import Response
+from rest_framework.response import Response 
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from django.db.models import Q
@@ -18,7 +18,6 @@ class CourseViewSet(viewsets.ModelViewSet):
     GET  /cms/courses/               → List all courses I'm assigned to
     GET  /cms/courses/1/dashboard/   → Complete dashboard for course ID 1 (with all weeks)
     """
-    queryset = Course.objects.all()
     permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
@@ -37,16 +36,21 @@ class CourseViewSet(viewsets.ModelViewSet):
         if user.role == 'instructor':
             return Course.objects.filter(instructor = user)
         elif user.role == 'student':
-            return Course.objects.filter(enrollments__students = user,enrollments__status = 'enrolled')
+            return Course.objects.filter(
+                enrollments__student=user,  # Note: enrollments__student (singular)
+                enrollments__status='enrolled'
+            ).distinct()
 
-        return Course.objects.none
+        return Course.objects.none()
     
     def list(self,request,*args,**kwargs):
         """
         Custom list method to format response exactly as frontend expects
         """
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.get_queryset()
+        queryset = self.filter_queryset(queryset)
         courses = []
+        
         for course in queryset:
             courses.append({
                 'id': course.id,
@@ -60,9 +64,10 @@ class CourseViewSet(viewsets.ModelViewSet):
     def get_announcements(self,course,user):
         """Get batch and course announcements for this course"""
         announcements = []
-
+        batch_announcements = []
         if course.batch:
-            batch_announcements = Announcement.objects.filter(batch=course.batch,announcement_type='batch').order_by('-created_at')[:3]
+            batch_announcements = Announcement.objects.filter(batch=course.batch,announcement_type='batch'
+            ).order_by('-created_at')[:3]
 
         for ann in batch_announcements:
             announcements.append({
@@ -98,8 +103,11 @@ class CourseViewSet(viewsets.ModelViewSet):
         course= self.get_object()
 
         if request.user.role == 'student':
-            if not course.enrollments.filter(student = request.user,status= 'enrolled'):
-                return Response({'error':'Not enrolled in this course'},status = 403)
+            if not course.enrollments.filter(
+                student=request.user,
+                status='enrolled'
+            ).exists():
+                return Response({'error': 'Not enrolled in this course'}, status=403)
         elif request.user.role == 'instructor':
             if request.user != course.instructor:
                 return Response({'error': 'Not your Course'},status=403)
