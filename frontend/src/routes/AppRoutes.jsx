@@ -55,8 +55,6 @@ function AppRoutes() {
       <Route path="/lms/academics/time-tables" element={<LMSLayout> <ExamTimeTablePage /> </LMSLayout>} />
       <Route path="/lms/server-management/users" element={<LMSLayout> <UserManagement /> </LMSLayout>} />
       <Route path="/lms/server-management/courses" element={<LMSLayout> <CourseManagement /> </LMSLayout>} />
-
-      {/* Catch-all */}
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
