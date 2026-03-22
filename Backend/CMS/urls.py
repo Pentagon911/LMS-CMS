@@ -1,22 +1,31 @@
-from django.urls import path,include
-from . import views
+# CMS/urls.py
+
+from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from . import views
 
 router = DefaultRouter()
-
-# Register ViewSets
-router.register(r'courses', views.CourseViewSet, basename='course')
 router.register(r'quizzes', views.QuizViewSet, basename='quiz')
 router.register(r'questions', views.QuestionViewSet, basename='question')
 router.register(r'options', views.OptionViewSet, basename='option')
-router.register(r'weeks', views.WeekViewSet, basename='week')
-# router.register(r'videos', views.VideoViewSet, basename='video')
-# router.register(r'pdfs', views.PdfViewSet, basename='pdf')
-# router.register(r'links', views.LinkViewSet, basename='link')
 router.register(r'attempts', views.QuizAttemptViewSet, basename='attempt')
 router.register(r'answers', views.StudentAnswerViewSet, basename='answer')
+router.register(r'weeks', views.WeekViewSet, basename='week')
+router.register(r'courses', views.CourseViewSet, basename='course')
+router.register(r'announcements', views.AnnouncementViewSet, basename='announcement')
 
 urlpatterns = [
-    # All API endpoints under /cms/
     path('', include(router.urls)),
-]
+        
+    # Announcement preview
+    path('announcements/preview/', views.AnnouncementViewSet.as_view({'post': 'preview'}), name='announcement-preview'),
+    
+    # Course announcements
+    path('courses/<int:course_id>/announcements/', views.AnnouncementViewSet.as_view({'get': 'by_course'}), name='course-announcements'),
+    
+    # Week announcements (using AnnouncementViewSet)
+    path('courses/<int:course_id>/weeks/<int:week_id>/announcements/', views.AnnouncementViewSet.as_view({'get': 'by_week'}), name='week-announcements'),
+
+    path('courses/<int:course_id>/weeks/<int:week_number>/announcements/create/', 
+         views.AnnouncementViewSet.as_view({'post': 'create_for_week'}), 
+         name='week-announcements-create'),]

@@ -6,9 +6,6 @@ from django.utils import timezone
 from lms.models import *
 User = get_user_model()
 
-
-# yet to connect LMS sem module as foriegn key to week
-    
 class Week(models.Model):
     """Course Weeks"""
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='weeks', null=True)
@@ -272,15 +269,42 @@ class StudentAnswer(models.Model):
         return f"Answer for {self.question.questionId}"
 
 class Announcement(models.Model):
-    """Course announcements"""
-
-    # Which week this announcement is for
-    week = models.ForeignKey(Week,on_delete=models.CASCADE,related_name='announcements')
-    description = models.TextField()
-    createdAt = models.DateTimeField(auto_now_add=True)
+    """Announcements at different levels"""
+    
+    ANNOUNCEMENT_TYPES = [
+        ('batch', 'Batch Announcement'),    
+        ('course', 'Course Announcement'),        
+        ('week', 'Week Announcement'),     
+    ]
+    
+    announcement_type = models.CharField(max_length=10, choices=ANNOUNCEMENT_TYPES, default='course')
+    
+    # For batch announcements (all students in this batch)
+    batch = models.ForeignKey(Batch,on_delete=models.CASCADE,related_name='announcements',null=True,blank=True)
+    
+    # For course announcements
+    course = models.ForeignKey(Course,on_delete=models.CASCADE,related_name='announcements',null=True,blank=True)
+    
+    # For week announcements
+    week = models.ForeignKey(Week,on_delete=models.CASCADE,related_name='announcements',null=True,blank=True)
+    
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    
+    # Attachments
+    image = models.ImageField(upload_to='announcements/images/', null=True, blank=True)
+    pdf = models.FileField(upload_to='announcements/pdfs/', null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
     class Meta:
-        ordering =['-createdAt']
+        ordering = ['-created_at']
 
     def __str__(self):
-        return self.description[:50]
+        if self.announcement_type == 'batch':
+            return f"Semester {self.semester}: {self.title}"
+        elif self.announcement_type == 'course':
+            return f"Course {self.course.code}: {self.title}"
+        else:
+            return f"Week {self.week.order}: {self.title}"
