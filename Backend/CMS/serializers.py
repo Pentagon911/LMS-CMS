@@ -295,7 +295,7 @@ class QuizCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Quiz
-        fields = ['title', 'timeLimitMinutes', 'order','week','questions','courseCode','start_time','description','status']
+        fields = ['title', 'timeLimitMinutes', 'order','questions','courseCode','start_time','description','status']
 
     def create(self,validated_data):
         """
@@ -304,7 +304,7 @@ class QuizCreateSerializer(serializers.ModelSerializer):
         """
 
         questionsData = validated_data.pop('questions')
-        week = validated_data.pop('week')
+        #week = validated_data.pop('week')
         courseCode = validated_data.pop('courseCode', None)
         start_time = validated_data.pop('start_time', None) 
         status = validated_data.pop('status', 'draft') 
@@ -317,7 +317,7 @@ class QuizCreateSerializer(serializers.ModelSerializer):
             else:
                 status = 'scheduled'
                
-        quiz = Quiz.objects.create(week = week,courseCode=courseCode,**validated_data)
+        quiz = Quiz.objects.create(courseCode=courseCode,**validated_data)
         
         # Create each question with its options
         for questionData in questionsData:
@@ -416,11 +416,11 @@ class courseListSerializer(serializers.ModelSerializer):
     code = serializers.CharField(source = Course.code)
     title = serializers.CharField(source = Course.name)
     color = serializers.CharField(source = Course.color)
-
     class Meta:
         model = Course
         fields = ['id','code', 'title','color']
 
+    
 class courseDashboardSerializer(serializers.ModelSerializer):
     """Serializer for complete course dashboard"""
     courseTitle = serializers.CharField(source = 'name')

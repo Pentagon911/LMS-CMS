@@ -45,17 +45,49 @@ class CourseViewSet(viewsets.ModelViewSet):
         """
         Custom list method to format response exactly as frontend expects
         """
-        self.queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.filter_queryset(self.get_queryset())
         courses = []
-
-        for course in self.queryset:
+        for course in queryset:
             courses.append({
                 'id': course.id,
                 'code':course.code,
                 'title':course.name,
-                'color':course.color
+                'color':course.color,
             })
+
         return Response(courses)
+    
+    def get_announcements(self,course,user):
+        """Get batch and course announcements for this course"""
+        announcements = []
+
+        if course.batch:
+            batch_announcements = Announcement.objects.filter(batch=course.batch,announcement_type='batch').order_by('-created_at')[:3]
+
+        for ann in batch_announcements:
+            announcements.append({
+                'id' : ann.id,
+                'title': ann.title,
+                'content': ann.content[:100] if len(ann.content) > 100 else ann.content,
+                'type':'batch',
+                'created_at':ann.created_at,
+                'created_by':ann.created_by.username if ann.created_by else None
+            })
+
+        course_announcements = Announcement.objects.filter(course = course,announcement_type = 'course').order_by('-created_at')[:3]
+
+        for ann in course_announcements:
+            announcements.append({
+                'id' : ann.id,
+                'title': ann.title,
+                'content': ann.content[:100] if len(ann.content) > 100 else ann.content,
+                'type':'course',
+                'created_at':ann.created_at,
+                'created_by':ann.created_by.username if ann.created_by else None
+            })
+
+            announcements.sort(key=lambda x: x['created_at'], reverse=True)
+            return announcements[:3]
     
     @action(detail = True, methods = ['get'],url_path='dashboard')
     def dashboard(self,request,pk = None):
