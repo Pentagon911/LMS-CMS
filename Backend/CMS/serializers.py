@@ -681,3 +681,26 @@ class AcademicCalendarSerializer(serializers.ModelSerializer):
         if value.size > 10 * 1024 * 1024:
             raise serializers.ValidationError("File size must be under 10 MB.")
         return value
+    
+
+class PracticalTimetableSerializer(serializers.ModelSerializer):
+    pdf_url = serializers.SerializerMethodField()
+    uploaded_by_name = serializers.CharField(source='uploaded_by.username', read_only=True)
+
+    class Meta:
+        model = PracticalTimetable
+        fields = [
+            'id', 'year', 'semester', 'faculty', 'title',
+            'pdf', 'pdf_url', 'uploaded_at', 'uploaded_by_name'
+        ]
+        read_only_fields = ['uploaded_at', 'uploaded_by']
+
+    def get_pdf_url(self, obj):
+        return obj.pdf.url if obj.pdf else None
+
+    def validate_pdf(self, value):
+        if not value.name.lower().endswith('.pdf'):
+            raise serializers.ValidationError("Only PDF files are allowed.")
+        if value.size > 10 * 1024 * 1024:
+            raise serializers.ValidationError("File size must be under 10 MB.")
+        return value

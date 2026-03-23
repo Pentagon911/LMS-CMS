@@ -725,3 +725,19 @@ class AcademicCalendarViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(uploaded_by=self.request.user)
+
+
+from users.permissions import IsAdminUser
+
+class PracticalTimetableViewSet(viewsets.ModelViewSet):
+    queryset = PracticalTimetable.objects.all()
+    serializer_class = PracticalTimetableSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAuthenticated(), IsAdminUser()]
+        return [IsAuthenticated()]
+
+    def perform_create(self, serializer):
+        serializer.save(uploaded_by=self.request.user)
