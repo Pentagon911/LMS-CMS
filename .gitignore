@@ -3,7 +3,10 @@ venv/
 env/
 ENV/
 # Python cache files
-__pycache__/
+Backend/Backend/__pycache__/
+Backend/CMS/__pycache__/
+Backend/lms/__pycache__/
+Backend/users/__pycache__/
 *.pyc
 
 # Database

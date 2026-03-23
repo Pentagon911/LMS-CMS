@@ -37,12 +37,12 @@ const Header = () => {
       ]
     },
     'Appeals/Welfare': {
-      admin: [
-        { name: 'Bursary Appeals', path: '/lms/appeals-and-welfare/bursary-appeals', icon: <MdAttachMoney /> },
-        { name: 'Hostel Appeals', path: '/lms/appeals-and-welfare/hostel-appeals', icon: <MdHome /> },
-        { name: 'Exam Appeals', path: '/lms/appeals-and-welfare/exam-appeals', icon: <MdHelpOutline /> },
-        { name: 'Medical Appeals', path: '/lms/appeals-and-welfare/medical-eppeals', icon: <MdMedicalServices /> }
-      ],
+    //   // admin: [
+    //   //   { name: 'Bursary Appeals', path: '/lms/appeals-and-welfare/bursary-appeals', icon: <MdAttachMoney /> },
+    //   //   { name: 'Hostel Appeals', path: '/lms/appeals-and-welfare/hostel-appeals', icon: <MdHome /> },
+    //   //   { name: 'Exam Appeals', path: '/lms/appeals-and-welfare/exam-appeals', icon: <MdHelpOutline /> },
+    //   //   { name: 'Medical Appeals', path: '/lms/appeals-and-welfare/medical-eppeals', icon: <MdMedicalServices /> }
+    //   // ],
       student: [
         { name: 'My Appeals', path: '/lms/appeals-and-welfare/my-appeals', icon: <MdAssignment /> },
         { name: 'Apply bursary', path: '/lms/appeals-and-welfare/bursary', icon: <MdAttachMoney /> },
@@ -144,12 +144,19 @@ const Header = () => {
   // Build navigation based on role
   const navigation = [...baseNavigation];
 
-  if (isStudent || isAdmin) {
+  if (isStudent) {
     navigation.push({ 
       name: 'Appeals/Welfare', 
       href: '/lms/appeals-and-welfare', 
       icon: <MdVolunteerActivism />, 
       hasDropdown: true 
+    });
+  } else if (isAdmin) {
+    navigation.push({ 
+      name: 'Appeals/Welfare', 
+      href: '/lms/admin/appeals', 
+      icon: <MdVolunteerActivism />, 
+      hasDropdown: false 
     });
   }
   if (isAdmin) {

@@ -102,7 +102,15 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """
     Custom JWT serializer that includes user data and updates last_login
     """
-    
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Add custom claims
+        token['role'] = user.role   
+
+        return token
+
     def validate(self, attrs):
         data = super().validate(attrs)
         
