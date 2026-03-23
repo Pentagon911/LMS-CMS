@@ -9,22 +9,27 @@ import { MdAttachFile, MdCampaign, MdDescription } from "react-icons/md";
 const AnnouncementCard = ({ announcement }) => {
   const [expanded, setExpanded] = useState(false);
   
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now - date);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  const now = new Date();
 
+  // Normalize both to midnight (ignore time)
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const given = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  const diffTime = today - given;
+  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric',
+    year: 'numeric'
+  });
+};
   // Function to strip HTML tags for preview
   const getPlainTextPreview = (html, maxLength = 100) => {
     const tempDiv = document.createElement('div');
@@ -40,7 +45,7 @@ const AnnouncementCard = ({ announcement }) => {
           <span className="announcement-badge">< MdCampaign /></span>
           <h3 className="announcement-title">{announcement.title}</h3>
         </div>
-        <span className="announcement-time">{formatDate(announcement.createdAt)}</span>
+        <span className="announcement-time">{formatDate(announcement.created_at)}</span>
       </div>
       
       
@@ -84,7 +89,7 @@ const AnnouncementCard = ({ announcement }) => {
       )}
       
       <div className="announcement-footer">
-        <span className="posted-by">Posted by {announcement.postedBy}</span>
+        <span className="posted-by">Posted by {announcement.created_by_name}</span>
         <button className="read-more-btn" onClick={() => setExpanded(!expanded)}>
           {expanded ? 'Show less' : 'Read more'}
         </button>
