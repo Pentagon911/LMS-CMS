@@ -280,18 +280,16 @@ class QuizViewSet(viewsets.ModelViewSet):
             status='draft',
             week__isnull=True  # Not assigned to any week
         )
-        
-        return Response({
-            'quizzes': [{
-                'id': q.id,
-                'quizId': q.quizId,
+        quizzes = []
+        for q in drafts:
+            quizzes.append({
+                'quizId': q.id,
                 'title': q.title,
-                'description': q.description,
-                'timeLimitMinutes': q.timeLimitMinutes,
-                'questionsCount': q.questions.count(),
-                'totalPoints': q.total_points if hasattr(q, 'total_points') else 0
-            } for q in drafts]
-        })
+                'course': q.courseCode.code,
+                'time': q.timeLimitMinutes,
+                'createdAt': q.created_at,
+            })
+        return Response(quizzes)
     
     @action(detail=True, methods=['post'])
     def add_to_week(self, request, pk=None):
