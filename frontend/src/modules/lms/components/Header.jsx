@@ -36,21 +36,21 @@ const Header = () => {
           { name: 'Exam Timetables', path: '/lms/academics/time-tables', icon: <MdEvent /> },
       ]
     },
-    'Appeals/Welfare': {
-      admin: [
-        { name: 'Bursary Appeals', path: '/lms/appeals-and-welfare/bursary-appeals', icon: <MdAttachMoney /> },
-        { name: 'Hostel Appeals', path: '/lms/appeals-and-welfare/hostel-appeals', icon: <MdHome /> },
-        { name: 'Exam Appeals', path: '/lms/appeals-and-welfare/exam-appeals', icon: <MdHelpOutline /> },
-        { name: 'Medical Appeals', path: '/lms/appeals-and-welfare/medical-eppeals', icon: <MdMedicalServices /> }
-      ],
-      student: [
-        { name: 'My Appeals', path: '/lms/appeals-and-welfare/my-appeals', icon: <MdAssignment /> },
-        { name: 'Apply bursary', path: '/lms/appeals-and-welfare/bursary', icon: <MdAttachMoney /> },
-        { name: 'Apply Hostel Facility', path: '/lms/appeals-and-welfare/welfare-request', icon: <MdHome /> },
-        { name: 'Medical Leave', path: '/lms/appeals-and-welfare/medical-leave', icon: <MdHelp /> },
-        { name: 'Exam-Rewrite', path: '/lms/appeals-and-welfare/exam-rewrite', icon: <MdEvent/>}
-      ]
-    },
+    // 'Appeals/Welfare': {
+    // admin: [
+    //   { name: 'Bursary Appeals', path: '/lms/appeals-and-welfare/bursary-appeals', icon: <MdAttachMoney /> },
+    //   { name: 'Hostel Appeals', path: '/lms/appeals-and-welfare/hostel-appeals', icon: <MdHome /> },
+    //   { name: 'Exam Appeals', path: '/lms/appeals-and-welfare/exam-appeals', icon: <MdHelpOutline /> },
+    //   { name: 'Medical Appeals', path: '/lms/appeals-and-welfare/medical-eppeals', icon: <MdMedicalServices /> }
+    // ],
+    //   student: [
+    //     { name: 'My Appeals', path: '/lms/appeals-and-welfare/my-appeals', icon: <MdAssignment /> },
+    //     { name: 'Apply bursary', path: '/lms/appeals-and-welfare/bursary', icon: <MdAttachMoney /> },
+    //     { name: 'Apply Hostel Facility', path: '/lms/appeals-and-welfare/welfare-request', icon: <MdHome /> },
+    //     { name: 'Medical Leave', path: '/lms/appeals-and-welfare/medical-leave', icon: <MdHelp /> },
+    //     { name: 'Exam-Rewrite', path: '/lms/appeals-and-welfare/exam-rewrite', icon: <MdEvent/>}
+    //   ]
+    // },
     'Server Managements': {
       admin: [
         { name: 'User Management', path: '/lms/server-management/users', icon: <MdPeople /> },
@@ -144,12 +144,19 @@ const Header = () => {
   // Build navigation based on role
   const navigation = [...baseNavigation];
 
-  if (isStudent || isAdmin) {
+  if (isStudent) {
     navigation.push({ 
       name: 'Appeals/Welfare', 
-      href: '/lms/appeals-and-welfare', 
+      href: '/lms/student/appeals', 
       icon: <MdVolunteerActivism />, 
-      hasDropdown: true 
+      hasDropdown: false 
+    });
+  } else if (isAdmin) {
+    navigation.push({ 
+      name: 'Appeals/Welfare', 
+      href: '/lms/admin/appeals', 
+      icon: <MdVolunteerActivism />, 
+      hasDropdown: false 
     });
   }
   if (isAdmin) {

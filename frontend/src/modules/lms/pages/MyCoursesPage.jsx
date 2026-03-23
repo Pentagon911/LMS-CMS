@@ -36,7 +36,7 @@ const MyCoursesPage = () => {
     <div className="my-courses-container">
       <div className="my-courses-header">
         <h1>My Courses</h1>
-        <p>Continue your learning journey</p>
+        <p className = "course-welcome">Continue your learning journey</p>
       </div>
       <div className="courses-grid">
         {courses.map(course => (

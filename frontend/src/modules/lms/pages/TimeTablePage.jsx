@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MdDownload, MdAdd, MdEdit, MdDelete, MdClose, MdFilterList, MdEvent } from 'react-icons/md';
 import request from '../../../utils/requestMethods.jsx';
-import '../../cms/pages/TimeTablePage.css';
+import './TimeTableCustom.css';
 
 const ExamTimetablePage = () => {
   const navigate = useNavigate();
@@ -139,7 +139,7 @@ const ExamTimetablePage = () => {
     return true;
   });
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
 
   return (
     <div className="timetable-container">
