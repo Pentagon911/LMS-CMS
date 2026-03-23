@@ -61,11 +61,16 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 class UserDetailSerializer(serializers.ModelSerializer):
     profile = serializers.SerializerMethodField()
     
+    department_name = serializers.CharField(source='student_profile.department.name', read_only=True, allow_null=True)
+    faculty_name = serializers.CharField(source='student_profile.faculty.name', read_only=True, allow_null=True)
+    batch_name = serializers.CharField(source='student_profile.batch.name', read_only=True, allow_null=True)
+
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'first_name', 'last_name',
                  'role', 'phone_number', 'profile_picture', 'profile',
-                 'date_joined', 'last_login', 'last_password_change')
+                 'date_joined', 'last_login', 'last_password_change',
+                 'department_name', 'faculty_name', 'batch_name')
         read_only_fields = ('date_joined', 'last_login', 'last_password_change')
     
     def get_profile(self, obj):
