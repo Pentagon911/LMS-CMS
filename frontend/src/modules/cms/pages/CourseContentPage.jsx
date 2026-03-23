@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import request from '../../../utils/requestMethods.jsx';
-import { getUserFromToken } from "../../../utils/auth";
+import { getUserFromToken} from "../../../utils/auth";
 import WeekCard from '../components/WeekCard.jsx';
 import './CourseContentPage.css';
 import { MdCalendarMonth, MdLibraryBooks } from 'react-icons/md';
