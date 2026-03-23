@@ -90,3 +90,7 @@ body.dark-mode .results-table td {
 .grade-A { color: #27ae60; font-weight: bold; }
 .grade-B { color: #3498db; font-weight: bold; }
 .grade-C { color: #f39c12; font-weight: bold; }
+
+.body.dark-mode .exam-results-desc{
+  color:#e5e9f0;
+}

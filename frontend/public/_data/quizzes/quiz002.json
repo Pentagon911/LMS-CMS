@@ -2,7 +2,7 @@
   "quizId": "quiz002",
   "title": "Data Structures & Algorithms Fundamentals",
   "course": "CS1050",
-  "time": "15m",
+  "time": "15",
   "questions": [
     {
       "questionId": "q1",
