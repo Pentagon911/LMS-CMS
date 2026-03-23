@@ -103,7 +103,7 @@ useEffect(() => {
   const fetchAnnouncements = async () => {
     try {
       setLoading(true);
-      const data = await request.GET('/cms/courses/'); 
+      const data = await request.GET('/cms/announcements/'); 
       setAnnouncements(Array.isArray(data) ? data : []);
       setError('');
     } catch (err) {
@@ -172,6 +172,7 @@ const CoursesPage = () => {
         setLoading(true);
         
         const data = await request.GET('/cms/courses/'); 
+        console.log(data);
         setModules(data);
         setError('');
         setTimeout(checkScrollButtons, 100);
@@ -250,7 +251,7 @@ const CoursesPage = () => {
             <div
               key={mod.code}
               className="module-card-wrapper"
-              onClick={() => handleCardClick(mod.code)}
+              onClick={() => handleCardClick(mod.id)}
             >
               <ModuleCard code={mod.code} title={mod.title} color={mod.color} />
             </div>

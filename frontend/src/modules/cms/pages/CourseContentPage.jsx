@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import request from '../../../utils/requestMethods.jsx';
+import { setUserFromData } from "../../../utils/auth";
 import WeekCard from '../components/WeekCard.jsx';
 import './CourseContentPage.css';
 import { MdCalendarMonth, MdLibraryBooks } from 'react-icons/md';
@@ -17,17 +18,11 @@ const CourseContentPage = () => {
   const [showAddWeekModal, setShowAddWeekModal] = useState(false);
   const [newWeekName, setNewWeekName] = useState('');
 
-  // Get user from localStorage
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (err) {
-        console.error("Failed to parse user", err);
-      }
-    }
-  }, []);
+
+  useEffect(()=>{
+      const token = getUserFromToken();
+      setUser(token);
+  },[]);
 
   // Fetch course content based on module code
   useEffect(() => {
@@ -36,7 +31,7 @@ const CourseContentPage = () => {
         setLoading(true);
         console.log(`Fetching data for module: ${moduleCode} from /_data/${moduleCode}.json`);
         
-        const data = await request.GET(`/_data/${moduleCode}.json`);
+        const data = await request.GET(`/cms/courses/${moduleCode}/dashboard`);
         console.log("Raw data received:", data);
         
         // Check if data exists and has the expected structure
