@@ -17,29 +17,24 @@ const MyAppealsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Helper to format date
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString();
   };
 
-  // Helper to get status CSS class
   const getStatusClass = (status) => {
     const s = status?.toUpperCase();
-    if (s === 'APPROVED') return 'status-approved';
-    if (s === 'REJECTED') return 'status-rejected';
-    return 'status-pending'; // PENDING, UNDER_REVIEW, etc.
+    if (s === 'APPROVED') return 'my-appeals-status-approved';
+    if (s === 'REJECTED') return 'my-appeals-status-rejected';
+    return 'my-appeals-status-pending';
   };
 
-  // Fetch appeals and dashboard stats
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch appeals
         const appealsData = await request.GET('/lms/appeals/my/');
         setAppeals(appealsData);
 
-        // Fetch dashboard stats
         const statsData = await request.GET('/lms/dashboard/student/');
         if (statsData?.my_appeals) {
           setStats(statsData.my_appeals);
@@ -54,36 +49,35 @@ const MyAppealsPage = () => {
     fetchData();
   }, []);
 
-  // Render each group with its items
   const renderAppealGroup = (title, icon, items, createPath, renderExtra = null) => (
-    <div className="appeal-group" key={title}>
-      <div className="group-header">
+    <div className="my-appeals-appeal-group" key={title}>
+      <div className="my-appeals-group-header">
         <h3>{icon} {title}</h3>
-        <button className="new-appeal-btn" onClick={() => navigate(createPath)}>
+        <button className="my-appeals-new-appeal-btn" onClick={() => navigate(createPath)}>
           <MdAdd /> New
         </button>
       </div>
       {items.length === 0 ? (
-        <p className="no-appeals">No appeals found.</p>
+        <p className="my-appeals-no-appeals">No appeals found.</p>
       ) : (
-        <ul className="appeal-list">
+        <ul className="my-appeals-appeal-list">
           {items.map(appeal => (
-            <li key={appeal.id} className="appeal-item">
-              <div className="appeal-main-info">
-                <span className="appeal-title">{appeal.title}</span>
-                <span className={`status-badge ${getStatusClass(appeal.status)}`}>
+            <li key={appeal.id} className="my-appeals-appeal-item">
+              <div className="my-appeals-appeal-main-info">
+                <span className="my-appeals-appeal-title">{appeal.title}</span>
+                <span className={`my-appeals-status-badge ${getStatusClass(appeal.status)}`}>
                   {appeal.status}
                 </span>
-                <span className="appeal-date">{formatDate(appeal.created_at)}</span>
+                <span className="my-appeals-appeal-date">{formatDate(appeal.created_at)}</span>
               </div>
               {renderExtra && (
-                <div className="appeal-extra-info">
+                <div className="my-appeals-appeal-extra-info">
                   {renderExtra(appeal)}
                 </div>
               )}
-              <div className="appeal-actions">
+              <div className="my-appeals-appeal-actions">
                 <button
-                  className="view-details"
+                  className="my-appeals-view-details"
                   onClick={() => navigate(`/lms/appeals-and-welfare/appeal/${appeal.id}`)}
                 >
                   <MdInfo /> Details
@@ -96,9 +90,8 @@ const MyAppealsPage = () => {
     </div>
   );
 
-  // Extra details for exam rewrite appeals
   const examExtra = (appeal) => (
-    <div className="extra-details">
+    <div className="my-appeals-extra-details">
       <span><strong>Course:</strong> {appeal.course_name}</span>
       <span><strong>Module:</strong> {appeal.module_name}</span>
       <span><strong>Semester:</strong> {appeal.semester}</span>
@@ -107,9 +100,8 @@ const MyAppealsPage = () => {
     </div>
   );
 
-  // Extra details for medical leave appeals
   const medicalExtra = (appeal) => (
-    <div className="extra-details">
+    <div className="my-appeals-extra-details">
       <span><strong>From:</strong> {formatDate(appeal.start_date)}</span>
       <span><strong>To:</strong> {formatDate(appeal.end_date)}</span>
       <span><strong>Hospital:</strong> {appeal.hospital_name}</span>
@@ -117,22 +109,11 @@ const MyAppealsPage = () => {
     </div>
   );
 
-  // Bursary extra (if needed) – currently no extra fields in JSON
-  const bursaryExtra = (appeal) => (
-    <div className="extra-details">
-      {/* If the API returns fields like family_income_bracket etc., show them */}
-    </div>
-  );
+  const bursaryExtra = (appeal) => <div className="my-appeals-extra-details"></div>;
+  const hostelExtra = (appeal) => <div className="my-appeals-extra-details"></div>;
 
-  // Hostel extra (if needed)
-  const hostelExtra = (appeal) => (
-    <div className="extra-details">
-      {/* Add fields when available */}
-    </div>
-  );
-
-  if (loading) return <div className="loading-state"><div className="spinner"></div><p>Loading your appeals...</p></div>;
-  if (error) return <div className="error-alert">{error}</div>;
+  if (loading) return <div className="my-appeals-loading-state"><div className="my-appeals-spinner"></div><p>Loading your appeals...</p></div>;
+  if (error) return <div className="my-appeals-error-alert">{error}</div>;
 
   return (
     <div className="my-appeals-container">
@@ -141,23 +122,22 @@ const MyAppealsPage = () => {
         <p>View and track your submitted appeals</p>
       </div>
 
-      {/* Summary stats card */}
-      <div className="stats-card">
-        <div className="stat-item">
-          <span className="stat-label">Total Appeals</span>
-          <span className="stat-value">{stats.total}</span>
+      <div className="my-appeals-stats-card">
+        <div className="my-appeals-stat-item">
+          <span className="my-appeals-stat-label">Total Appeals</span>
+          <span className="my-appeals-stat-value">{stats.total}</span>
         </div>
-        <div className="stat-item">
-          <span className="stat-label">Pending</span>
-          <span className="stat-value pending">{stats.pending}</span>
+        <div className="my-appeals-stat-item">
+          <span className="my-appeals-stat-label">Pending</span>
+          <span className="my-appeals-stat-value my-appeals-pending">{stats.pending}</span>
         </div>
-        <div className="stat-item">
-          <span className="stat-label">Approved</span>
-          <span className="stat-value approved">{stats.approved}</span>
+        <div className="my-appeals-stat-item">
+          <span className="my-appeals-stat-label">Approved</span>
+          <span className="my-appeals-stat-value my-appeals-approved">{stats.approved}</span>
         </div>
-        <div className="stat-item">
-          <span className="stat-label">Rejected</span>
-          <span className="stat-value rejected">{stats.rejected}</span>
+        <div className="my-appeals-stat-item">
+          <span className="my-appeals-stat-label">Rejected</span>
+          <span className="my-appeals-stat-value my-appeals-rejected">{stats.rejected}</span>
         </div>
       </div>
 
