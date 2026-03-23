@@ -71,7 +71,6 @@ class LinkSerializer(contentSerializer):
         return value
     
 class AnnouncementSerializer(serializers.ModelSerializer):
-    
     created_by_name = serializers.CharField(source='created_by.username', read_only=True)
     week_number = serializers.IntegerField(source='week.order', read_only=True)
     attachments = serializers.SerializerMethodField()
@@ -86,73 +85,71 @@ class AnnouncementSerializer(serializers.ModelSerializer):
     
     def get_attachments(self, obj):
         """
-        Return attachments in the format expected by frontend.
-        Always returns an array with exactly 2 attachments (PDF and Image).
-        Each attachment contains null values if the file doesn't exist.
+        Returns exactly one list of attachments.
+        If both exist, both are returned. If one exists, only one is returned.
+        If none exist, it returns a list with null values to maintain the 'one attachment' contract.
         """
         attachments = []
         
-        # Get PDF attachment
-        pdf_attachment = self.get_file_attachment(obj.pdf, 'application/pdf')
-        attachments.append(pdf_attachment)
-        
-        # Get Image attachment
-        # Determine image MIME type if image exists
-        if obj.image and obj.image.name:
+        # Check PDF
+        if hasattr(obj, 'pdf') and obj.pdf:
+            attachments.append(self.get_file_attachment(obj.pdf, 'application/pdf'))
+            
+        # Check Image
+        if hasattr(obj, 'image') and obj.image:
+            # Determine image MIME type
             file_ext = obj.image.name.split('.')[-1].lower() if '.' in obj.image.name else 'jpg'
-            mime_type = {
-                'jpg': 'image/jpeg',
-                'jpeg': 'image/jpeg',
-                'png': 'image/png',
-                'gif': 'image/gif',
-                'webp': 'image/webp'
-            }.get(file_ext, 'image/jpeg')
-        else:
-            mime_type = 'image/jpeg'
+            mime_types = {
+                'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png',
+                'gif': 'image/gif', 'webp': 'image/webp'
+            }
+            mime_type = mime_types.get(file_ext, 'image/jpeg')
+            attachments.append(self.get_file_attachment(obj.image, mime_type))
+
         
-        image_attachment = self.get_file_attachment(obj.image, mime_type)
-        attachments.append(image_attachment)
-        
+        if not attachments:
+            attachments.append({
+                "fileName": None,
+                "fileUrl": None,
+                "fileSize": None,
+                "fileType": None
+            })
+
         return attachments
     
     def get_file_attachment(self, file_field, default_mime_type):
         """
         Get attachment data for a file field.
-        Returns null values if file doesn't exist.
         """
         try:
             if file_field and file_field.name:
-                # Get file name
-                file_name = file_field.name.split('/')[-1] if '/' in file_field.name else file_field.name
+                # Get clean file name
+                file_name = file_field.name.split('/')[-1]
                 
-                # Get file URL
+                # Get URL (Handles S3 or Local Media)
                 file_url = file_field.url if hasattr(file_field, 'url') else f"/media/{file_field.name}"
                 
-                # Get file size
-                file_size = file_field.size if hasattr(file_field, 'size') else 0
+                # Get file size safely
+                try:
+                    file_size = file_field.size
+                except (OSError, ValueError):
+                    file_size = 0
                 
                 return {
-                    "fileName": file_name if file_name else None,
-                    "fileUrl": file_url if file_url else None,
-                    "fileSize": file_size if file_size > 0 else None,
-                    "fileType": default_mime_type if default_mime_type else None
-                }
-            else:
-                # Return null values if file doesn't exist
-                return {
-                    "fileName": None,
-                    "fileUrl": None,
-                    "fileSize": None,
-                    "fileType": None
+                    "fileName": file_name,
+                    "fileUrl": file_url,
+                    "fileSize": file_size,
+                    "fileType": default_mime_type
                 }
         except Exception:
-            # Return null values on any error
-            return {
-                "fileName": None,
-                "fileUrl": None,
-                "fileSize": None,
-                "fileType": None
-            }
+            pass
+            
+        return {
+            "fileName": None,
+            "fileUrl": None,
+            "fileSize": None,
+            "fileType": default_mime_type
+        }
 
 
 # ========== BASE Serilizers for Quiz Operations ==========
@@ -197,7 +194,7 @@ class BaseQuizSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Quiz
-        fields = ['quizId', 'title', 'course', 'time', ]
+        fields = ['id', 'title', 'course', 'time', ]
     
     def get_course(self, obj):
         if obj.week and obj.week.course:
@@ -245,7 +242,7 @@ class InstructorOptionSerializer(BaseOptionSerializer):
     
     is_correct = serializers.BooleanField()
     class Meta(BaseOptionSerializer.Meta):
-        fields = ['id','text','is_correct','points']
+        fields = ['id','text','is_correct']
 
 class InstructorQuestionSerializer(BaseQuestionSerializer):
     """Instructor view of questions - includes options with correct answers"""
@@ -293,8 +290,7 @@ from CMS.models import Course, Quiz, Question, Option
 class OptionCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating options within a question"""
     id = serializers.CharField(source='optionId', required=False)
-    
-    # We explicitly declare this so it maps cleanly
+
     is_correct = serializers.BooleanField(required=False, default=False)
 
     class Meta:

@@ -327,15 +327,13 @@ class QuizViewSet(viewsets.ModelViewSet):
         quiz.save()
         
         return Response({
-            'id': quiz.id,
-            'quizId': quiz.quizId,
+            'quizId': quiz.id,
             'title': quiz.title,
-            'timeLimitMinutes': quiz.timeLimitMinutes,
+            'time': quiz.timeLimitMinutes,
             'start_time': quiz.start_time,
             'status': quiz.status,
             'week': {
                 'id': week.id,
-                'order': week.order,
                 'topic': week.topic
             },
             'message': f'Quiz added to Week {week.order}'
