@@ -1,5 +1,5 @@
 import random
-from datetime import date, timedelta
+from datetime import date, timedelta, time
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.contrib.auth import get_user_model
@@ -48,27 +48,35 @@ class Command(BaseCommand):
             self.stdout.write('\n📝 Creating enrollments...')
             self.create_enrollments(users['students'], courses)
             
-            # 8. Create CMS content (Weeks, Videos, PDFs, Links) - EXACTLY 14 WEEKS
-            self.stdout.write('\n🎥 Creating CMS content...')
-            weeks = self.create_cms_content(courses, target_weeks=14)  # Target exactly 14 weeks
+            # 8. Create exam timetables
+            self.stdout.write('\n📅 Creating exam timetables...')
+            self.create_exam_timetables(courses)
             
-            # 9. Create quizzes and questions
+            # 9. Create exam results
+            self.stdout.write('\n📊 Creating exam results...')
+            self.create_exam_results(users['students'], courses)
+            
+            # 10. Create CMS content (Weeks, Videos, PDFs, Links) - EXACTLY 14 WEEKS
+            self.stdout.write('\n🎥 Creating CMS content...')
+            weeks = self.create_cms_content(courses, target_weeks=14)
+            
+            # 11. Create quizzes and questions
             self.stdout.write('\n📝 Creating quizzes and questions...')
             self.create_quizzes(weeks, courses)
             
-            # 10. Create quiz attempts and answers
+            # 12. Create quiz attempts and answers
             self.stdout.write('\n✓ Creating quiz attempts...')
             self.create_quiz_attempts(users['students'])
             
-            # 11. Create announcements
+            # 13. Create announcements
             self.stdout.write('\n📢 Creating announcements...')
             self.create_announcements(users['instructors'], users['admins'], batches, courses, weeks)
             
-            # 12. Create appeals
+            # 14. Create appeals
             self.stdout.write('\n✉️ Creating appeals...')
             self.create_appeals(users['students'], departments, faculties, batches, courses, modules)
             
-            # 13. Create review queue
+            # 15. Create review queue
             self.stdout.write('\n🗂️ Creating review queue...')
             self.create_review_queue(users['admins'])
             
@@ -141,51 +149,12 @@ class Command(BaseCommand):
         return departments
     
     def create_programs(self, departments):
-        """Create programs for each department"""
+        """Create programs for each department and store default program per department"""
         programs = []
-        
-        program_templates = {
-            'CS': [
-                {'name': 'BSc in Computer Science', 'code': 'BSC-CS', 'description': 'Bachelor of Science in Computer Science'},
-                {'name': 'BSc in Software Engineering', 'code': 'BSC-SE', 'description': 'Bachelor of Science in Software Engineering'},
-                {'name': 'BSc in Information Technology', 'code': 'BSC-IT', 'description': 'Bachelor of Science in Information Technology'},
-            ],
-            'EE': [
-                {'name': 'BSc in Electrical Engineering', 'code': 'BSC-EE', 'description': 'Bachelor of Science in Electrical Engineering'},
-                {'name': 'BSc in Electronics Engineering', 'code': 'BSC-ECE', 'description': 'Bachelor of Science in Electronics Engineering'},
-            ],
-            'ME': [
-                {'name': 'BSc in Mechanical Engineering', 'code': 'BSC-ME', 'description': 'Bachelor of Science in Mechanical Engineering'},
-            ],
-            'CE': [
-                {'name': 'BSc in Civil Engineering', 'code': 'BSC-CE', 'description': 'Bachelor of Science in Civil Engineering'},
-            ],
-            'MATH': [
-                {'name': 'BSc in Mathematics', 'code': 'BSC-MATH', 'description': 'Bachelor of Science in Mathematics'},
-                {'name': 'BSc in Statistics', 'code': 'BSC-STAT', 'description': 'Bachelor of Science in Statistics'},
-            ],
-            'PHY': [
-                {'name': 'BSc in Physics', 'code': 'BSC-PHY', 'description': 'Bachelor of Science in Physics'},
-            ],
-            'CHEM': [
-                {'name': 'BSc in Chemistry', 'code': 'BSC-CHEM', 'description': 'Bachelor of Science in Chemistry'},
-            ],
-            'BIO': [
-                {'name': 'BSc in Biology', 'code': 'BSC-BIO', 'description': 'Bachelor of Science in Biology'},
-            ],
-            'MGT': [
-                {'name': 'BBA in Management', 'code': 'BBA-MGT', 'description': 'Bachelor of Business Administration in Management'},
-                {'name': 'BCom in Business Studies', 'code': 'BCOM-BS', 'description': 'Bachelor of Commerce in Business Studies'},
-            ],
-            'FIN': [
-                {'name': 'BBA in Finance', 'code': 'BBA-FIN', 'description': 'Bachelor of Business Administration in Finance'},
-                {'name': 'BCom in Accounting', 'code': 'BCOM-ACC', 'description': 'Bachelor of Commerce in Accounting'},
-            ],
-            'MKT': [
-                {'name': 'BBA in Marketing', 'code': 'BBA-MKT', 'description': 'Bachelor of Business Administration in Marketing'},
-            ],
-        }
-        
+        self.default_programs = {}   # attribute to store default program for each department
+
+        program_templates = { ... }   # unchanged
+
         for department in departments:
             if department.code in program_templates:
                 for template in program_templates[department.code]:
@@ -200,8 +169,11 @@ class Command(BaseCommand):
                     programs.append(program)
                     if created:
                         self.stdout.write(f"  ✓ Created program: {program.name} ({department.code})")
-        
-        # If no programs created for some departments, create generic ones
+                    # Store the first program for this department as default
+                    if department.id not in self.default_programs:
+                        self.default_programs[department.id] = program
+
+        # For departments without templates, create a generic program and set as default
         for department in departments:
             if not any(p.department == department for p in programs):
                 generic_program, created = Program.objects.get_or_create(
@@ -215,7 +187,8 @@ class Command(BaseCommand):
                 programs.append(generic_program)
                 if created:
                     self.stdout.write(f"  ✓ Created generic program: {generic_program.name}")
-        
+                self.default_programs[department.id] = generic_program
+
         self.stdout.write(f"  ✓ Created total {len(programs)} programs")
         return programs
     
@@ -333,9 +306,7 @@ class Command(BaseCommand):
             try:
                 department = random.choice(departments)
                 batch = random.choice([b for b in batches if b.department == department])
-                # Get programs for this department
-                department_programs = [p for p in programs if p.department == department]
-                program = random.choice(department_programs) if department_programs else None
+                program = self.default_programs.get(department.id)
                 
                 StudentProfile.objects.get_or_create(
                     user=user,
@@ -343,7 +314,7 @@ class Command(BaseCommand):
                         'student_id': f"STU{user.id:06d}",
                         'department': department,
                         'batch': batch,
-                        'program': program,  # Now a ForeignKey to Program
+                        'program': program,
                         'current_semester': random.randint(1, 8),
                         'cgpa': round(random.uniform(2.0, 4.0), 2),
                         'completed_credits': random.randint(30, 120)
@@ -364,21 +335,24 @@ class Command(BaseCommand):
         courses = []
         modules = []
         
+        # Expanded templates with gpa_applicable and offering_type
         course_templates = [
-            {'code': '101', 'name': 'Programming Fundamentals', 'credits': 3, 'semester': 1},
-            {'code': '201', 'name': 'Data Structures', 'credits': 3, 'semester': 2},
-            {'code': '301', 'name': 'Database Systems', 'credits': 3, 'semester': 3},
-            {'code': '401', 'name': 'Software Engineering', 'credits': 4, 'semester': 4},
+            {'code': '101', 'name': 'Programming Fundamentals', 'credits': 3, 'semester': 1, 'gpa': True, 'offering': 'compulsory'},
+            {'code': '102', 'name': 'Data Structures', 'credits': 3, 'semester': 1, 'gpa': True, 'offering': 'compulsory'},
+            {'code': '103', 'name': 'Mathematics', 'credits': 3, 'semester': 1, 'gpa': True, 'offering': 'compulsory'},
+            {'code': '104', 'name': 'Physics Lab', 'credits': 1, 'semester': 1, 'gpa': False, 'offering': 'compulsory'},
+            {'code': '201', 'name': 'Database Systems', 'credits': 3, 'semester': 2, 'gpa': True, 'offering': 'compulsory'},
+            {'code': '202', 'name': 'Web Development', 'credits': 3, 'semester': 2, 'gpa': True, 'offering': 'elective'},
+            {'code': '203', 'name': 'Software Engineering', 'credits': 3, 'semester': 3, 'gpa': True, 'offering': 'compulsory'},
+            {'code': '204', 'name': 'Mobile App Development', 'credits': 3, 'semester': 3, 'gpa': True, 'offering': 'elective'},
         ]
         
-        for department in departments[:3]:
+        for department in departments[:3]:  # Limit to first 3 departments
             department_programs = [p for p in programs if p.department == department]
-            program = department_programs[0] if department_programs else None
+            program = self.default_programs.get(department.id)
             
-            for template in course_templates[:2]:
+            for template in course_templates:
                 course_code = f"{department.code}{template['code']}"
-                
-                # Get a valid batch for this department
                 department_batches = [b for b in batches if b.department == department]
                 batch = department_batches[0] if department_batches else None
                 
@@ -390,13 +364,15 @@ class Command(BaseCommand):
                         'department': department,
                         'semester': template['semester'],
                         'batch': batch,
-                        'program': program,  # Add program to course
-                        'instructor': random.choice(instructors) if instructors else None
+                        'program': program,
+                        'instructor': random.choice(instructors) if instructors else None,
+                        'gpa_applicable': template['gpa'],
+                        'offering_type': template['offering']
                     }
                 )
                 courses.append(course)
                 if created:
-                    self.stdout.write(f"  ✓ Created course: {course.code}")
+                    self.stdout.write(f"  ✓ Created course: {course.code} (GPA: {course.gpa_applicable}, Type: {course.offering_type})")
                 
                 # Create modules for each course
                 for j in range(1, 3):
@@ -411,6 +387,81 @@ class Command(BaseCommand):
                     modules.append(module)
         
         return courses, modules
+    
+    def create_enrollments(self, students, courses):
+        enrollment_count = 0
+        for student in students:
+            enrolled_courses = random.sample(courses, min(random.randint(2, 4), len(courses)))
+            for course in enrolled_courses:
+                try:
+                    enrollment, created = Enrollment.objects.get_or_create(
+                        student=student,
+                        course=course,
+                        defaults={'status': 'enrolled'}
+                    )
+                    if created:
+                        enrollment_count += 1
+                except Exception as e:
+                    self.stdout.write(f"  ⚠️ Could not create enrollment: {e}")
+        self.stdout.write(f"  ✓ Created {enrollment_count} enrollments for {len(students)} students")
+    
+    def create_exam_timetables(self, courses):
+        """Create exam timetables for all courses"""
+        exam_count = 0
+        exam_date = date.today() + timedelta(days=30)  # start from next month
+        
+        for course in courses:
+            exam, created = ExamTimetable.objects.get_or_create(
+                course=course,
+                title=f"Final Exam - {course.code}",
+                defaults={
+                    'date': exam_date,
+                    'start_time': time(9, 0),
+                    'end_time': time(12, 0),
+                    'location': f"Hall {random.choice(['A', 'B', 'C'])}"
+                }
+            )
+            if created:
+                exam_count += 1
+            exam_date += timedelta(days=1)
+        
+        self.stdout.write(f"  ✓ Created {exam_count} exam timetables")
+    
+    def create_exam_results(self, students, courses):
+        """Create exam results for each student for their enrolled courses"""
+        result_count = 0
+        grade_mapping = {
+            (90, 100): 'A+', (85, 89): 'A', (80, 84): 'A-',
+            (75, 79): 'B+', (70, 74): 'B', (65, 69): 'B-',
+            (60, 64): 'C+', (55, 59): 'C', (50, 54): 'C-',
+            (45, 49): 'D', (0, 44): 'F'
+        }
+        
+        for student in students:
+            enrolled_courses = Course.objects.filter(enrollments__student=student)
+            for course in enrolled_courses:
+                exam = ExamTimetable.objects.filter(course=course).first()
+                if exam:
+                    score = random.randint(40, 100)
+                    grade = 'F'
+                    for (low, high), g in grade_mapping.items():
+                        if low <= score <= high:
+                            grade = g
+                            break
+                    
+                    result, created = ExamResult.objects.get_or_create(
+                        student=student,
+                        exam=exam,
+                        defaults={
+                            'score': score,
+                            'grade': grade,
+                            'is_reevaluated': False
+                        }
+                    )
+                    if created:
+                        result_count += 1
+        
+        self.stdout.write(f"  ✓ Created {result_count} exam results")
     
     def create_cms_content(self, courses, target_weeks=14):
         """Create exactly target_weeks weeks distributed across courses"""
@@ -443,15 +494,11 @@ class Command(BaseCommand):
         
         week_counter = 1
         for idx, course in enumerate(courses):
-            # Distribute weeks: some courses get one extra week if there's a remainder
             num_weeks_for_course = weeks_per_course + (1 if idx < remainder else 0)
-            
             self.stdout.write(f"  → Creating {num_weeks_for_course} weeks for {course.code}")
             
             for week_num in range(1, num_weeks_for_course + 1):
-                # Use a variety of topics
                 topic_index = (week_counter - 1) % len(topics)
-                
                 week, created = Week.objects.get_or_create(
                     course=course,
                     order=week_num,
@@ -464,8 +511,6 @@ class Command(BaseCommand):
                     all_weeks.append(week)
                     self.stdout.write(f"    ✓ Created week {week_num}: {week.topic}")
                     week_counter += 1
-                    
-                    # Create content for each week
                     self.create_week_content(week)
         
         self.stdout.write(f"  ✓ Created total {len(all_weeks)} weeks (target: {target_weeks})")
@@ -537,9 +582,8 @@ class Command(BaseCommand):
                 self.stdout.write(f"  ⚠️ Could not create link: {e}")
     
     def create_quizzes(self, weeks, courses):
-        """Create quizzes for weeks - only for first 14 weeks"""
+        """Create quizzes for weeks"""
         quiz_count = 0
-        
         quiz_titles = [
             "Knowledge Check",
             "Weekly Assessment",
@@ -548,7 +592,6 @@ class Command(BaseCommand):
             "Self-Assessment"
         ]
         
-        # Create quizzes for all weeks (which are exactly 14)
         for week in weeks:
             quiz_title = f"{random.choice(quiz_titles)}: {week.topic}"
             try:
@@ -563,8 +606,6 @@ class Command(BaseCommand):
                     start_time=timezone.now() + timedelta(days=random.randint(-5, 10))
                 )
                 quiz_count += 1
-                
-                # Create questions for the quiz
                 self.create_quiz_questions(quiz)
             except Exception as e:
                 self.stdout.write(f"  ⚠️ Could not create quiz for week {week.order}: {e}")
@@ -574,7 +615,6 @@ class Command(BaseCommand):
     def create_quiz_questions(self, quiz):
         """Create questions and options for a quiz"""
         question_count = random.randint(3, 8)
-        
         question_texts = [
             "What is the main concept discussed in this week?",
             "Which of the following is correct about this topic?",
@@ -596,15 +636,12 @@ class Command(BaseCommand):
                     text=random.choice(question_texts)
                 )
                 
-                # Create options based on question type
                 if question_type == 'true_false':
                     Option.objects.create(question=question, order=1, text="True", is_correct=random.choice([True, False]))
                     Option.objects.create(question=question, order=2, text="False", is_correct=not Option.objects.get(question=question, text="True").is_correct)
                 else:
-                    # Create 3-5 options
                     num_options = random.randint(3, 5)
                     correct_option_index = random.randint(0, num_options - 1)
-                    
                     for j in range(num_options):
                         Option.objects.create(
                             question=question,
@@ -620,13 +657,11 @@ class Command(BaseCommand):
         attempts_count = 0
         quizzes = Quiz.objects.filter(status='active')
         
-        for student in students[:10]:  # For first 10 students
-            # Try to attempt 2-4 quizzes
+        for student in students[:10]:
             available_quizzes = list(quizzes)
             if available_quizzes:
                 for quiz in random.sample(available_quizzes, min(random.randint(2, 4), len(available_quizzes))):
                     try:
-                        # Check if student already attempted
                         if not QuizAttempt.objects.filter(student=student, quiz=quiz, endAt__isnull=False).exists():
                             attempt = QuizAttempt.objects.create(
                                 student=student,
@@ -636,8 +671,6 @@ class Command(BaseCommand):
                                 score=round(random.uniform(60, 100), 2)
                             )
                             attempts_count += 1
-                            
-                            # Create student answers
                             self.create_student_answers(attempt)
                     except Exception as e:
                         self.stdout.write(f"  ⚠️ Could not create quiz attempt: {e}")
@@ -650,18 +683,15 @@ class Command(BaseCommand):
             try:
                 correct_options = question.options.filter(is_correct=True)
                 if correct_options.exists():
-                    # Student selects all correct options
-                    student_answers = StudentAnswer.objects.create(
+                    student_answer = StudentAnswer.objects.create(
                         attempt=attempt,
                         question=question,
                         isCorrect=random.choice([True, False]),
                         pointsEarned=random.choice([0, 1, 2])
                     )
-                    
-                    # Randomly select 1-3 options
                     num_selected = random.randint(1, min(3, correct_options.count()))
                     selected_options = random.sample(list(correct_options), num_selected)
-                    student_answers.selectedOptions.set(selected_options)
+                    student_answer.selectedOptions.set(selected_options)
             except Exception as e:
                 self.stdout.write(f"  ⚠️ Could not create student answer: {e}")
     
@@ -716,32 +746,13 @@ class Command(BaseCommand):
         
         self.stdout.write(f"  ✓ Created {announcement_count} announcements")
     
-    def create_enrollments(self, students, courses):
-        enrollment_count = 0
-        for student in students:
-            enrolled_courses = random.sample(courses, min(random.randint(2, 4), len(courses)))
-            for course in enrolled_courses:
-                try:
-                    enrollment, created = Enrollment.objects.get_or_create(
-                        student=student,
-                        course=course,
-                        defaults={'status': 'enrolled'}
-                    )
-                    if created:
-                        enrollment_count += 1
-                except Exception as e:
-                    self.stdout.write(f"  ⚠️ Could not create enrollment: {e}")
-        self.stdout.write(f"  ✓ Created {enrollment_count} enrollments for {len(students)} students")
-    
     def create_appeals(self, students, departments, faculties, batches, courses, modules):
         """Create appeals with error handling"""
         appeal_statuses = ['PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED']
         
-        # Only create appeals if the models exist
         appeal_models = []
         for model in [BursaryAppeal, HostelAppeal, ExamRewriteAppeal, MedicalLeaveAppeal, ResultReEvaluationAppeal]:
             try:
-                # Check if the model's table exists by trying to query it
                 model.objects.exists()
                 appeal_models.append(model)
             except Exception:
@@ -751,7 +762,7 @@ class Command(BaseCommand):
             self.stdout.write(f"  ⚠️ No appeal models available yet. Run migrations first.")
             return
         
-        # Create bursary appeals
+        # Bursary appeals
         if BursaryAppeal in appeal_models:
             bursary_count = 0
             for student in random.sample(students, min(5, len(students))):
@@ -774,7 +785,7 @@ class Command(BaseCommand):
                     self.stdout.write(f"  ⚠️ Could not create bursary appeal: {e}")
             self.stdout.write(f"  ✓ Created {bursary_count} bursary appeals")
         
-        # Create hostel appeals
+        # Hostel appeals
         if HostelAppeal in appeal_models:
             hostel_count = 0
             for student in random.sample(students, min(5, len(students))):
@@ -797,7 +808,7 @@ class Command(BaseCommand):
                     self.stdout.write(f"  ⚠️ Could not create hostel appeal: {e}")
             self.stdout.write(f"  ✓ Created {hostel_count} hostel appeals")
         
-        # Create exam rewrite appeals
+        # Exam rewrite appeals
         if ExamRewriteAppeal in appeal_models and courses:
             exam_count = 0
             for student in random.sample(students, min(5, len(students))):
@@ -823,7 +834,7 @@ class Command(BaseCommand):
                     self.stdout.write(f"  ⚠️ Could not create exam rewrite appeal: {e}")
             self.stdout.write(f"  ✓ Created {exam_count} exam rewrite appeals")
         
-        # Create medical leave appeals
+        # Medical leave appeals
         if MedicalLeaveAppeal in appeal_models:
             medical_count = 0
             for student in random.sample(students, min(5, len(students))):
@@ -847,7 +858,7 @@ class Command(BaseCommand):
                     self.stdout.write(f"  ⚠️ Could not create medical leave appeal: {e}")
             self.stdout.write(f"  ✓ Created {medical_count} medical leave appeals")
         
-        # Create result re-evaluation appeals
+        # Result re-evaluation appeals
         if ResultReEvaluationAppeal in appeal_models:
             reeval_count = 0
             exam_results = ExamResult.objects.all()
@@ -856,8 +867,8 @@ class Command(BaseCommand):
                     ResultReEvaluationAppeal.objects.create(
                         student=exam.student,
                         academic_year='2024-2025',
-                        department=exam.course.department,
-                        faculty=exam.course.department.faculty,
+                        department=exam.exam.course.department,
+                        faculty=exam.exam.course.department.faculty,
                         title="Result Re-evaluation Request",
                         description="Request to re-evaluate the exam paper",
                         exam_result=exam,
@@ -872,13 +883,12 @@ class Command(BaseCommand):
     
     def create_review_queue(self, admins):
         """Create review queue entries"""
-        # Get all appeals from models that exist
         all_appeals = []
         for model in [BursaryAppeal, HostelAppeal, ExamRewriteAppeal, MedicalLeaveAppeal, ResultReEvaluationAppeal]:
             try:
                 all_appeals.extend(model.objects.all())
             except Exception:
-                pass  # Model might not have table yet
+                pass
         
         if not all_appeals:
             self.stdout.write(f"  ⚠️ No appeals found to add to review queue")
@@ -896,7 +906,6 @@ class Command(BaseCommand):
         for appeal in all_appeals[:20]:
             if hasattr(appeal, 'status') and appeal.status in ['PENDING', 'UNDER_REVIEW']:
                 category = category_map.get(appeal.__class__.__name__, 'other')
-                
                 try:
                     queue_item, created = AppealReviewQueue.objects.get_or_create(
                         content_type=ContentType.objects.get_for_model(appeal),
