@@ -577,7 +577,7 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
         
         if user.role == 'student':
             # Get student's batch from their enrolled courses
-            enrolled_courses = user.enrolled_courses.all()
+            enrolled_courses = Course.objects.filter(enrollments__student=user,enrollments__status='enrolled')
             batches = enrolled_courses.values_list('batch', flat=True).distinct()
             
             # Students see:

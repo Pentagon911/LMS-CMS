@@ -40,7 +40,7 @@ class StudentProfile(models.Model):
         related_name='students',
         help_text="Academic batch/year of the student"
     )
-    program = models.CharField(max_length=100, blank=True)
+    program = models.ForeignKey('lms.Program',on_delete=models.SET_NULL,null=True,blank=True)
     joined_date = models.DateTimeField(default=timezone.now)
     
     cgpa = models.FloatField(null=True, blank=True)

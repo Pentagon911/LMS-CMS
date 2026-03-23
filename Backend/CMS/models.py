@@ -303,7 +303,7 @@ class Announcement(models.Model):
 
     def __str__(self):
         if self.announcement_type == 'batch':
-            return f"Semester {self.semester}: {self.title}"
+            return f"Semester {self.batch}: {self.title}"
         elif self.announcement_type == 'course':
             return f"Course {self.course.code}: {self.title}"
         else:
