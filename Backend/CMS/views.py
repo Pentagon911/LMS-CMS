@@ -708,3 +708,22 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=201)
         
         return Response(serializer.errors, status=400)
+    
+
+class AcademicCalendarViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for academic calendar PDFs.
+    - Admin: full CRUD.
+    - Students & Instructors: read‑only (list, retrieve).
+    """
+    queryset = AcademicCalendar.objects.all()
+    serializer_class = AcademicCalendarSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAuthenticated(), IsAdminUser()]
+        return [IsAuthenticated()]
+
+    def perform_create(self, serializer):
+        serializer.save(uploaded_by=self.request.user)
