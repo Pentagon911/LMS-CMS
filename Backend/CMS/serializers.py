@@ -73,30 +73,86 @@ class LinkSerializer(contentSerializer):
 class AnnouncementSerializer(serializers.ModelSerializer):
     
     created_by_name = serializers.CharField(source='created_by.username', read_only=True)
-
-    # For batch
-    batch_id = serializers.CharField(source='batch.id', read_only=True)
-    
-    # For course
-    course_code = serializers.CharField(source='course.code', read_only=True)
-    
-    # For week
     week_number = serializers.IntegerField(source='week.order', read_only=True)
-    
-    image_url = serializers.SerializerMethodField()
-    pdf_url = serializers.SerializerMethodField()
-    
+    attachments = serializers.SerializerMethodField()
+
     class Meta:
         model = Announcement
         fields = [
-            'id', 'announcement_type', 'title', 'content','image', 'image_url', 'pdf', 'pdf_url', 'batch_id', 'course_code', 'week_number','created_at', 'created_by_name']
+            'id', 'title', 'content', 'attachments', 'week_number', 
+            'created_at', 'created_by_name'
+        ]
         read_only_fields = ['id', 'created_at', 'created_by']
     
-    def get_image_url(self, obj):
-        return obj.image.url if obj.image else None
+    def get_attachments(self, obj):
+        """
+        Return attachments in the format expected by frontend.
+        Always returns an array with exactly 2 attachments (PDF and Image).
+        Each attachment contains null values if the file doesn't exist.
+        """
+        attachments = []
+        
+        # Get PDF attachment
+        pdf_attachment = self.get_file_attachment(obj.pdf, 'application/pdf')
+        attachments.append(pdf_attachment)
+        
+        # Get Image attachment
+        # Determine image MIME type if image exists
+        if obj.image and obj.image.name:
+            file_ext = obj.image.name.split('.')[-1].lower() if '.' in obj.image.name else 'jpg'
+            mime_type = {
+                'jpg': 'image/jpeg',
+                'jpeg': 'image/jpeg',
+                'png': 'image/png',
+                'gif': 'image/gif',
+                'webp': 'image/webp'
+            }.get(file_ext, 'image/jpeg')
+        else:
+            mime_type = 'image/jpeg'
+        
+        image_attachment = self.get_file_attachment(obj.image, mime_type)
+        attachments.append(image_attachment)
+        
+        return attachments
     
-    def get_pdf_url(self, obj):
-        return obj.pdf.url if obj.pdf else None
+    def get_file_attachment(self, file_field, default_mime_type):
+        """
+        Get attachment data for a file field.
+        Returns null values if file doesn't exist.
+        """
+        try:
+            if file_field and file_field.name:
+                # Get file name
+                file_name = file_field.name.split('/')[-1] if '/' in file_field.name else file_field.name
+                
+                # Get file URL
+                file_url = file_field.url if hasattr(file_field, 'url') else f"/media/{file_field.name}"
+                
+                # Get file size
+                file_size = file_field.size if hasattr(file_field, 'size') else 0
+                
+                return {
+                    "fileName": file_name if file_name else None,
+                    "fileUrl": file_url if file_url else None,
+                    "fileSize": file_size if file_size > 0 else None,
+                    "fileType": default_mime_type if default_mime_type else None
+                }
+            else:
+                # Return null values if file doesn't exist
+                return {
+                    "fileName": None,
+                    "fileUrl": None,
+                    "fileSize": None,
+                    "fileType": None
+                }
+        except Exception:
+            # Return null values on any error
+            return {
+                "fileName": None,
+                "fileUrl": None,
+                "fileSize": None,
+                "fileType": None
+            }
 
 
 # ========== BASE Serilizers for Quiz Operations ==========
@@ -441,64 +497,112 @@ class courseDashboardSerializer(serializers.ModelSerializer):
 
         return result
     
-    def get_week_items(self,week):
+    def get_week_items(self, week):
         items = []
 
-        for video in week.video_set.all():
+        # Helper function to safely check file size without crashing
+        def get_safe_file_size(file_obj):
+            try:
+                if file_obj and file_obj.storage.exists(file_obj.name):
+                    return round(file_obj.size / (1024 * 1024), 2)
+            except Exception:
+                pass
+            return 0
+
+        # 1. Videos
+        videos = week.video_set.all()
+        if videos:
+            for video in videos:
+                items.append({
+                    "type": "content",
+                    "title": video.title,
+                    "format": "Video",
+                    "fileUrl": video.file.url if video.file else None,
+                    "fileSize": get_safe_file_size(video.file),
+                    "description": video.description
+                })
+        else:
             items.append({
-                "type": "content",
-                "title": video.title,
-                "format": "Video",
-                "fileUrl": video.file.url,
-                "fileSize": video.fileSize,
-                "description": video.description
+                "type": None, "title": None, "format": None,
+                "fileUrl": None, "fileSize": None, "description": None
             })
 
-        for pdf in week.pdf_set.all():
+        # 2. PDFs
+        pdfs = week.pdf_set.all()
+        if pdfs:
+            for pdf in pdfs:
+                items.append({
+                    "type": "content",
+                    "title": pdf.title,
+                    "format": "PDF",
+                    "fileUrl": pdf.file.url if pdf.file else None,
+                    "fileSize": get_safe_file_size(pdf.file),
+                    "description": pdf.description
+                })
+        else:
             items.append({
-                "type": "content",
-                "title": pdf.title,
-                "format": "PDF",
-                "fileUrl": pdf.file.url,
-                "fileSize": pdf.fileSize,
-                "description": pdf.description
+                "type": None, "title": None, "format": None,
+                "fileUrl": None, "fileSize": None, "description": None
             })
 
-        for link in week.link_set.all():
+        # 3. Links
+        links = week.link_set.all()
+        if links:
+            for link in links:
+                items.append({
+                    "type": "content",
+                    "title": link.title,
+                    "format": "Link",
+                    "fileUrl": link.link_url,
+                    "fileSize": None, 
+                    "description": link.description
+                })
+        else:
             items.append({
-                "type": "content",
-                "title": link.title,
-                "format": "Link",
-                "fileUrl": link.link_url,
-                "description": link.description
+                "type": None, "title": None, "format": None,
+                "fileUrl": None, "fileSize": None, "description": None
             })
 
+        # 4. Quizzes
         request = self.context.get('request')
         quizzes = week.quizzes.all()
 
-        if request and request.user.role == 'student':
+        if request and getattr(request.user, 'role', None) == 'student':
             quizzes = quizzes.filter(status='published')
         
-        for quiz in quizzes:
+        if quizzes:
+            for quiz in quizzes:
+                items.append({
+                    'type': 'quiz',
+                    'title': quiz.title,
+                    'quizId': quiz.quizId,
+                    'duration': f"{quiz.timeLimitMinutes} min",
+                    'questionsCount': quiz.questions.count(),
+                    'description': getattr(quiz, 'description', '')
+                })
+        else:
             items.append({
-                'type': 'quiz',
-                'title': quiz.title,
-                'quizId': quiz.quizId,
-                'duration': f"{quiz.timeLimitMinutes} min",
-                'questionsCount': quiz.questions.count(),
-                'description': getattr(quiz, 'description', '')
+                'type': None, 'title': None, 'quizId': None,
+                'duration': None, 'questionsCount': None, 'description': None
             })
 
-        for announcement in week.announcements.all():
+        # 5. Announcements
+        announcements = week.announcements.all()
+        if announcements:
+            for announcement in announcements:
+                items.append({
+                    'type': 'announcement',
+                    'title': announcement.content[:50],
+                    'message': announcement.content,
+                    'date': announcement.created_at.strftime('%Y-%m-%d')
+                })
+        else:
             items.append({
-                'type': 'announcement',
-                'title': announcement.content[:50],
-                'message': announcement.content,
-                'date': announcement.created_at.strftime('%Y-%m-%d')
+                'type': None, 'title': None, 'quizId': None, 
+                'duration': None, 'questionsCount': None, 'description': None
             })
-        
+
         return items
-
 class WeekSerializer(serializers.ModelSerializer):
     """
     Serializer for Week model - includes all related content. Dynamically loads videos, PDFs, links, announcements, and quizzes
