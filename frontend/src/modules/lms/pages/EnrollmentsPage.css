@@ -16,6 +16,13 @@ body.dark-mode .enrollments-container {
 body.dark-mode .enrollments-header h1 {
   color: #e5e9f0;
 }
+/* Fix paragraph text color in dark mode */
+.enrollments-header p {
+  color: #2c3e50;
+}
+body.dark-mode .enrollments-header p {
+  color: #bdc3c7;
+}
 .enrollments-table-container {
   overflow-x: auto;
   background: white;
@@ -68,16 +75,24 @@ body.dark-mode .enrollments-table td {
   border-radius: 10px;
   transition: width 0.3s ease;
 }
+/* Ensure progress fill stays green in dark mode */
+body.dark-mode .progress-fill {
+  background: #27ae60;
+}
 .progress-bar span {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
   font-size: 0.7rem;
   font-weight: bold;
-  color: #1a2632;
+  color: #1ccb85;
+}
+/* Improve text contrast in dark mode */
+body.dark-mode .progress-bar span {
+  color: #f0f0f0;
 }
 body.dark-mode .progress-bar {
-  background: #2a313c;
+  background: #34dc6c;
 }
 .status-active {
   background: #e8f5e9;

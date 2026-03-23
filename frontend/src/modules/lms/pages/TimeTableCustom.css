@@ -1,0 +1,102 @@
+/* TimeTablePageCustom.css - Overrides for better visibility */
+
+/* Ensure edit/delete buttons have proper size and spacing */
+.timetable-actions button {
+  min-width: 36px;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Fix edit button appearance */
+.edit-btn,
+.delete-btn {
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 8px !important;
+  border-radius: 6px !important;
+}
+
+.edit-btn {
+  color: #2c3e50 !important;
+}
+.edit-btn:hover {
+  background: rgba(0,0,0,0.05) !important;
+}
+
+.delete-btn {
+  color: #d32f2f !important;
+}
+.delete-btn:hover {
+  background: rgba(211, 47, 47, 0.1) !important;
+}
+
+/* Dark mode overrides */
+body.dark-mode .edit-btn {
+  color: #e5e9f0 !important;
+}
+body.dark-mode .edit-btn:hover {
+  background: rgba(255,255,255,0.1) !important;
+}
+body.dark-mode .delete-btn {
+  color: #ff8a80 !important;
+}
+body.dark-mode .delete-btn:hover {
+  background: rgba(255, 138, 128, 0.15) !important;
+}
+
+/* Ensure icons are visible and sized properly */
+.edit-btn svg,
+.delete-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  vertical-align: middle;
+}
+
+/* Fix download button appearance to match new style */
+.download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #1a2632 !important;
+  color: white !important;
+  border: none !important;
+  padding: 8px 16px !important;
+  border-radius: 6px !important;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.download-btn:hover {
+  background: #2c3e50 !important;
+  transform: translateY(-1px);
+}
+body.dark-mode .download-btn {
+  background: #2c3e50 !important;
+}
+body.dark-mode .download-btn:hover {
+  background: #3a4a5e !important;
+}
+
+/* Ensure the action buttons don't overflow on mobile */
+@media (max-width: 768px) {
+  .timetable-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .timetable-actions button {
+    flex: 0 0 auto;
+  }
+}
+
+.add-btn {
+    background-color: #3c79e1;
+    padding-left: 100px;
+    padding-right: 100px;
+}
+body.dark-mode .course-welcome{
+    color:#e5e9f0;
+}

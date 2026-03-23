@@ -69,24 +69,44 @@ body.dark-mode .course-info h3 {
   position: relative;
   margin: 1rem 0;
 }
+
 .progress-fill {
-  background: #27ae60;
+  background: #22a358;
   height: 100%;
   width: 0%;
-  transition: width 0.3s;
+  transition: width 0.3s ease;
+  border-radius: 10px;
 }
+
 .progress-bar span {
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 0.7rem;
   font-weight: bold;
-  color: #1a2632;
+  color: #040c15;
+  z-index: 1; /* Ensures text appears above the fill */
+}
+
+/* Dark mode */
+body.dark-mode .progress-bar {
+  background: #2a313c;
+}
+body.dark-mode .progress-fill {
+  background: #27ae60;
+}
+body.dark-mode .progress-bar span {
+  color: #343c4a;
 }
 .continue-btn {
   width: 100%;
   padding: 0.6rem;
-  background: #1a2632;
+  background: #1666b6;
   color: white;
   border: none;
   border-radius: 6px;

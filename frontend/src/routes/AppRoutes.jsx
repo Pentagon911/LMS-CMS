@@ -13,15 +13,15 @@ import EnrollmentsPage from "../modules/lms/pages/EnrollmentsPage.jsx";
 import MyCoursesPage from "../modules/lms/pages/MyCoursesPage.jsx";
 import ExamResultsPage from "../modules/lms/pages/ExamResultsPage.jsx";
 import UpdateResultsPage from "../modules/lms/pages/UpdateResultsPage.jsx";
-import BursaryAppealsPage from "../modules/lms/pages/BursaryAppealsPage.jsx";
-import HostelAppealsPage from "../modules/lms/pages/HostelAppealsPage.jsx";
-import ExamAppealsPage from "../modules/lms/pages/ExamAppealsPage.jsx";
-import MedicalAppealsPage from "../modules/lms/pages/MedicalAppealsPage.jsx";
-import BursaryApplicationPage from "../modules/lms/pages/BursaryApplicationPage.jsx";
-import HostelApplicationPage from "../modules/lms/pages/HostelApplicationPage.jsx";
-import ExamAppealFormPage from "../modules/lms/pages/ExamAppealFormPage.jsx";
-import MedicalLeavePage from "../modules/lms/pages/MedicalLeavePage.jsx";
-import MyAppealsPage from "../modules/lms/pages/MyAppealsPage.jsx";
+// import BursaryAppealsPage from "../modules/lms/pages/BursaryAppealsPage.jsx";
+// import HostelAppealsPage from "../modules/lms/pages/HostelAppealsPage.jsx";
+// import ExamAppealsPage from "../modules/lms/pages/ExamAppealsPage.jsx";
+// import MedicalAppealsPage from "../modules/lms/pages/MedicalAppealsPage.jsx";
+// import BursaryApplicationPage from "../modules/lms/pages/BursaryApplicationPage.jsx";
+// import HostelApplicationPage from "../modules/lms/pages/HostelApplicationPage.jsx";
+// import ExamAppealFormPage from "../modules/lms/pages/ExamAppealFormPage.jsx";
+// import MedicalLeavePage from "../modules/lms/pages/MedicalLeavePage.jsx";
+// import MyAppealsPage from "../modules/lms/pages/MyAppealsPage.jsx";
 
 //LMS-APPEAL
 import AdminAppealDashboard from '../modules/lms/pages/Admin-Appeal/AdminAppealDashboard';
@@ -31,6 +31,14 @@ import AdminExamRewriteAppeals from '../modules/lms/pages/Admin-Appeal/AdminExam
 import AdminMedicalLeaveAppeals from '../modules/lms/pages/Admin-Appeal/AdminMedicalLeaveAppeals';
 import AdminResultReevalAppeals from '../modules/lms/pages/Admin-Appeal/AdminResultReevalAppeals';
 import ReviewQueue from '../modules/lms/pages/Admin-Appeal/ReviewQueue';
+//LMS-STUDENT-APPEAL
+import StudentAppealDashboard from '../modules/lms/pages/Student-Appeal/StudentAppealDashboard';
+import BursaryApplicationPage from '../modules/lms/pages/Student-Appeal/BursaryApplicationPage';
+import HostelApplicationPage from '../modules/lms/pages/Student-Appeal/HostelApplicationPage';
+import ExamAppealFormPage from '../modules/lms/pages/Student-Appeal/ExamAppealFormPage';
+import MedicalLeavePage from '../modules/lms/pages/Student-Appeal/MedicalLeavePage';
+import ResultReevalPage from '../modules/lms/pages/Student-Appeal/ResultReevalPage';
+import MyAppealsPage from '../modules/lms/pages/Student-Appeal/MyAppealsPage';
 
 //CMS Pages
 import CMSDashboard from "../modules/cms/pages/Dashboard.jsx";
@@ -82,7 +90,7 @@ function AppRoutes() {
       <Route path="/lms/academics/results" element={<LMSLayout><ExamResultsPage /></LMSLayout>} />
       <Route path="/lms/update-results" element={<LMSLayout><UpdateResultsPage /></LMSLayout>} />
 
-      <Route path="/lms/appeals-and-welfare/bursary-appeals" element={<LMSLayout><BursaryAppealsPage /></LMSLayout>} />
+      {/* <Route path="/lms/appeals-and-welfare/bursary-appeals" element={<LMSLayout><BursaryAppealsPage /></LMSLayout>} />
       <Route path="/lms/appeals-and-welfare/hostel-appeals" element={<LMSLayout><HostelAppealsPage /></LMSLayout>} />
       <Route path="/lms/appeals-and-welfare/exam-appeals" element={<LMSLayout><ExamAppealsPage /></LMSLayout>} />
       <Route path="/lms/appeals-and-welfare/medical-appeals" element={<LMSLayout><MedicalAppealsPage /></LMSLayout>} />
@@ -91,9 +99,8 @@ function AppRoutes() {
       <Route path="/lms/appeals-and-welfare/my-appeals" element={<LMSLayout><MyAppealsPage /></LMSLayout>} />
       <Route path="/lms/appeals-and-welfare/medical-leave" element={<LMSLayout><MedicalLeavePage /></LMSLayout>} />
       <Route path="/lms/appeals-and-welfare/exam-rewrite" element={<LMSLayout><ExamAppealFormPage /></LMSLayout>} />
-      <Route path="/lms/appeals-and-welfare/appeal/:id" element={<LMSLayout><MyAppealsPage /></LMSLayout>} /> {/* placeholder for detail view */}
+      <Route path="/lms/appeals-and-welfare/appeal/:id" element={<LMSLayout><MyAppealsPage /></LMSLayout>} /> placeholder for detail view */}
 
-      {/* ========== LMS ADMIN APPEAL MANAGEMENT ROUTES ========== */}
       {/* Admin Appeal Dashboard */}
       <Route path="/lms/admin/appeals" element={<ProtectedRoute requiredRole="admin"><LMSLayout><AdminAppealDashboard /></LMSLayout></ProtectedRoute>} />
       
@@ -114,6 +121,20 @@ function AppRoutes() {
       {/* Admin Review Queue */}
       <Route path="/lms/admin/review-queue" element={<ProtectedRoute requiredRole="admin"><LMSLayout><ReviewQueue /></LMSLayout></ProtectedRoute>} />
       <Route path="/lms/admin/review-queue/:id" element={<ProtectedRoute requiredRole="admin"><LMSLayout><ReviewQueue /></LMSLayout></ProtectedRoute>} />
+      
+      {/* Student Appeal Dashboard */}
+      <Route path="/lms/student/appeals" element={<LMSLayout><StudentAppealDashboard /></LMSLayout>} />
+      
+      {/* Student Appeal Form Pages */}
+      <Route path="/lms/appeals-and-welfare/bursary" element={<LMSLayout><BursaryApplicationPage /></LMSLayout>} />
+      <Route path="/lms/appeals-and-welfare/welfare-request" element={<LMSLayout><HostelApplicationPage /></LMSLayout>} />
+      <Route path="/lms/appeals-and-welfare/exam-rewrite" element={<LMSLayout><ExamAppealFormPage /></LMSLayout>} />
+      <Route path="/lms/appeals-and-welfare/medical-leave" element={<LMSLayout><MedicalLeavePage /></LMSLayout>} />
+      <Route path="/lms/appeals-and-welfare/result-reeval" element={<LMSLayout><ResultReevalPage /></LMSLayout>} />
+      
+      {/* Student My Appeals - View all submitted appeals */}
+      <Route path="/lms/appeals-and-welfare/my-appeals" element={<LMSLayout><MyAppealsPage /></LMSLayout>} />
+      <Route path="/lms/appeals-and-welfare/appeal/:id" element={<LMSLayout><MyAppealsPage /></LMSLayout>} />
       
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/login" replace />} />

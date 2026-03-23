@@ -39,7 +39,7 @@ const ExamResultsPage = () => {
     <div className="exam-results-container">
       <div className="exam-results-header">
         <h1>Exam Results</h1>
-        <p>View your academic performance</p>
+        <p className = "exam-results-desc">View your academic performance</p>
       </div>
       <div className="filters">
         <select onChange={(e) => setFilter({ ...filter, semester: e.target.value })} value={filter.semester}>

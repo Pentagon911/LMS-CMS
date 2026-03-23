@@ -174,14 +174,9 @@ const AdminAppealDashboard = () => {
       </div>
 
       <div className="quick-actions">
-        <h2>Quick Actions</h2>
+        
         <div className="actions-list">
-          <button 
-            className="action-btn"
-            onClick={() => navigate('/lms/admin/review-queue')}
-          >
-            <MdQueue /> Review Queue
-          </button>
+          
         </div>
       </div>
     </div>
