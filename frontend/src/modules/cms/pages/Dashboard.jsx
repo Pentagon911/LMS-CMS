@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getUserFromToken } from "../../../utils/auth";
 import { MdPerson, MdBadge, MdAdminPanelSettings, MdCalendarToday } from "react-icons/md";
 import "./Dashboard.css";
 
@@ -7,6 +8,13 @@ const Dashboard = () => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const [tokenData, setTokenData] = useState(null);
+
+  useEffect(()=>{
+      const token = getUserFromToken();
+      setTokenData(token);
+  },[]);
+
 
   useEffect(() => {
     // Get user data from localStorage (assuming you store it after login)
@@ -112,9 +120,9 @@ const Dashboard = () => {
               <h2>{userData.first_name} {userData.last_name}</h2>
               <div 
                 className="role-badge"
-                style={{ backgroundColor: getRoleBadgeColor(userData.role) }}
+                style={{ backgroundColor: getRoleBadgeColor(tokenData.role) }}
               >
-                {userData.role === 'instructor'? "Lecturer/Instructor":userData.role || 'User'}
+                {tokenData.role === 'instructor'? "Lecturer/Instructor":tokenData.role || 'User'}
               </div>
             </div>
           </div>
@@ -143,7 +151,7 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Card */}
-        { userData.role != 'student' && <div className="dashboard-card stats-card">
+        { tokenData.role != 'student' && <div className="dashboard-card stats-card">
           <h3>Account Overview</h3>
           <div className="stats-grid">
             <div className="stat-item">
@@ -158,7 +166,7 @@ const Dashboard = () => {
               <div className="stat-icon"><MdBadge /></div>
               <div className="stat-info">
                 <span className="stat-label">Role</span>
-                <span className="stat-value role-text">{userData.role == 'instructor'? 'Lecturer/Instructor':userData.role}</span>
+                <span className="stat-value role-text">{tokenData.role == 'instructor'? 'Lecturer/Instructor':tokenData.role}</span>
               </div>
             </div>
 

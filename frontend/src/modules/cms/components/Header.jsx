@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useEffectEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { MdDashboard, MdMenuBook, MdQuiz, MdPerson, MdCampaign, MdLogout, MdLibraryBooks, MdDarkMode, MdLightMode, MdTableChart } from 'react-icons/md';
 import { getUserFromToken } from '../../../utils/auth';
@@ -9,6 +9,7 @@ const Header = () => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [tokenData, setTokenData] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem('theme');
     return savedTheme === 'dark';
@@ -17,25 +18,24 @@ const Header = () => {
   const profileMenuRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
+  
+  useEffect(()=>{
+      const token = getUserFromToken();
+      setTokenData(token);
+  },[]);
 
   // Check if token is valid and not expired
   const isTokenValid = () => {
-    const tokenData = getUserFromToken();
-    if (!tokenData) return false;
-    
     try {
+      const tokenData = getUserFromToken();
+      if (!tokenData || !tokenData.exp) return false;
       const currentTime = Date.now() / 1000;
-      // Check if token is expired
-      if (tokenData.exp && tokenData.exp < currentTime) {
-        return false;
-      }
-      return true;
+      return tokenData.exp > currentTime + 10;
     } catch (err) {
       console.error('Token validation error:', err);
       return false;
     }
   };
-
   // Check if user is authenticated
   const isAuthenticated = () => {
     const tokenValid = isTokenValid();
@@ -51,7 +51,6 @@ const Header = () => {
       localStorage.removeItem('user');
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user_role');
       
       // Don't redirect if already on login page
       if (location.pathname !== '/login') {
@@ -124,7 +123,6 @@ const Header = () => {
           localStorage.removeItem('user');
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
-          localStorage.removeItem('user_role');
           navigate('/login');
         }
       }
@@ -171,8 +169,8 @@ const Header = () => {
   }, [isDarkMode]);
 
   // Check user roles
-  const isInstructor = user?.role === 'instructor' || user?.role === 'lecturer';
-  const isAdmin = user?.role === 'admin';
+  const isInstructor = tokenData?.role === 'instructor';
+  const isAdmin = tokenData?.role === 'admin';
 
   // Base navigation for all users
   const baseNavigation = [
