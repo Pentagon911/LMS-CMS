@@ -1,8 +1,8 @@
 // src/modules/lms/pages/BursaryApplicationPage.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import request from '../../../../utils/requestMethods';
-import { MdSave, MdCancel, MdAttachFile, MdWarning, MdCheckCircle, MdDelete, MdCloudUpload } from 'react-icons/md';
+import { MdSave, MdCancel, MdWarning, MdCheckCircle, MdDelete, MdCloudUpload, MdAttachMoney } from 'react-icons/md';
 import './AppealFormPage.css';
 
 const BursaryApplicationPage = () => {
@@ -16,17 +16,47 @@ const BursaryApplicationPage = () => {
   const [uploadingFile, setUploadingFile] = useState(false);
   
   // Get user data from localStorage
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  
-  // Extract IDs from profile
-  const departmentId = user.profile?.department || '';
-  const facultyId = user.profile?.faculty || '';
-  const batchId = user.profile?.batch || '';
-  
-  // Extract names from user object
-  const departmentName = user.department_name || '';
-  const facultyName = user.faculty_name || '';
-  const batchName = user.batch_name || '';
+  const [user, setUser] = useState(null);
+  const [departmentId, setDepartmentId] = useState(null);
+  const [facultyId, setFacultyId] = useState(null);
+  const [batchId, setBatchId] = useState(null);
+  const [studentId, setStudentId] = useState(null);
+  const [departmentName, setDepartmentName] = useState('Not assigned');
+  const [facultyName, setFacultyName] = useState('Not assigned');
+  const [batchName, setBatchName] = useState('Not assigned');
+
+  // Define appeal type constant
+  const APPEAL_TYPE = 'BURSARY';
+
+  // Load user data from localStorage
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+      setStudentId(parsedUser.id);
+      
+      // Extract IDs from profile
+      if (parsedUser.profile) {
+        setDepartmentId(parsedUser.profile.department);
+        setFacultyId(parsedUser.profile.faculty);
+        setBatchId(parsedUser.profile.batch);
+        
+        // Set display names
+        setDepartmentName(parsedUser.department_name || 'Not assigned');
+        setFacultyName(parsedUser.faculty_name || 'Not assigned');
+        setBatchName(parsedUser.batch_name || 'Not assigned');
+      } else {
+        // Fallback to direct properties if profile doesn't exist
+        setDepartmentId(parsedUser.department);
+        setFacultyId(parsedUser.faculty);
+        setBatchId(parsedUser.batch);
+        setDepartmentName(parsedUser.department_name || 'Not assigned');
+        setFacultyName(parsedUser.faculty_name || 'Not assigned');
+        setBatchName(parsedUser.batch_name || 'Not assigned');
+      }
+    }
+  }, []);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -35,9 +65,6 @@ const BursaryApplicationPage = () => {
     family_income_bracket: '',
     has_scholarship: false,
     reason_for_aid: '',
-    department: departmentId,
-    faculty: facultyId,
-    batch: batchId,
   });
 
   const handleInputChange = (e) => {
@@ -118,35 +145,61 @@ const BursaryApplicationPage = () => {
     setSupportingDocs(supportingDocs.filter((_, i) => i !== index));
   };
 
-  const uploadFile = async (file, type) => {
-    try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('file', file);
-      formDataToSend.append('description', `${type}_${file.name}`);
-      
-      const response = await request.UPLOAD('/lms/attachments/', formDataToSend);
-      return response;
-    } catch (err) {
-      console.error(`Error uploading ${type}:`, err);
-      throw err;
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
+    // Check authentication
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      setError('You are not logged in. Please login again.');
+      setLoading(false);
+      navigate('/login');
+      return;
+    }
+
     // Validate required fields
-    if (!formData.department || !formData.faculty || !formData.batch) {
+    if (!studentId) {
+      setError('Student information is missing. Please log in again.');
+      setLoading(false);
+      return;
+    }
+
+    if (!departmentId || !facultyId || !batchId) {
       setError('Student profile information is incomplete. Please contact support.');
       setLoading(false);
       return;
     }
-    
+
+    // Validate required form fields
+    if (!formData.title.trim()) {
+      setError('Please provide a title for your application.');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.description.trim()) {
+      setError('Please provide a description for your application.');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.family_income_bracket) {
+      setError('Please select your family income bracket.');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.reason_for_aid.trim()) {
+      setError('Please provide a reason for financial aid.');
+      setLoading(false);
+      return;
+    }
+
     // Validate required documents
     if (!incomeCertificate) {
-      setError('Income certificate is required');
+      setError('Income certificate is required.');
       setLoading(false);
       return;
     }
@@ -154,42 +207,81 @@ const BursaryApplicationPage = () => {
     try {
       setUploadingFile(true);
       
-      // Prepare appeal data with file IDs
-      const submitData = {
-        ...formData,
-        department: parseInt(formData.department),
-        faculty: parseInt(formData.faculty),
-        batch: parseInt(formData.batch),
-      };
+      // Create FormData object
+      const formDataToSend = new FormData();
       
-      // Create the appeal first
-      const appealResponse = await request.POST('/lms/appeals/bursary/', submitData);
+      // Add required fields
+      formDataToSend.append('appeal_type', APPEAL_TYPE);
+      formDataToSend.append('student', studentId.toString());
+      formDataToSend.append('department', departmentId.toString());
+      formDataToSend.append('faculty', facultyId.toString());
+      if (batchId) {
+        formDataToSend.append('batch', batchId.toString());
+      }
       
-      // Upload income certificate and associate with appeal
+      // Add form fields
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('academic_year', formData.academic_year);
+      formDataToSend.append('family_income_bracket', formData.family_income_bracket);
+      formDataToSend.append('has_scholarship', formData.has_scholarship ? 'true' : 'false');
+      formDataToSend.append('reason_for_aid', formData.reason_for_aid);
+      
+      // Append files
       if (incomeCertificate) {
-        const incomeCertResponse = await uploadFile(incomeCertificate, 'income_certificate');
-        await request.PATCH(`/lms/attachments/${incomeCertResponse.id}/`, {
-          appeal_type: 'bursaryappeal',
-          appeal_id: appealResponse.id
-        });
+        formDataToSend.append('income_certificate', incomeCertificate);
       }
       
-      // Upload bank statements if provided
       if (bankStatements) {
-        const bankResponse = await uploadFile(bankStatements, 'bank_statements');
-        await request.PATCH(`/lms/attachments/${bankResponse.id}/`, {
-          appeal_type: 'bursaryappeal',
-          appeal_id: appealResponse.id
-        });
+        formDataToSend.append('bank_statements', bankStatements);
       }
       
-      // Upload supporting documents
-      for (const doc of supportingDocs) {
-        const docResponse = await uploadFile(doc, 'supporting_document');
-        await request.PATCH(`/lms/attachments/${docResponse.id}/`, {
-          appeal_type: 'bursaryappeal',
-          appeal_id: appealResponse.id
-        });
+      if (supportingDocs.length > 0) {
+        formDataToSend.append('supporting_documents', supportingDocs[0]);
+        
+        const additionalDocs = supportingDocs.slice(1);
+        if (additionalDocs.length > 0) {
+          console.log(`${additionalDocs.length} additional document(s) will be uploaded as attachments after appeal creation.`);
+        }
+      }
+      
+      // Debug log
+      console.log('Submitting bursary appeal with:', {
+        appeal_type: APPEAL_TYPE,
+        student: studentId,
+        department: departmentId,
+        faculty: facultyId,
+        batch: batchId,
+        title: formData.title,
+        files: {
+          income_certificate: incomeCertificate?.name || 'none',
+          bank_statements: bankStatements?.name || 'none',
+          supporting_documents: supportingDocs.length > 0 ? supportingDocs[0]?.name : 'none',
+        }
+      });
+      
+      // Create the appeal
+      const appealResponse = await request.POST('/lms/appeals/bursary/', formDataToSend, { isFormData: true });
+      
+      console.log('Appeal created successfully:', appealResponse);
+      
+      // Upload additional documents as attachments
+      if (supportingDocs.length > 1 && appealResponse.id) {
+        try {
+          const additionalDocs = supportingDocs.slice(1);
+          for (const doc of additionalDocs) {
+            const attachmentFormData = new FormData();
+            attachmentFormData.append('file', doc);
+            attachmentFormData.append('description', `Supporting document: ${doc.name}`);
+            attachmentFormData.append('appeal_type', 'bursaryappeal');
+            attachmentFormData.append('appeal_id', appealResponse.id.toString());
+            
+            await request.POST('/lms/attachments/', attachmentFormData, { isFormData: true });
+          }
+          console.log('Additional documents uploaded successfully');
+        } catch (attachmentError) {
+          console.warn('Failed to upload additional documents:', attachmentError);
+        }
       }
       
       setSuccess(true);
@@ -198,7 +290,33 @@ const BursaryApplicationPage = () => {
       }, 2000);
     } catch (err) {
       console.error('Error submitting bursary application:', err);
-      setError(err.message || 'Failed to submit application. Please try again.');
+      
+      let errorMessage = 'Failed to submit application. Please try again.';
+      
+      if (err.status === 401) {
+        errorMessage = 'Your session has expired. Please login again.';
+        setTimeout(() => navigate('/login'), 2000);
+      } else if (err.data) {
+        if (typeof err.data === 'object') {
+          const errorMessages = [];
+          for (const [key, value] of Object.entries(err.data)) {
+            if (Array.isArray(value)) {
+              errorMessages.push(`${key}: ${value.join(', ')}`);
+            } else if (typeof value === 'string') {
+              errorMessages.push(`${key}: ${value}`);
+            } else {
+              errorMessages.push(`${key}: ${JSON.stringify(value)}`);
+            }
+          }
+          errorMessage = errorMessages.join('; ');
+        } else if (typeof err.data === 'string') {
+          errorMessage = err.data;
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
       setUploadingFile(false);
@@ -223,7 +341,7 @@ const BursaryApplicationPage = () => {
   return (
     <div className="appeal-form-container">
       <div className="form-header">
-        <h1>Bursary Application</h1>
+        <h1><MdAttachMoney /> Bursary Application</h1>
         <p>Apply for financial aid and scholarships</p>
       </div>
 
@@ -235,6 +353,7 @@ const BursaryApplicationPage = () => {
       )}
 
       <form onSubmit={handleSubmit} className="appeal-form">
+        {/* Student Information Section */}
         <div className="form-section">
           <h3>Student Information</h3>
           
@@ -242,58 +361,60 @@ const BursaryApplicationPage = () => {
             <label>Student Name</label>
             <input
               type="text"
-              value={`${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.username || ''}
+              value={user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username || '' : ''}
               disabled
               className="readonly-field"
             />
           </div>
 
-          <div className="form-group">
-            <label>Department</label>
-            <input
-              type="text"
-              value={departmentName || 'Not assigned'}
-              disabled
-              className="readonly-field"
-            />
-            <input type="hidden" name="department" value={formData.department} />
+          <div className="form-row">
+            <div className="form-group">
+              <label>Department</label>
+              <input
+                type="text"
+                value={departmentName}
+                disabled
+                className="readonly-field"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Faculty</label>
+              <input
+                type="text"
+                value={facultyName}
+                disabled
+                className="readonly-field"
+              />
+            </div>
           </div>
 
-          <div className="form-group">
-            <label>Faculty</label>
-            <input
-              type="text"
-              value={facultyName || 'Not assigned'}
-              disabled
-              className="readonly-field"
-            />
-            <input type="hidden" name="faculty" value={formData.faculty} />
-          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Batch</label>
+              <input
+                type="text"
+                value={batchName}
+                disabled
+                className="readonly-field"
+              />
+            </div>
 
-          <div className="form-group">
-            <label>Batch</label>
-            <input
-              type="text"
-              value={batchName || 'Not assigned'}
-              disabled
-              className="readonly-field"
-            />
-            <input type="hidden" name="batch" value={formData.batch} />
-          </div>
-
-          <div className="form-group">
-            <label>Academic Year *</label>
-            <input
-              type="text"
-              name="academic_year"
-              value={formData.academic_year}
-              onChange={handleInputChange}
-              required
-              placeholder="e.g., 2024-2025"
-            />
+            <div className="form-group">
+              <label>Academic Year *</label>
+              <input
+                type="text"
+                name="academic_year"
+                value={formData.academic_year}
+                onChange={handleInputChange}
+                required
+                placeholder="e.g., 2024-2025"
+              />
+            </div>
           </div>
         </div>
 
+        {/* Application Details Section */}
         <div className="form-section">
           <h3>Application Details</h3>
           
@@ -322,6 +443,7 @@ const BursaryApplicationPage = () => {
           </div>
         </div>
 
+        {/* Financial Information Section */}
         <div className="form-section">
           <h3>Financial Information</h3>
 
@@ -365,12 +487,12 @@ const BursaryApplicationPage = () => {
           </div>
         </div>
 
+        {/* Supporting Documents Section */}
         <div className="form-section">
           <h3>Supporting Documents</h3>
           
-          {/* Income Certificate Upload */}
           <div className="form-group">
-            <label>Income Certificate *</label>
+            <label>Income Certificate <span className="required">*</span></label>
             <div className="file-upload-area">
               <input
                 type="file"
@@ -396,12 +518,11 @@ const BursaryApplicationPage = () => {
                 </div>
               )}
             </div>
-            <small>Upload income certificate (PDF only, max 5MB)</small>
+            <small>Upload income certificate to verify your financial situation (PDF only, max 5MB)</small>
           </div>
 
-          {/* Bank Statements Upload */}
           <div className="form-group">
-            <label>Bank Statements (Optional)</label>
+            <label>Bank Statements <span className="optional">(Optional)</span></label>
             <div className="file-upload-area">
               <input
                 type="file"
@@ -430,9 +551,8 @@ const BursaryApplicationPage = () => {
             <small>Upload recent bank statements (PDF only, max 5MB)</small>
           </div>
 
-          {/* Supporting Documents Upload */}
           <div className="form-group">
-            <label>Supporting Documents (Optional)</label>
+            <label>Supporting Documents <span className="optional">(Optional)</span></label>
             <div className="file-upload-area">
               <input
                 type="file"
@@ -447,11 +567,11 @@ const BursaryApplicationPage = () => {
                 <span>Click to upload multiple supporting documents (PDF)</span>
               </label>
             </div>
-            <small>Upload any additional supporting documents (PDF only, max 5MB each)</small>
+            <small>Upload any additional supporting documents (PDF only, max 5MB each). Only the first document will be attached as supporting_documents; additional documents will be uploaded as separate attachments.</small>
             
             {supportingDocs.length > 0 && (
               <div className="attachments-list">
-                <label>Uploaded Documents:</label>
+                <label>Uploaded Documents ({supportingDocs.length}):</label>
                 {supportingDocs.map((doc, index) => (
                   <div key={index} className="attachment-item">
                     <span>{doc.name} ({(doc.size / 1024).toFixed(2)} KB)</span>

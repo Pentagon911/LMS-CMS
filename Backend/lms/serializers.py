@@ -60,13 +60,14 @@ class ExamTimetableSerializer(serializers.ModelSerializer):
 class ExamResultSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source='student.get_full_name', read_only=True)
     exam_title = serializers.CharField(source='exam.title', read_only=True)
+    course_code = serializers.CharField(source='exam.course.code', read_only=True)
 
     class Meta:
         model = ExamResult
         fields = [
             'id', 'student', 'student_name',
             'exam', 'exam_title',
-            'score', 'grade'
+            'score', 'grade', 'course_code',
         ]
 
     def validate_score(self, value):
@@ -172,8 +173,9 @@ class BaseAppealSerializer(serializers.ModelSerializer):
         abstract = True
         fields = [
             'id', 'appeal_id', 'appeal_type', 'appeal_type_display', 'status',
-            'student', 'student_name', 'academic_year', 'department_name',
-            'faculty_name', 'batch_name', 'title', 'description',
+            'student', 'student_name', 'academic_year','department', 'department_name',
+            'faculty', 'faculty_name','batch',
+            'batch_name', 'title', 'description',
             'supporting_documents', 'review_notes', 'created_at', 'updated_at'
         ]
         read_only_fields = ['appeal_id', 'status', 'reviewed_by', 'reviewed_at', 'created_at', 'updated_at']
@@ -223,7 +225,7 @@ class HostelAppealSerializer(BaseAppealSerializer):
 
 class ExamRewriteAppealSerializer(BaseAppealSerializer):
     course_name = serializers.CharField(source='course.name', read_only=True)
-    module_name = serializers.CharField(source='module.name', read_only=True)
+    # module_name = serializers.CharField(source='module.name', read_only=True)
     medical_certificate = serializers.FileField(
         validators=[validate_pdf_file], 
         required=False, 
@@ -233,7 +235,7 @@ class ExamRewriteAppealSerializer(BaseAppealSerializer):
     class Meta(BaseAppealSerializer.Meta):
         model = ExamRewriteAppeal
         fields = BaseAppealSerializer.Meta.fields + [
-            'course', 'course_name', 'module', 'module_name', 'semester',
+            'course', 'course_name', 'semester',
             'original_exam_date', 'reason_type', 'detailed_reason',
             'medical_certificate', 'new_exam_date', 'exam_venue'
         ]

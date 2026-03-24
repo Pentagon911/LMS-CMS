@@ -1,5 +1,5 @@
 // src/modules/lms/pages/HostelApplicationPage.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import request from '../../../../utils/requestMethods';
 import { MdSave, MdCancel, MdWarning, MdCheckCircle, MdDelete, MdCloudUpload, MdHome } from 'react-icons/md';
@@ -15,31 +15,52 @@ const HostelApplicationPage = () => {
   const [uploadingFile, setUploadingFile] = useState(false);
   
   // Get user data from localStorage
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  
-  // Extract IDs from profile (these are the IDs sent to backend)
-  const departmentId = user.profile?.department || '';
-  const facultyId = user.profile?.faculty || '';
-  const batchId = user.profile?.batch || '';
-  
-  // Extract display names from user object (these are from JWT response)
-  const departmentName = user.department_name || 'Not assigned';
-  const facultyName = user.faculty_name || 'Not assigned';
-  const batchName = user.batch_name || 'Not assigned';
-  
-  // Get student ID (try different possible field names)
-  const studentId = user.id;
-  
-  // Define appeal type constant
-  const APPEAL_TYPE = 'HOSTEL'; // This matches the "Hostel Facility" option in the image
+  const [user, setUser] = useState(null);
+  const [departmentId, setDepartmentId] = useState(null);
+  const [facultyId, setFacultyId] = useState(null);
+  const [batchId, setBatchId] = useState(null);
+  const [studentId, setStudentId] = useState(null);
+  const [departmentName, setDepartmentName] = useState('Not assigned');
+  const [facultyName, setFacultyName] = useState('Not assigned');
+  const [batchName, setBatchName] = useState('Not assigned');
+
+  // Define appeal type constant - must match one of the AppealType choices
+  const APPEAL_TYPE = 'HOSTEL';
+
+  // Load user data from localStorage
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+      setStudentId(parsedUser.id);
+      
+      // Extract IDs from profile
+      if (parsedUser.profile) {
+        setDepartmentId(parsedUser.profile.department);
+        setFacultyId(parsedUser.profile.faculty);
+        setBatchId(parsedUser.profile.batch);
+        
+        // Set display names
+        setDepartmentName(parsedUser.department_name || 'Not assigned');
+        setFacultyName(parsedUser.faculty_name || 'Not assigned');
+        setBatchName(parsedUser.batch_name || 'Not assigned');
+      } else {
+        // Fallback to direct properties if profile doesn't exist
+        setDepartmentId(parsedUser.department);
+        setFacultyId(parsedUser.faculty);
+        setBatchId(parsedUser.batch);
+        setDepartmentName(parsedUser.department_name || 'Not assigned');
+        setFacultyName(parsedUser.faculty_name || 'Not assigned');
+        setBatchName(parsedUser.batch_name || 'Not assigned');
+      }
+    }
+  }, []);
 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     academic_year: new Date().getFullYear() + '-' + (new Date().getFullYear() + 1),
-    department: departmentId,
-    faculty: facultyId,
-    batch: batchId,
     preferred_check_in: '',
     duration_months: 6,
     special_requirements: '',
@@ -104,112 +125,188 @@ const HostelApplicationPage = () => {
     setSupportingDocs(supportingDocs.filter((_, i) => i !== index));
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setError(null);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
-  // Check authentication
-  const token = localStorage.getItem('access_token');
-  if (!token) {
-    setError('You are not logged in. Please login again.');
-    setLoading(false);
-    navigate('/login');
-    return;
-  }
-
-  // Validate required fields
-  if (!formData.department || !formData.faculty || !formData.batch) {
-    setError('Student profile information is incomplete. Please contact support.');
-    setLoading(false);
-    return;
-  }
-
-  // Validate student ID is available
-  if (!studentId) {
-    setError('Student information is missing. Please log in again.');
-    setLoading(false);
-    return;
-  }
-
-  try {
-    setUploadingFile(true);
-    
-    // Create FormData object for multipart/form-data submission
-    const formDataToSend = new FormData();
-    
-    // Required fields from backend
-    formDataToSend.append('appeal_type', APPEAL_TYPE);
-    formDataToSend.append('student', studentId);
-    
-    // Use field names without _id suffix (the serializer likely expects these)
-    formDataToSend.append('department', parseInt(formData.department));
-    formDataToSend.append('faculty', parseInt(formData.faculty));
-    formDataToSend.append('batch', parseInt(formData.batch));
-    
-    // Append all form fields
-    formDataToSend.append('title', formData.title);
-    formDataToSend.append('description', formData.description);
-    formDataToSend.append('academic_year', formData.academic_year);
-    formDataToSend.append('preferred_check_in', formData.preferred_check_in);
-    formDataToSend.append('duration_months', formData.duration_months);
-    formDataToSend.append('special_requirements', formData.special_requirements || '');
-    formDataToSend.append('has_medical_condition', formData.has_medical_condition);
-    
-    // Append medical certificate file if provided
-    if (formData.has_medical_condition && medicalCertificate) {
-      formDataToSend.append('medical_certificate', medicalCertificate);
-    }
-    
-    // Append supporting documents
-    supportingDocs.forEach((doc) => {
-      formDataToSend.append('supporting_documents', doc);
-    });
-    
-    // Debug log to verify data being sent
-    console.log('Submitting hostel appeal with:', {
-      appeal_type: APPEAL_TYPE,
-      student: studentId,
-      department: parseInt(formData.department),
-      faculty: parseInt(formData.faculty),
-      batch: parseInt(formData.batch),
-      title: formData.title,
-      description: formData.description,
-      preferred_check_in: formData.preferred_check_in,
-      duration_months: formData.duration_months,
-      files: {
-        medical_certificate: medicalCertificate?.name || 'none',
-        supporting_documents: supportingDocs.length
-      }
-    });
-    
-    // Create the appeal with FormData
-    const appealResponse = await request.POST('/lms/appeals/hostel/', formDataToSend, { isFormData: true });
-    
-    console.log('Appeal created successfully:', appealResponse);
-    
-    setSuccess(true);
-    setTimeout(() => {
-      navigate('/lms/appeals-and-welfare/my-appeals');
-    }, 2000);
-  } catch (err) {
-    console.error('Error submitting hostel application:', err);
-    if (err.status === 401) {
-      setError('Your session has expired. Please login again.');
+    // Check authentication
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      setError('You are not logged in. Please login again.');
+      setLoading(false);
       navigate('/login');
-    } else if (err.data && typeof err.data === 'object') {
-      const errorMessages = Object.entries(err.data)
-        .map(([key, value]) => `${key}: ${value}`)
-        .join(', ');
-      setError(`Failed to submit: ${errorMessages}`);
-    } else {
-      setError(err.message || 'Failed to submit application. Please try again.');
+      return;
     }
-  } finally {
-    setLoading(false);
-    setUploadingFile(false);
-  }
-};
+
+    // Validate required fields
+    if (!studentId) {
+      setError('Student information is missing. Please log in again.');
+      setLoading(false);
+      return;
+    }
+
+    if (!departmentId || !facultyId || !batchId) {
+      setError('Student profile information is incomplete. Please contact support.');
+      setLoading(false);
+      return;
+    }
+
+    // Validate required form fields
+    if (!formData.title.trim()) {
+      setError('Please provide a title for your application.');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.description.trim()) {
+      setError('Please provide a description for your application.');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.preferred_check_in) {
+      setError('Please select a preferred check-in date.');
+      setLoading(false);
+      return;
+    }
+
+    // Validate medical certificate if medical condition is checked
+    if (formData.has_medical_condition && !medicalCertificate) {
+      setError('Please upload a medical certificate as you have indicated a medical condition.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setUploadingFile(true);
+      
+      // Create FormData object for multipart/form-data submission
+      const formDataToSend = new FormData();
+      
+      // Add required fields that the serializer expects
+      formDataToSend.append('appeal_type', APPEAL_TYPE);
+      formDataToSend.append('student', studentId.toString());
+      
+      // Add all form fields
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('academic_year', formData.academic_year);
+      formDataToSend.append('preferred_check_in', formData.preferred_check_in);
+      formDataToSend.append('duration_months', formData.duration_months.toString());
+      formDataToSend.append('special_requirements', formData.special_requirements || '');
+      formDataToSend.append('has_medical_condition', formData.has_medical_condition ? 'true' : 'false');
+      
+      // Add the IDs
+      formDataToSend.append('department', departmentId.toString());
+      formDataToSend.append('faculty', facultyId.toString());
+      if (batchId) {
+        formDataToSend.append('batch', batchId.toString());
+      }
+      
+      // Append medical certificate file if provided
+      if (medicalCertificate) {
+        formDataToSend.append('medical_certificate', medicalCertificate);
+      }
+      
+      // Append supporting documents
+      if (supportingDocs.length > 0) {
+        formDataToSend.append('supporting_documents', supportingDocs[0]);
+        
+        // Additional files will be uploaded as separate attachments after the appeal is created
+        const additionalDocs = supportingDocs.slice(1);
+        if (additionalDocs.length > 0) {
+          console.log(`${additionalDocs.length} additional document(s) will be uploaded as attachments after appeal creation.`);
+        }
+      }
+      
+      // Debug log to verify data being sent
+      console.log('Submitting hostel appeal with:', {
+        appeal_type: APPEAL_TYPE,
+        student: studentId,
+        department: departmentId,
+        faculty: facultyId,
+        batch: batchId,
+        title: formData.title,
+        description: formData.description,
+        preferred_check_in: formData.preferred_check_in,
+        duration_months: formData.duration_months,
+        has_medical_condition: formData.has_medical_condition,
+        files: {
+          medical_certificate: medicalCertificate?.name || 'none',
+          supporting_documents: supportingDocs.length > 0 ? supportingDocs[0]?.name : 'none',
+        }
+      });
+      
+      // Create the appeal with FormData
+      const appealResponse = await request.POST('/lms/appeals/hostel/', formDataToSend, { isFormData: true });
+      
+      console.log('Appeal created successfully:', appealResponse);
+      
+      // If there are additional documents (more than 1 supporting doc), upload them as attachments
+      if (supportingDocs.length > 1 && appealResponse.id) {
+        try {
+          console.log('Uploading additional documents as attachments...');
+          const additionalDocs = supportingDocs.slice(1);
+          
+          for (const doc of additionalDocs) {
+            const attachmentFormData = new FormData();
+            attachmentFormData.append('file', doc);
+            attachmentFormData.append('description', `Supporting document: ${doc.name}`);
+            // The appeal_type should be the content type model name in lowercase
+            attachmentFormData.append('appeal_type', 'hostelappeal');
+            attachmentFormData.append('appeal_id', appealResponse.id.toString());
+            
+            await request.POST('/lms/attachments/', attachmentFormData, { isFormData: true });
+          }
+          
+          console.log('Additional documents uploaded successfully');
+        } catch (attachmentError) {
+          console.warn('Failed to upload additional documents:', attachmentError);
+        }
+      }
+      
+      setSuccess(true);
+      setTimeout(() => {
+        navigate('/lms/appeals-and-welfare/my-appeals');
+      }, 2000);
+    } catch (err) {
+      console.error('Error submitting hostel application:', err);
+      
+      // Parse error response
+      let errorMessage = 'Failed to submit application. Please try again.';
+      
+      if (err.status === 401) {
+        errorMessage = 'Your session has expired. Please login again.';
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+      } else if (err.data) {
+        if (typeof err.data === 'object') {
+          const errorMessages = [];
+          for (const [key, value] of Object.entries(err.data)) {
+            if (Array.isArray(value)) {
+              errorMessages.push(`${key}: ${value.join(', ')}`);
+            } else if (typeof value === 'string') {
+              errorMessages.push(`${key}: ${value}`);
+            } else {
+              errorMessages.push(`${key}: ${JSON.stringify(value)}`);
+            }
+          }
+          errorMessage = errorMessages.join('; ');
+        } else if (typeof err.data === 'string') {
+          errorMessage = err.data;
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+      setUploadingFile(false);
+    }
+  };
 
   if (success) {
     return (
@@ -249,7 +346,7 @@ const handleSubmit = async (e) => {
             <label>Student Name</label>
             <input
               type="text"
-              value={`${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.username || ''}
+              value={user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username || '' : ''}
               disabled
               className="readonly-field"
             />
@@ -344,6 +441,7 @@ const handleSubmit = async (e) => {
                 value={formData.preferred_check_in}
                 onChange={handleInputChange}
                 required
+                min={new Date().toISOString().split('T')[0]}
               />
             </div>
 
@@ -402,7 +500,6 @@ const handleSubmit = async (e) => {
                   accept=".pdf"
                   onChange={handleMedicalCertificateChange}
                   className="file-input-hidden"
-                  required
                 />
                 <label htmlFor="medical-certificate" className="file-upload-label">
                   <MdCloudUpload />
@@ -442,7 +539,7 @@ const handleSubmit = async (e) => {
                 <span>Click to upload multiple supporting documents (PDF)</span>
               </label>
             </div>
-            <small>Upload any additional supporting documents (PDF only, max 5MB each)</small>
+            <small>Upload any additional supporting documents (PDF only, max 5MB each). Only the first document will be attached as supporting_documents; additional documents will be uploaded as separate attachments.</small>
             
             {supportingDocs.length > 0 && (
               <div className="attachments-list">
