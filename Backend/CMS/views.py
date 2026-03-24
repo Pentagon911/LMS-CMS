@@ -327,15 +327,13 @@ class QuizViewSet(viewsets.ModelViewSet):
         quiz.save()
         
         return Response({
-            'id': quiz.id,
-            'quizId': quiz.quizId,
+            'quizId': quiz.id,
             'title': quiz.title,
-            'timeLimitMinutes': quiz.timeLimitMinutes,
+            'time': quiz.timeLimitMinutes,
             'start_time': quiz.start_time,
             'status': quiz.status,
             'week': {
                 'id': week.id,
-                'order': week.order,
                 'topic': week.topic
             },
             'message': f'Quiz added to Week {week.order}'
@@ -706,3 +704,38 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=201)
         
         return Response(serializer.errors, status=400)
+    
+
+class AcademicCalendarViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for academic calendar PDFs.
+    - Admin: full CRUD.
+    - Students & Instructors: read‑only (list, retrieve).
+    """
+    queryset = AcademicCalendar.objects.all()
+    serializer_class = AcademicCalendarSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAuthenticated(), IsAdminUser()]
+        return [IsAuthenticated()]
+
+    def perform_create(self, serializer):
+        serializer.save(uploaded_by=self.request.user)
+
+
+from users.permissions import IsAdminUser
+
+class PracticalTimetableViewSet(viewsets.ModelViewSet):
+    queryset = PracticalTimetable.objects.all()
+    serializer_class = PracticalTimetableSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAuthenticated(), IsAdminUser()]
+        return [IsAuthenticated()]
+
+    def perform_create(self, serializer):
+        serializer.save(uploaded_by=self.request.user)
