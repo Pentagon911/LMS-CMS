@@ -39,11 +39,7 @@ const CreateQuizPage = () => {
     }
   }, []);
 
-<<<<<<< HEAD
-  // Fetch all modules from API
-=======
   // Fetch all modules
->>>>>>> 5295de3 (updating fetching functions)
   useEffect(() => {
     const fetchModules = async () => {
       try {
@@ -83,33 +79,6 @@ const CreateQuizPage = () => {
     }
   }, [quizId, mode]);
 
-<<<<<<< HEAD
-  const loadQuizForEdit = async (id) => {
-    try {
-      setLoading(true);
-      let quizToLoad;
-      const data = await request.GET(`/cms/quizzes/${id}/`);
-      if (data) quizToLoad = data;
-
-      const moduleInfo = modules.find(m => m.code === quizToLoad.course);
-      
-      setQuizData({
-        ...quizToLoad,
-        moduleTitle: moduleInfo?.title || '',
-        createdAt: quizToLoad.createdAt || new Date().toISOString()
-      });
-      setSelectedModule(quizToLoad.course);
-      setSelectedQuiz(quizToLoad);
-      setMode('edit');
-    } catch (err) {
-      console.error('Failed to load quiz', err);
-      alert('Failed to load quiz. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-=======
 const loadQuizForEdit = async (id) => {
   try {
     setLoading(true);
@@ -146,7 +115,6 @@ const loadQuizForEdit = async (id) => {
     setLoading(false);
   }
 };
->>>>>>> 5295de3 (updating fetching functions)
   const handleSelectQuiz = (quiz) => {
     setSelectedQuiz(quiz);
     loadQuizForEdit(quiz.quizId);
