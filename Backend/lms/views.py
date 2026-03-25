@@ -226,11 +226,26 @@ class ExamResultViewSet(BaseModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        queryset = super().get_queryset()
+        
+        # Role-based filtering
         if user.role == 'admin':
-            return ExamResult.objects.all()
-        if user.role == 'instructor':
-            return ExamResult.objects.filter(exam__course__instructor=user)
-        return ExamResult.objects.filter(student=user)
+            queryset = ExamResult.objects.all()
+        elif user.role == 'instructor':
+            queryset = ExamResult.objects.filter(exam__course__instructor=user)
+        else:
+            queryset = ExamResult.objects.filter(student=user)
+        
+        # Optional query parameter filters
+        course_id = self.request.query_params.get('course')
+        if course_id:
+            queryset = queryset.filter(exam__course_id=course_id)
+        
+        student_id = self.request.query_params.get('student')
+        if student_id and user.role == 'admin':  # Only admin can filter by student
+            queryset = queryset.filter(student_id=student_id)
+        
+        return queryset
 
     def get_object(self):
         obj = super().get_object()
@@ -253,7 +268,25 @@ class ExamResultViewSet(BaseModelViewSet):
 
     @action(detail=False, methods=['get'], permission_classes=[IsStudentUser])
     def my_results(self, request):
+        """
+        Student view: Get results grouped by semester with SGPA and CGPA
+        """
         student = request.user
+        
+        # Double-check user is student
+        if student.role != 'student':
+            return Response(
+                {'error': 'This endpoint is only for students'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Check if student has profile
+        if not hasattr(student, 'student_profile'):
+            return Response(
+                {'error': 'Student profile not found. Please contact admin.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
         profile = student.student_profile
         results = ExamResult.objects.filter(student=student).select_related('exam__course')
 
@@ -297,6 +330,124 @@ class ExamResultViewSet(BaseModelViewSet):
             'final_cgpa': round(cumulative_points / cumulative_credits, 2) if cumulative_credits else 0,
         })
 
+    @action(detail=False, methods=['get'], permission_classes=[IsInstructorUser])
+    def instructor_results(self, request):
+        """
+        Instructor view: Get results for courses taught by the instructor
+        """
+        instructor = request.user
+        results = ExamResult.objects.filter(
+            exam__course__instructor=instructor
+        ).select_related('exam__course', 'student')
+        
+        serializer = ExamResultSerializer(results, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAdminUser])
+    def admin_results(self, request):
+        """
+        Admin view: Get all exam results with optional filters
+        """
+        queryset = ExamResult.objects.all().select_related('exam__course', 'student')
+        
+        # Optional filters
+        course_id = request.query_params.get('course')
+        if course_id:
+            queryset = queryset.filter(exam__course_id=course_id)
+        
+        student_id = request.query_params.get('student')
+        if student_id:
+            queryset = queryset.filter(student_id=student_id)
+        
+        semester = request.query_params.get('semester')
+        if semester:
+            queryset = queryset.filter(exam__course__semester=semester)
+        
+        serializer = ExamResultSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAdminUser])
+    def admin_results_grouped(self, request):
+        """
+        Admin view: Get results grouped by semester with statistics
+        """
+        queryset = ExamResult.objects.all().select_related('exam__course', 'student')
+        
+        # Apply filters if provided
+        course_id = request.query_params.get('course')
+        if course_id:
+            queryset = queryset.filter(exam__course_id=course_id)
+        
+        student_id = request.query_params.get('student')
+        if student_id:
+            queryset = queryset.filter(student_id=student_id)
+        
+        # Group by student and semester
+        grouped_results = {}
+        
+        for result in queryset:
+            student = result.student
+            course = result.exam.course
+            semester = course.semester
+            
+            if student.id not in grouped_results:
+                grouped_results[student.id] = {
+                    'student_id': student.id,
+                    'student_name': student.get_full_name(),
+                    'student_username': student.username,
+                    'semesters': {}
+                }
+            
+            if semester not in grouped_results[student.id]['semesters']:
+                grouped_results[student.id]['semesters'][semester] = {
+                    'semester': semester,
+                    'results': [],
+                    'total_credits': 0,
+                    'total_grade_points': 0
+                }
+            
+            sem_data = grouped_results[student.id]['semesters'][semester]
+            sem_data['results'].append(result)
+            if course.gpa_applicable:
+                sem_data['total_credits'] += course.credits
+                grade_point = self._grade_to_point(result.grade)
+                sem_data['total_grade_points'] += grade_point * course.credits
+        
+        # Calculate SGPA and CGPA for each student
+        student_results = []
+        for student_id, student_data in grouped_results.items():
+            student_semesters = []
+            cumulative_credits = 0
+            cumulative_points = 0
+            
+            for sem in sorted(student_data['semesters'].keys()):
+                sem_data = student_data['semesters'][sem]
+                sgpa = sem_data['total_grade_points'] / sem_data['total_credits'] if sem_data['total_credits'] else 0
+                cumulative_credits += sem_data['total_credits']
+                cumulative_points += sem_data['total_grade_points']
+                cgpa = cumulative_points / cumulative_credits if cumulative_credits else 0
+                
+                student_semesters.append({
+                    'semester': sem,
+                    'results': ExamResultSerializer(sem_data['results'], many=True).data,
+                    'sgpa': round(sgpa, 2),
+                    'cgpa': round(cgpa, 2),
+                })
+            
+            final_cgpa = cumulative_points / cumulative_credits if cumulative_credits else 0
+            
+            student_results.append({
+                'student': {
+                    'id': student_data['student_id'],
+                    'name': student_data['student_name'],
+                    'username': student_data['student_username']
+                },
+                'semester_results': student_semesters,
+                'final_cgpa': round(final_cgpa, 2)
+            })
+        
+        return Response(student_results)
+
     def _grade_to_point(self, grade):
         mapping = {
             'A+': 4.0, 'A': 4.0, 'A-': 3.7,
@@ -305,7 +456,7 @@ class ExamResultViewSet(BaseModelViewSet):
             'D+': 1.3, 'D': 1.0, 'F': 0.0,
         }
         return mapping.get(grade, 0.0)
-
+    
 
 
 class SystemSettingViewSet(BaseModelViewSet):
