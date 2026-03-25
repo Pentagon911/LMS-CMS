@@ -371,16 +371,9 @@ class QuizCreateSerializer(serializers.ModelSerializer):
         start_time = validated_data.pop('start_time', None) 
         status = validated_data.pop('status', 'draft') 
         
-        if start_time:
-            from django.utils import timezone
-            if start_time <= timezone.now():
-                status = 'active'
-            else:
-                status = 'scheduled'
-               
         quiz = Quiz.objects.create(
             courseCode=courseCode,
-            status=status,
+            status='draft',
             start_time=start_time,
             **validated_data
         )
