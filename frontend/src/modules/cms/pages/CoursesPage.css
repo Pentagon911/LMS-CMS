@@ -55,6 +55,7 @@ body.dark-mode .courses-subtitle {
 
 .modules-carousel {
   display: flex;
+  width: 90%;
   gap: 1.5rem;
   overflow-x: auto;
   scroll-behavior: smooth;
