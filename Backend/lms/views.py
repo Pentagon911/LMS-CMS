@@ -637,7 +637,7 @@ class StudentMyAppealsView(APIView):
 
         bursary = BursaryAppeal.objects.filter(student=student).select_related('department', 'faculty', 'batch')
         hostel = HostelAppeal.objects.filter(student=student).select_related('department', 'faculty', 'batch')
-        exam = ExamRewriteAppeal.objects.filter(student=student).select_related('department', 'faculty', 'batch', 'course', 'module')
+        exam = ExamRewriteAppeal.objects.filter(student=student).select_related('department', 'faculty', 'batch', 'course')
         medical = MedicalLeaveAppeal.objects.filter(student=student).select_related('department', 'faculty', 'batch')
         reeval = ResultReEvaluationAppeal.objects.filter(student=student).select_related('department', 'faculty', 'batch', 'exam_result')
 

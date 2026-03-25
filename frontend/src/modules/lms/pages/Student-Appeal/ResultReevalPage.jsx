@@ -16,25 +16,48 @@ const ResultReevalPage = () => {
   const [fetchingResults, setFetchingResults] = useState(true);
   
   // Get user data from localStorage
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  
-  // Extract IDs from profile (these are the IDs sent to backend)
-  const departmentId = user.profile?.department || '';
-  const facultyId = user.profile?.faculty || '';
-  const batchId = user.profile?.batch || '';
-  
-  // Extract display names from user object (these are from JWT response)
-  const departmentName = user.department_name || 'Not assigned';
-  const facultyName = user.faculty_name || 'Not assigned';
-  const batchName = user.batch_name || 'Not assigned';
+  const [user, setUser] = useState(null);
+  const [departmentId, setDepartmentId] = useState(null);
+  const [facultyId, setFacultyId] = useState(null);
+  const [batchId, setBatchId] = useState(null);
+  const [studentId, setStudentId] = useState(null);
+  const [departmentName, setDepartmentName] = useState('Not assigned');
+  const [facultyName, setFacultyName] = useState('Not assigned');
+  const [batchName, setBatchName] = useState('Not assigned');
+
+  // Define appeal type constant
+  const APPEAL_TYPE = 'RESULT_RE_EVALUATION';
+
+  // Load user data from localStorage
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+      setStudentId(parsedUser.id);
+      
+      if (parsedUser.profile) {
+        setDepartmentId(parsedUser.profile.department);
+        setFacultyId(parsedUser.profile.faculty);
+        setBatchId(parsedUser.profile.batch);
+        setDepartmentName(parsedUser.department_name || 'Not assigned');
+        setFacultyName(parsedUser.faculty_name || 'Not assigned');
+        setBatchName(parsedUser.batch_name || 'Not assigned');
+      } else {
+        setDepartmentId(parsedUser.department);
+        setFacultyId(parsedUser.faculty);
+        setBatchId(parsedUser.batch);
+        setDepartmentName(parsedUser.department_name || 'Not assigned');
+        setFacultyName(parsedUser.faculty_name || 'Not assigned');
+        setBatchName(parsedUser.batch_name || 'Not assigned');
+      }
+    }
+  }, []);
 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     academic_year: new Date().getFullYear() + '-' + (new Date().getFullYear() + 1),
-    department: departmentId,
-    faculty: facultyId,
-    batch: batchId,
     exam_result: '',
     reason_type: '',
     specific_concerns: ''
@@ -49,11 +72,9 @@ const ResultReevalPage = () => {
       setFetchingResults(true);
       const response = await request.GET('/lms/exam_results/my_results/');
       
-      // Handle the response structure
       if (response) {
         setStudentData(response.student);
         
-        // Flatten all semester results into a single array for selection
         const flattenedResults = [];
         if (response.semester_results && Array.isArray(response.semester_results)) {
           response.semester_results.forEach(semester => {
@@ -97,9 +118,34 @@ const ResultReevalPage = () => {
     setLoading(true);
     setError(null);
 
-    // Validate required fields
-    if (!formData.department || !formData.faculty || !formData.batch) {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      setError('You are not logged in. Please login again.');
+      setLoading(false);
+      navigate('/login');
+      return;
+    }
+
+    if (!studentId) {
+      setError('Student information is missing. Please log in again.');
+      setLoading(false);
+      return;
+    }
+
+    if (!departmentId || !facultyId || !batchId) {
       setError('Student profile information is incomplete. Please contact support.');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.title.trim()) {
+      setError('Please provide a title for your application.');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.description.trim()) {
+      setError('Please provide a description for your application.');
       setLoading(false);
       return;
     }
@@ -110,23 +156,71 @@ const ResultReevalPage = () => {
       return;
     }
 
+    if (!formData.reason_type) {
+      setError('Please select a reason type.');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.specific_concerns.trim()) {
+      setError('Please provide specific concerns for the re-evaluation.');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const submitData = {
-        ...formData,
-        department: parseInt(formData.department),
-        faculty: parseInt(formData.faculty),
-        batch: parseInt(formData.batch),
-        exam_result: parseInt(formData.exam_result)
-      };
+      const formDataToSend = new FormData();
       
-      await request.POST('/lms/appeals/result-reeval/', submitData);
+      formDataToSend.append('appeal_type', APPEAL_TYPE);
+      formDataToSend.append('student', studentId.toString());
+      formDataToSend.append('department', departmentId.toString());
+      formDataToSend.append('faculty', facultyId.toString());
+      if (batchId) {
+        formDataToSend.append('batch', batchId.toString());
+      }
+      
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('academic_year', formData.academic_year);
+      formDataToSend.append('exam_result', formData.exam_result);
+      formDataToSend.append('reason_type', formData.reason_type);
+      formDataToSend.append('specific_concerns', formData.specific_concerns);
+      
+      await request.POST('/lms/appeals/result-reeval/', formDataToSend, { isFormData: true });
+      
       setSuccess(true);
       setTimeout(() => {
         navigate('/lms/appeals-and-welfare/my-appeals');
       }, 2000);
     } catch (err) {
       console.error('Error submitting reevaluation appeal:', err);
-      setError(err.message || 'Failed to submit appeal. Please try again.');
+      
+      let errorMessage = 'Failed to submit appeal. Please try again.';
+      
+      if (err.status === 401) {
+        errorMessage = 'Your session has expired. Please login again.';
+        setTimeout(() => navigate('/login'), 2000);
+      } else if (err.data) {
+        if (typeof err.data === 'object') {
+          const errorMessages = [];
+          for (const [key, value] of Object.entries(err.data)) {
+            if (Array.isArray(value)) {
+              errorMessages.push(`${key}: ${value.join(', ')}`);
+            } else if (typeof value === 'string') {
+              errorMessages.push(`${key}: ${value}`);
+            } else {
+              errorMessages.push(`${key}: ${JSON.stringify(value)}`);
+            }
+          }
+          errorMessage = errorMessages.join('; ');
+        } else if (typeof err.data === 'string') {
+          errorMessage = err.data;
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -164,7 +258,6 @@ const ResultReevalPage = () => {
       )}
 
       <form onSubmit={handleSubmit} className="appeal-form">
-        {/* Student Information Section */}
         <div className="form-section">
           <h3>Student Information</h3>
           
@@ -172,17 +265,7 @@ const ResultReevalPage = () => {
             <label>Student Name</label>
             <input
               type="text"
-              value={studentData?.name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.username || ''}
-              disabled
-              className="readonly-field"
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Index Number / Username</label>
-            <input
-              type="text"
-              value={studentData?.index_number || user?.username || ''}
+              value={studentData?.name || (user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username || '' : '')}
               disabled
               className="readonly-field"
             />
@@ -222,18 +305,6 @@ const ResultReevalPage = () => {
             </div>
 
             <div className="form-group">
-              <label>Program</label>
-              <input
-                type="text"
-                value={studentData?.program || ''}
-                disabled
-                className="readonly-field"
-              />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
               <label>Academic Year *</label>
               <input
                 type="text"
@@ -244,20 +315,9 @@ const ResultReevalPage = () => {
                 placeholder="e.g., 2024-2025"
               />
             </div>
-
-            <div className="form-group">
-              <label>Current CGPA</label>
-              <input
-                type="text"
-                value={studentData?.final_cgpa || '0.00'}
-                disabled
-                className="readonly-field"
-              />
-            </div>
           </div>
         </div>
 
-        {/* Appeal Details Section */}
         <div className="form-section">
           <h3>Appeal Details</h3>
           
@@ -286,7 +346,6 @@ const ResultReevalPage = () => {
           </div>
         </div>
 
-        {/* Result Details Section */}
         <div className="form-section">
           <h3>Result Details</h3>
 
@@ -303,7 +362,7 @@ const ResultReevalPage = () => {
               >
                 <option value="">Select exam result</option>
                 {semesterResults.map(semester => (
-                  <optgroup key={semester.semester} label={`Semester ${semester.semester} - ${semester.academic_year || ''}`}>
+                  <optgroup key={semester.semester} label={`Semester ${semester.semester}`}>
                     {semester.results && semester.results.map(result => (
                       <option key={result.id} value={result.id}>
                         {result.course_name || result.course_code || 'Course'} - {result.assessment_name || 'Exam'}: {result.marks_obtained || result.score || 0} ({result.grade || 'N/A'})
@@ -312,9 +371,6 @@ const ResultReevalPage = () => {
                   </optgroup>
                 ))}
               </select>
-            )}
-            {allResults.length === 0 && !fetchingResults && (
-              <small className="warning-text">No exam results found. Make sure you have enrolled in courses with published results.</small>
             )}
           </div>
 

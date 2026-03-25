@@ -333,7 +333,7 @@ class HostelAppeal(BaseAppeal):
 class ExamRewriteAppeal(BaseAppeal):
     """Appeal to rewrite an exam"""
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
-    module = models.ForeignKey(Module, on_delete=models.CASCADE)
+    # module = models.ForeignKey(Module, on_delete=models.CASCADE)
     semester = models.IntegerField()
     original_exam_date = models.DateField()
     
@@ -356,7 +356,7 @@ class ExamRewriteAppeal(BaseAppeal):
     
     class Meta:
         db_table = 'exam_rewrite_appeals'
-        unique_together = ['student', 'module', 'semester', 'academic_year']
+        unique_together = ['student', 'course', 'semester', 'academic_year']
 
 
 class MedicalLeaveAppeal(BaseAppeal):
