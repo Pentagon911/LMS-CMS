@@ -81,7 +81,21 @@ class AnnouncementSerializer(serializers.ModelSerializer):
             'id', 'title', 'content', 'attachments', 'week_number', 
             'created_at', 'created_by_name'
         ]
-        read_only_fields = ['id', 'created_at', 'created_by']
+        read_only_fields = ['id', 'created_at', 'created_by_name']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        
+        # Merge pdf, image, and url into one "attachment" field for the frontend
+        if instance.pdf:
+            representation['attachment'] = representation.pop('pdf')
+        elif instance.image:
+            representation['attachment'] = representation.pop('image')
+        elif instance.attachment_url:
+            representation['attachment'] = representation.pop('attachment_url')
+        
+            
+        return representation
     
     def get_attachments(self, obj):
         """
@@ -169,13 +183,12 @@ class BaseQuestionSerializer(serializers.ModelSerializer):
     Base serializer for Question model. Provides common fields for all question serializers
     """
     questionId = serializers.CharField()
-    question = serializers.CharField(source = 'text')
     multipleAnswers = serializers.SerializerMethodField()
     image = serializers.ImageField(allow_null = True,required = False)
     totalPoints = serializers.SerializerMethodField()
     class Meta:
         model = Question
-        fields = ['questionId','question','image','multipleAnswers']
+        fields = ['questionId','text','image','multipleAnswers']
 
     def get_multipleAnswers(self,obj):
         return "true" if obj.questionTypes == 'multiple' else "false"
@@ -197,8 +210,7 @@ class BaseQuizSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'course', 'time', ]
     
     def get_course(self, obj):
-        if obj.week and obj.week.course:
-            return obj.week.course.code
+            return obj.courseCode.code
     
     def get_time(self, obj):
         return f"{obj.timeLimitMinutes}m"  
@@ -301,13 +313,12 @@ class OptionCreateSerializer(serializers.ModelSerializer):
 
 class QuestionCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating questions within a quiz"""
-    question = serializers.CharField(source='text')
     multipleAnswers = serializers.CharField(write_only=True, required=False)
     options = OptionCreateSerializer(many=True)
 
     class Meta:
         model = Question
-        fields = ['questionId', 'question', 'multipleAnswers', 'image', 'options']
+        fields = ['questionId', 'text', 'multipleAnswers', 'image', 'options']
 
     def validate(self, data):
         is_multiple = str(data.pop('multipleAnswers', 'false')).lower()
@@ -336,7 +347,6 @@ class QuestionCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Single answer questions can only have one correct option")
         
         return data
-
 
 class QuizCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating a complete quiz with questions and options"""
@@ -371,16 +381,11 @@ class QuizCreateSerializer(serializers.ModelSerializer):
         start_time = validated_data.pop('start_time', None) 
         status = validated_data.pop('status', 'draft') 
         
-        if start_time:
-            from django.utils import timezone
-            if start_time <= timezone.now():
-                status = 'active'
-            else:
-                status = 'scheduled'
+        
                
         quiz = Quiz.objects.create(
             courseCode=courseCode,
-            status=status,
+            status='draft',
             start_time=start_time,
             **validated_data
         )
@@ -398,33 +403,47 @@ class QuizCreateSerializer(serializers.ModelSerializer):
         return quiz
 
     def update(self, instance, validated_data):
-        questionsData = validated_data.pop('questions', None)
-
-        time_str = validated_data.pop('time', None)
-        if time_str:
+        """Update quiz by replacing all questions and options"""
+        questions_data = validated_data.pop('questions', [])
+        
+        # Update Quiz fields
+        instance.title = validated_data.get('title', instance.title)
+        instance.description = validated_data.get('description', instance.description)
+        
+        # Handle time field
+        if 'time' in validated_data:
+            time_str = validated_data['time']
             try:
-                validated_data['timeLimitMinutes'] = int(str(time_str).replace('m', '').strip())
+                instance.timeLimitMinutes = int(str(time_str).replace('m', '').strip())
             except ValueError:
-                pass
-
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
+                instance.timeLimitMinutes = 15
+        
+        # Handle status and start_time
+        if 'status' in validated_data:
+            instance.status = validated_data['status']
+        if 'start_time' in validated_data:
+            instance.start_time = validated_data['start_time']
+        
         instance.save()
-
-        if questionsData is not None:
-            instance.questions.all().delete()
+        
+        # Delete all existing questions (cascades to options)
+        instance.questions.all().delete()
+        
+        # Create new questions with options
+        for q_index, q_data in enumerate(questions_data, start=1):
+            options_data = q_data.pop('options', [])
+            q_data['order'] = q_index
             
-            for q_index, qData in enumerate(questionsData, start=1):
-                options_data = qData.pop('options', [])
-                points = qData.pop('points', 1)
-                
-                qData['order'] = q_index
-                question = Question.objects.create(quiz=instance, points=points, **qData)
-                
-                for opt_index, option_data in enumerate(options_data, start=1):
-                    option_data['order'] = opt_index
-                    Option.objects.create(question=question, **option_data)
-
+            # Remove id if present (since we're creating new)
+            q_data.pop('id', None)
+            
+            question = Question.objects.create(quiz=instance, **q_data)
+            
+            for opt_index, opt_data in enumerate(options_data, start=1):
+                opt_data['order'] = opt_index
+                opt_data.pop('id', None)  # Remove id for new options
+                Option.objects.create(question=question, **opt_data)
+        
         return instance
     
 # ========== BASE Serilizers for attempt Operations ==========

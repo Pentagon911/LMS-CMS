@@ -176,7 +176,7 @@ class QuizViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED)
     
 
-    def update(self,request,*args,**kwargs):
+    def update(self,request,pk=None,*args,**kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
@@ -503,60 +503,91 @@ class WeekViewSet(viewsets.ModelViewSet):
     #         }, status=status.HTTP_201_CREATED)
     #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    @action(detail=True, methods=['post'], parser_classes=[MultiPartParser, FormParser])
+    @action(detail=True, methods=['post'], url_path='dashboard/add_content', parser_classes=[MultiPartParser, FormParser])
     def add_content(self, request, pk=None):
-        """Dynamically handles Video, PDF, Link, or Text-only uploads under the 'attachments' key"""
-        week = self.get_object()
+        """
+        POST /cms/courses/{course_id}/dashboard/add_content/
+        Add content to a specific week - auto-detects content type
+        """
+        course = self.get_object()
         
-        # 1. Get the common text fields
-        title = request.data.get('title', 'Untitled')
+        # 1. Check if user is instructor
+        if getattr(request.user, 'role', None) != 'instructor' or request.user != course.instructor:
+            return Response({'error': 'Only the course instructor can add content'}, status=status.HTTP_403_FORBIDDEN)
+                
+        # 2. Get common text fields
+        week_number = request.data.get('week_number')
+        title = request.data.get('title')
         description = request.data.get('description', '')
         
-        # 2. Check the "attachments" key in both FILES and DATA
-        file_obj = request.FILES.get('attachments') 
-        link_url = request.data.get('attachments') 
-
-        # 3. Route based on what Django found
+        # 3. CRITICAL: Separate physical files from text links
+        file_obj = request.FILES.get('attachment')
+        link_str = request.data.get('attachment')
+        
+        # 4. Validate required fields
+        if not week_number or not title:
+            return Response({'error': 'week_number and title are required'}, status=status.HTTP_400_BAD_REQUEST)
+        if not file_obj and not link_str:
+            return Response({'error': 'attachment is required'}, status=status.HTTP_400_BAD_REQUEST)
+                
+        # 5. Find or create the week cleanly
+        week, created = Week.objects.get_or_create(
+            course=course, 
+            order=week_number,
+            defaults={
+                'topic': f'Week {week_number}',
+                'description': f'Week {week_number} content'
+            }
+        )
+                
+        # 6. Auto-detect content type and prepare Serializer data
         if file_obj:
             filename = file_obj.name.lower()
-            if filename.endswith('.pdf'):
-                serializer_class = PdfSerializer
-            elif filename.endswith(('.mp4', '.mkv', '.mov')):
-                serializer_class = VideoSerializer
+            if filename.endswith(('.mp4', '.mov', '.avi', '.mkv', '.webm')):
+                serializer_class = videoSerializer  
+                content_type = 'video'
+            elif filename.endswith('.pdf'):
+                serializer_class = pdfSerializer    
+                content_type = 'pdf'
             else:
-                return Response({"error": "Unsupported file type. Please upload a PDF or Video."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Unsupported file type. Please upload a PDF or Video.'}, status=status.HTTP_400_BAD_REQUEST)
                 
-            data = {
-                'title': title,
-                'description': description,
-                'file': file_obj 
-            }
+            # Map frontend 'attachment' file to backend 'file' field
+            data = {'title': title, 'description': description, 'file': file_obj}
 
-        elif link_url and isinstance(link_url, str) and link_url.startswith(('http://', 'https://')):
+        elif isinstance(link_str, str):
             serializer_class = LinkSerializer
-            data = {
-                'title': title,
-                'description': description,
-                'link_url': link_url
-            }
+            content_type = 'link'
+            
+            # Map frontend 'attachment' string to backend 'link_url' field
+            data = {'title': title, 'description': description, 'link_url': link_str}
 
-        else:
-            # If 'attachments' is empty, save as a Text-only post
-            serializer_class = TextSerializer
-            data = {
-                'title': title,
-                'description': description
-            }
-
-        # 4. Validate and Save
+        # 7. Validate and Save
         serializer = serializer_class(data=data)
         
         if serializer.is_valid():
-            serializer.save(week=week)
-            return Response({
-                "message": "Content added successfully.",
-                "item": serializer.data
-            }, status=status.HTTP_201_CREATED)
+            instance = serializer.save(week=week)
+            
+            response_data = {
+                'id': instance.id,
+                'type': content_type,
+                'title': instance.title,
+                'description': instance.description,
+                'course': course.code, # Assuming course model has a 'code' field. Use course.id if not.
+                'week': week_number,
+                
+                #  SUCCESS MESSAGE
+                'message': f'Successfully added {content_type} to Week {week_number} of {course.title}.'
+            }
+            
+            # Add type-specific URLs and Sizes safely
+            if content_type in ['video', 'pdf']:
+                response_data['url'] = instance.file.url
+                response_data['fileSize'] = instance.fileSize 
+            else:
+                response_data['url'] = instance.link_url
+                
+            return Response(response_data, status=status.HTTP_201_CREATED)
             
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
