@@ -158,7 +158,7 @@ const Header = () => {
       icon: <MdVolunteerActivism />, 
       hasDropdown: false 
     });
-  }
+  } 
   if (isAdmin) {
     navigation.push({ 
       name: 'Server Managements', 
@@ -177,7 +177,10 @@ const Header = () => {
       return menuData.admin;
     } else if (isStudent && menuData.student) {
       return menuData.student;
+    }else if (isInstructor && menuData.instructor) {
+      return menuData.instructor;
     }
+
     return [];
   };
 

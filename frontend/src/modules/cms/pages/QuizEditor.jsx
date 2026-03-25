@@ -40,14 +40,17 @@ const CreateQuizPage = () => {
     }
   }, []);
 
-  // Fetch all modules from moduleCard.json
+  // Fetch all modules from API
   useEffect(() => {
     const fetchModules = async () => {
       try {
-        const data = await request.GET('/_data/moduleCard.json');
+        setLoading(true);
+        const data = await request.GET('/cms/courses/');
         setModules(data);
       } catch (err) {
         console.error('Failed to fetch modules', err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -58,7 +61,8 @@ const CreateQuizPage = () => {
   const fetchExistingQuizzes = async () => {
     try {
       setLoading(true);
-      const data = await request.GET('/_data/quizzes.json');
+      // Using GET request to fetch all quizzes
+      const data = await request.GET('/cms/quizzes/');
       setExistingQuizzes(data);
     } catch (err) {
       console.error('Failed to fetch quizzes', err);
@@ -82,10 +86,9 @@ const CreateQuizPage = () => {
   const loadQuizForEdit = async (id) => {
     try {
       setLoading(true);
-      let quizToLoad;
-      const data = await request.GET(`/_data/quizzes/${id}.json`);
-      if (data) quizToLoad = data;
-
+      // Using GET request to fetch single quiz by ID
+      const quizToLoad = await request.GET(`/cms/quizzes/${id}/`);
+      
       const moduleInfo = modules.find(m => m.code === quizToLoad.course);
       
       setQuizData({
@@ -98,6 +101,7 @@ const CreateQuizPage = () => {
       setMode('edit');
     } catch (err) {
       console.error('Failed to load quiz', err);
+      alert('Failed to load quiz. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -228,7 +232,9 @@ const CreateQuizPage = () => {
     }
   };
 
+  // Updated saveQuiz function with proper POST/PUT logic
   const saveQuiz = async () => {
+    // Validation
     if (!quizData.title) {
       alert('Please enter a quiz title');
       return;
@@ -246,12 +252,14 @@ const CreateQuizPage = () => {
 
     try {
       setLoading(true);
+      
       const moduleInfo = modules.find(m => m.code === selectedModule);
       
       const finalQuizData = {
         quizId: quizData.quizId,
         title: quizData.title,
         course: selectedModule,
+        moduleTitle: moduleInfo?.title || '',
         time: quizData.time,
         createdAt: quizData.createdAt || new Date().toISOString(),
         questions: quizData.questions
@@ -259,13 +267,36 @@ const CreateQuizPage = () => {
       
       console.log('Saving quiz:', finalQuizData);
       
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      let response;
       
-      alert('Quiz saved successfully!');
+      // Check if we're editing an existing quiz or creating a new one
+      if (mode === 'edit' && selectedQuiz) {
+        // UPDATE existing quiz - using PUT request
+        response = await request.PUT(`/cms/quizzes/${quizData.quizId}/`, finalQuizData);
+        alert('Quiz updated successfully!');
+      } else {
+        // CREATE new quiz - using POST request
+        response = await request.POST('/cms/quizzes/', finalQuizData);
+        alert('Quiz created successfully!');
+      }
+      
+      // Refresh the quizzes list
+      await fetchExistingQuizzes();
+      
+      // Navigate back to quiz list or to courses page
       navigate('/cms/courses');
+      
     } catch (err) {
       console.error('Failed to save quiz', err);
-      alert('Failed to save quiz');
+      
+      // Handle different error status codes
+      if (err.status === 401) {
+        alert('Your session has expired. Please login again.');
+      } else if (err.status === 400) {
+        alert(`Validation error: ${err.data?.message || 'Please check your input'}`);
+      } else {
+        alert(`Failed to save quiz: ${err.message || 'Please try again'}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -459,7 +490,7 @@ const CreateQuizPage = () => {
             Cancel
           </button>
           <button className="save-btn" onClick={saveQuiz} disabled={loading}>
-            {loading ? 'Saving...' : 'Save Quiz'}
+            {loading ? 'Saving...' : (mode === 'edit' ? 'Update Quiz' : 'Create Quiz')}
           </button>
         </div>
       </div>

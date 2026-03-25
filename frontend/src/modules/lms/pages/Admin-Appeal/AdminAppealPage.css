@@ -619,3 +619,7 @@ body.dark-mode .spinner {
     justify-content: center;
   }
 }
+.action-btn-view-btn{
+  transform: translateY(-15px);
+  width: 30px;
+}

@@ -47,7 +47,7 @@ const MyCoursesPage = () => {
               <p className="instructor">Instructor: {course.instructor}</p>
               <div className="progress-bar">
                 <div className="progress-fill" style={{ width: `${course.progress}%` }}></div>
-                <span>{course.progress}% Completed</span>
+                <span className="complete-text">{course.progress}% completed</span>
               </div>
               <button className="continue-btn" onClick={() => handleContinue(course.id)}>
                 <MdPlayArrow /> Continue
