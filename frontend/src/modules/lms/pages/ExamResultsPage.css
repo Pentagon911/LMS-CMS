@@ -31,7 +31,7 @@ body.dark-mode .filters select {
   color: #e5e9f0;
 }
 .gpa-card {
-  background: linear-gradient(135deg, #1061b1 0%, #2c3e50 100%);
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
   border-radius: 12px;
   padding: 1rem;
   margin-bottom: 1.5rem;
@@ -52,7 +52,7 @@ body.dark-mode .gpa-card h3 {
 .gpa-value {
   font-size: 2.5rem;
   font-weight: bold;
-  color: #27ae60;
+  color: #1af575;
 }
 .results-table-container {
   overflow-x: auto;
@@ -145,7 +145,7 @@ body.dark-mode .student-info-card{
 }
 
 .student-info-card {
-  background: linear-gradient(135deg, #1061b1 0%, #2c3e50 100%);
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
   border-radius: 16px;
   padding: 1.5rem;
   margin-bottom: 2rem;
@@ -168,6 +168,7 @@ body.dark-mode .student-info-card{
   font-weight: 600;
   opacity: 0.8;
   min-width: 100px;
+  color: #fefeff;
 }
 
 .info-value {
