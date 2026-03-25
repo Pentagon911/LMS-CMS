@@ -284,9 +284,6 @@ class InstructorQuizSerializer(BaseQuizSerializer):
     
 # ==========  Serilizers for Quiz Creation ==========
 
-from rest_framework import serializers
-from CMS.models import Course, Quiz, Question, Option
-
 class OptionCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating options within a question"""
     id = serializers.CharField(source='optionId', required=False)
@@ -301,7 +298,6 @@ class OptionCreateSerializer(serializers.ModelSerializer):
         if not data.get('text'):
             raise serializers.ValidationError("Option Text is required")
         return data
-
 
 class QuestionCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating questions within a quiz"""
@@ -344,6 +340,7 @@ class QuestionCreateSerializer(serializers.ModelSerializer):
 
 class QuizCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating a complete quiz with questions and options"""
+    quizId = serializers.CharField(read_only=True)
     questions = QuestionCreateSerializer(many=True)
     
     course = serializers.SlugRelatedField(
@@ -580,14 +577,14 @@ class courseDashboardSerializer(serializers.ModelSerializer):
         quizzes = week.quizzes.all()
 
         if request and getattr(request.user, 'role', None) == 'student':
-            quizzes = quizzes.filter(status='published')
+            quizzes = quizzes.filter(status__in=['scheduled', 'active'])
         
         if quizzes:
             for quiz in quizzes:
                 items.append({
                     'type': 'quiz',
                     'title': quiz.title,
-                    'quizId': quiz.quizId,
+                    'quizId': quiz.id,
                     'duration': f"{quiz.timeLimitMinutes} min",
                     'questionsCount': quiz.questions.count(),
                     'description': getattr(quiz, 'description', '')
@@ -615,6 +612,7 @@ class courseDashboardSerializer(serializers.ModelSerializer):
             })
 
         return items
+    
 class WeekSerializer(serializers.ModelSerializer):
     """
     Serializer for Week model - includes all related content. Dynamically loads videos, PDFs, links, announcements, and quizzes
