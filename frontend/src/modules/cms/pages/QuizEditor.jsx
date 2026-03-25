@@ -44,7 +44,7 @@ const CreateQuizPage = () => {
   useEffect(() => {
     const fetchModules = async () => {
       try {
-        const data = await request.GET('/_data/moduleCard.json');
+        const data = await request.GET('/cms/courses/');
         setModules(data);
       } catch (err) {
         console.error('Failed to fetch modules', err);
@@ -58,7 +58,7 @@ const CreateQuizPage = () => {
   const fetchExistingQuizzes = async () => {
     try {
       setLoading(true);
-      const data = await request.GET('/_data/quizzes.json');
+      const data = await request.GET('/cms/quizzes/draft_quizzes/');
       setExistingQuizzes(data);
     } catch (err) {
       console.error('Failed to fetch quizzes', err);
@@ -83,7 +83,7 @@ const CreateQuizPage = () => {
     try {
       setLoading(true);
       let quizToLoad;
-      const data = await request.GET(`/_data/quizzes/${id}.json`);
+      const data = await request.GET(`/cms/quizzes/${id}/`);
       if (data) quizToLoad = data;
 
       const moduleInfo = modules.find(m => m.code === quizToLoad.course);
@@ -228,50 +228,61 @@ const CreateQuizPage = () => {
     }
   };
 
-  const saveQuiz = async () => {
-    if (!quizData.title) {
-      alert('Please enter a quiz title');
-      return;
-    }
+const saveQuiz = async () => {
+  if (!quizData.title) {
+    alert('Please enter a quiz title');
+    return;
+  }
 
-    if (!selectedModule) {
-      alert('Please select a module');
-      return;
-    }
+  if (!selectedModule) {
+    alert('Please select a module');
+    return;
+  }
 
-    if (quizData.questions.length === 0) {
-      alert('Please add at least one question');
-      return;
-    }
+  if (quizData.questions.length === 0) {
+    alert('Please add at least one question');
+    return;
+  }
 
-    try {
-      setLoading(true);
-      const moduleInfo = modules.find(m => m.code === selectedModule);
-      
+  try {
+    setLoading(true);
+    const moduleInfo = modules.find(m => m.code === selectedModule);
+    
+    // Base data without quizId
+    const baseQuizData = {
+      title: quizData.title,
+      course: selectedModule,
+      time: quizData.time,
+      questions: quizData.questions,
+      createdAt: new Date().toISOString()
+    };
+    
+    let response;
+    
+    if (mode === 'edit' && quizData.quizId) {
       const finalQuizData = {
+        ...baseQuizData,
         quizId: quizData.quizId,
-        title: quizData.title,
-        course: selectedModule,
-        time: quizData.time,
-        createdAt: quizData.createdAt || new Date().toISOString(),
-        questions: quizData.questions
       };
-      
-      console.log('Saving quiz:', finalQuizData);
-      
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      alert('Quiz saved successfully!');
-      navigate('/cms/courses');
-    } catch (err) {
-      console.error('Failed to save quiz', err);
-      alert('Failed to save quiz');
-    } finally {
-      setLoading(false);
+      console.log('Updating quiz:', finalQuizData);
+      response = await request.PUT(`/cms/quizzes/${quizData.quizId}/`, finalQuizData);
+      alert('Quiz updated successfully!');
+    } else {
+      console.log('Creating new quiz:', baseQuizData);
+      response = await request.POST('/cms/quizzes/', baseQuizData);
+      alert('Quiz created successfully!');
     }
-  };
+    
+    navigate('/cms/courses');
+  } catch (err) {
+    console.error('Failed to save quiz', err);
+    alert('Failed to save quiz: ' + (err.message || 'Please try again'));
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const getModuleTitle = (code) => {
+    const getModuleTitle = (code) => {
     const module = modules.find(m => m.code === code);
     return module ? module.title : code;
   };

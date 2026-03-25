@@ -202,8 +202,8 @@ const CoursesPage = () => {
     }
   };
 
-  const handleCardClick = (code) => {
-    navigate(`/cms/course-content/${code}`);
+  const handleCardClick = (moduleId) => {
+    navigate(`/cms/course-content/${moduleId}`);
   };
 
   if (loading) {
@@ -247,7 +247,7 @@ const CoursesPage = () => {
         <div className="modules-carousel" ref={scrollRef} onScroll={checkScrollButtons}>
           {modules.map((mod, index) => (
             <div
-              key={mod.code}
+              key={mod.id}
               className="module-card-wrapper"
               onClick={() => handleCardClick(mod.id)}
             >
