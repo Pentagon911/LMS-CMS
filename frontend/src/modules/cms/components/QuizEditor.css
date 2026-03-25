@@ -279,3 +279,26 @@ body.dark-mode .modal-content {
 body.dark-mode .modal-header {
   border-bottom-color: #2a313c;
 }
+.quiz-editor-content .editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.quiz-editor-content .editor-header h3 {
+  margin: 0;
+  color: #212529;
+  font-weight: 600;
+}
+
+/* Dark mode version */
+body.dark-mode .quiz-editor-content .editor-header {
+  border-bottom-color: #2a313c;
+}
+
+body.dark-mode .quiz-editor-content .editor-header h3 {
+  color: #e5e9f0;
+}

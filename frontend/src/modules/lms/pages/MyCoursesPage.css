@@ -79,7 +79,7 @@ body.dark-mode .course-info h3 {
 }
 
 .progress-bar span {
-  position: absolute;
+  position: relative;
   top: 0;
   left: 0;
   right: 0;
@@ -119,4 +119,8 @@ body.dark-mode .progress-bar span {
 }
 .continue-btn:hover {
   background: #2c3e50;
+}
+
+.complete-text{
+  padding-left: 30px;
 }

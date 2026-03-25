@@ -3,103 +3,102 @@
   background: #f8fafd;
   min-height: 100vh;
 }
+
 body.dark-mode .enrollments-container {
   background: #0f1217;
 }
+
 .enrollments-header {
   margin-bottom: 2rem;
 }
+
 .enrollments-header h1 {
   font-size: 1.8rem;
   color: #1a2632;
 }
+
 body.dark-mode .enrollments-header h1 {
   color: #e5e9f0;
 }
-/* Fix paragraph text color in dark mode */
+
 .enrollments-header p {
   color: #2c3e50;
 }
+
 body.dark-mode .enrollments-header p {
   color: #bdc3c7;
 }
+
+/* Section headings */
+.enrollments-section {
+  margin-bottom: 2.5rem;
+}
+
+.enrollments-section h2 {
+  font-size: 1.4rem;
+  margin-bottom: 1rem;
+  color: #1a2632;
+}
+
+body.dark-mode .enrollments-section h2 {
+  color: #e5e9f0;
+}
+
+/* Table container */
 .enrollments-table-container {
   overflow-x: auto;
   background: white;
   border-radius: 12px;
   border: 1px solid #eef2f6;
 }
+
 body.dark-mode .enrollments-table-container {
   background: #1e242c;
   border-color: #2a313c;
 }
+
 .enrollments-table {
   width: 100%;
   border-collapse: collapse;
 }
+
 .enrollments-table th,
 .enrollments-table td {
   padding: 1rem;
   text-align: left;
   border-bottom: 1px solid #eef2f6;
 }
+
 .enrollments-table th {
   background: #f8fafd;
   font-weight: 600;
   color: #1a2632;
 }
+
 body.dark-mode .enrollments-table th {
   background: #2a313c;
   color: #e5e9f0;
 }
+
 .enrollments-table td {
   color: #2c3e50;
 }
+
 body.dark-mode .enrollments-table td {
   border-bottom-color: #2a313c;
   color: #e5e9f0;
 }
-.progress-bar {
-  width: 120px;
-  background: #eef2f6;
-  border-radius: 10px;
-  overflow: hidden;
-  position: relative;
-  height: 20px;
-  display: flex;
-  align-items: center;
+
+.empty-row {
+  text-align: center;
+  color: #7f8c8d;
 }
-.progress-fill {
-  background: #27ae60;
-  height: 100%;
-  border-radius: 10px;
-  transition: width 0.3s ease;
+
+body.dark-mode .empty-row {
+  color: #95a5a6;
 }
-/* Ensure progress fill stays green in dark mode */
-body.dark-mode .progress-fill {
-  background: #27ae60;
-}
-.progress-bar span {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 0.7rem;
-  font-weight: bold;
-  color: #1ccb85;
-}
-/* Improve text contrast in dark mode */
-body.dark-mode .progress-bar span {
-  color: #f0f0f0;
-}
-body.dark-mode .progress-bar {
-  background: #34dc6c;
-}
-.status-active {
-  background: #e8f5e9;
-  color: #388e3c;
-  padding: 0.2rem 0.6rem;
-  border-radius: 20px;
-}
+
+/* Buttons */
 .drop-btn {
   padding: 0.4rem 0.8rem;
   background: #e74c3c;
@@ -108,13 +107,30 @@ body.dark-mode .progress-bar {
   border-radius: 6px;
   cursor: pointer;
 }
+
 .drop-btn:hover {
   background: #c0392b;
 }
+
+.enroll-btn {
+  padding: 0.4rem 0.8rem;
+  background: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.enroll-btn:hover {
+  background: #219653;
+}
+
+/* Loading state */
 .loading-state {
   text-align: center;
   padding: 3rem;
 }
+
 .spinner {
   width: 40px;
   height: 40px;
@@ -124,6 +140,26 @@ body.dark-mode .progress-bar {
   animation: spin 0.8s linear infinite;
   margin: 0 auto 1rem;
 }
+
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Error state */
+.error-state {
+  text-align: center;
+  padding: 2rem;
+  color: #e74c3c;
+}
+
+.error-state button {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }

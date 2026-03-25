@@ -286,7 +286,7 @@ class Announcement(models.Model):
     ]
     
     announcement_type = models.CharField(max_length=10, choices=ANNOUNCEMENT_TYPES, default='course')
-    
+    attachment_url = models.URLField(max_length=500, null=True, blank=True)
     # For batch announcements (all students in this batch)
     batch = models.ForeignKey(Batch,on_delete=models.CASCADE,related_name='announcements',null=True,blank=True)
     

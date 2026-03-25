@@ -104,7 +104,7 @@ const StudentAppealDashboard = () => {
       <div className="student-dashboard-container">
         <div className="loading-spinner">
           <div className="spinner"></div>
-          <p>Loading dashboard...</p>
+          <p></p>
         </div>
       </div>
     );
