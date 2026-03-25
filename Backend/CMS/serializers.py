@@ -381,8 +381,6 @@ class QuizCreateSerializer(serializers.ModelSerializer):
         start_time = validated_data.pop('start_time', None) 
         status = validated_data.pop('status', 'draft') 
         
-        
-               
         quiz = Quiz.objects.create(
             courseCode=courseCode,
             status='draft',
