@@ -355,3 +355,17 @@ body.dark-mode .spinner {
 .action-btn-process-btn:hover{
   background-color: #bbdef5
 }
+
+.action-btn-assign-btn{
+  background-color: #1ab15e;
+  width: 40px;
+  height: 30px;
+  border-radius: 10px;
+  border: none;
+  transform: translateY(-0.8px);
+  transition: background-color 0.3s ease;
+}
+
+.action-btn-assign-btn:hover{
+  background-color: #91fac9
+}

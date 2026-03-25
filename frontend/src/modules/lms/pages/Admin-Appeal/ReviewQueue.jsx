@@ -184,7 +184,7 @@ const ReviewQueue = () => {
                     </button>
                     {!item.assigned_to && (
                       <button
-                        className="action-btn assign-btn"
+                        className="action-btn-assign-btn"
                         onClick={() => handleAssign(item.id)}
                         disabled={processingId === item.id}
                         title="Assign to me"
