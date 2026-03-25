@@ -1167,35 +1167,40 @@ class StudentDashboardView(APIView):
             total=Count('id'),
             pending=Count('id', filter=Q(status=AppealStatus.PENDING)),
             approved=Count('id', filter=Q(status=AppealStatus.APPROVED)),
-            rejected=Count('id', filter=Q(status=AppealStatus.REJECTED))
+            rejected=Count('id', filter=Q(status=AppealStatus.REJECTED)),
+            under_review=Count('id', filter=Q(status=AppealStatus.UNDER_REVIEW))
         )
         
         hostel_counts = hostel_qs.aggregate(
             total=Count('id'),
             pending=Count('id', filter=Q(status=AppealStatus.PENDING)),
             approved=Count('id', filter=Q(status=AppealStatus.APPROVED)),
-            rejected=Count('id', filter=Q(status=AppealStatus.REJECTED))
+            rejected=Count('id', filter=Q(status=AppealStatus.REJECTED)),
+            under_review=Count('id', filter=Q(status=AppealStatus.UNDER_REVIEW))
         )
         
         exam_counts = exam_qs.aggregate(
             total=Count('id'),
             pending=Count('id', filter=Q(status=AppealStatus.PENDING)),
             approved=Count('id', filter=Q(status=AppealStatus.APPROVED)),
-            rejected=Count('id', filter=Q(status=AppealStatus.REJECTED))
+            rejected=Count('id', filter=Q(status=AppealStatus.REJECTED)),
+            under_review=Count('id', filter=Q(status=AppealStatus.UNDER_REVIEW))
         )
         
         medical_counts = medical_qs.aggregate(
             total=Count('id'),
             pending=Count('id', filter=Q(status=AppealStatus.PENDING)),
             approved=Count('id', filter=Q(status=AppealStatus.APPROVED)),
-            rejected=Count('id', filter=Q(status=AppealStatus.REJECTED))
+            rejected=Count('id', filter=Q(status=AppealStatus.REJECTED)),
+            under_review=Count('id', filter=Q(status=AppealStatus.UNDER_REVIEW))
         )
         
         reeval_counts = reeval_qs.aggregate(
             total=Count('id'),
             pending=Count('id', filter=Q(status=AppealStatus.PENDING)),
             approved=Count('id', filter=Q(status=AppealStatus.APPROVED)),
-            rejected=Count('id', filter=Q(status=AppealStatus.REJECTED))
+            rejected=Count('id', filter=Q(status=AppealStatus.REJECTED)),
+            under_review=Count('id', filter=Q(status=AppealStatus.UNDER_REVIEW))
         )
         
         return Response({
@@ -1212,5 +1217,8 @@ class StudentDashboardView(APIView):
                 'rejected': bursary_counts['rejected'] + hostel_counts['rejected'] + 
                            exam_counts['rejected'] + medical_counts['rejected'] + 
                            reeval_counts['rejected'],
+                'under_review': bursary_counts['under_review'] + hostel_counts['under_review'] + 
+                           exam_counts['under_review'] + medical_counts['under_review'] + 
+                           reeval_counts['under_review'],
             }
         })

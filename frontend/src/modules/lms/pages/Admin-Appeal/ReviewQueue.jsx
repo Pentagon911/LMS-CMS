@@ -101,7 +101,7 @@ const ReviewQueue = () => {
       <div className="review-queue-container">
         <div className="loading-spinner">
           <div className="spinner"></div>
-          <p>Loading review queue...</p>
+          <p></p>
         </div>
       </div>
     );
@@ -176,7 +176,7 @@ const ReviewQueue = () => {
                   <td>{item.assigned_to_name || 'Unassigned'}</td>
                   <td className="actions">
                     <button
-                      className="action-btn view-btn"
+                      className="action-btn-view-btn"
                       onClick={() => handleViewAppeal(item)}
                       title="View Appeal"
                     >
@@ -184,7 +184,7 @@ const ReviewQueue = () => {
                     </button>
                     {!item.assigned_to && (
                       <button
-                        className="action-btn assign-btn"
+                        className="action-btn-assign-btn"
                         onClick={() => handleAssign(item.id)}
                         disabled={processingId === item.id}
                         title="Assign to me"
@@ -194,7 +194,7 @@ const ReviewQueue = () => {
                     )}
                     {!item.is_processed && (
                       <button
-                        className="action-btn process-btn"
+                        className="action-btn-process-btn"
                         onClick={() => handleProcess(item.id)}
                         disabled={processingId === item.id}
                         title="Mark as Processed"

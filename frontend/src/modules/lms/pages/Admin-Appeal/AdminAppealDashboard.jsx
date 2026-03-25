@@ -96,7 +96,7 @@ const AdminAppealDashboard = () => {
       <div className="admin-dashboard-container">
         <div className="loading-spinner">
           <div className="spinner"></div>
-          <p>Loading dashboard...</p>
+          <p></p>
         </div>
       </div>
     );
