@@ -94,3 +94,252 @@ body.dark-mode .results-table td {
 .body.dark-mode .exam-results-desc{
   color:#e5e9f0;
 }
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1rem;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #eef2f6;
+  border-top-color: #1a2632;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+body.dark-mode .spinner {
+  border-color: #2a313c;
+  border-top-color: #e5e9f0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error State */
+.error-state {
+  text-align: center;
+  padding: 3rem;
+  color: #e74c3c;
+  background: #fff5f5;
+  border-radius: 12px;
+  margin: 2rem 0;
+}
+
+body.dark-mode .error-state {
+  background: #2a1f1f;
+  color: #ff8a80;
+}
+
+/* Student Info Card */
+.student-info-card {
+  background: linear-gradient(135deg, #1a2632 0%, #2c3e50 100%);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.student-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.info-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.info-label {
+  font-weight: 600;
+  opacity: 0.8;
+  min-width: 100px;
+}
+
+.info-value {
+  font-weight: 500;
+}
+
+/* Filters */
+.filters {
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.filters label {
+  font-weight: 500;
+  color: #1a2632;
+}
+
+body.dark-mode .filters label {
+  color: #e5e9f0;
+}
+
+.filters select {
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #eef2f6;
+  background: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.filters select:hover {
+  border-color: #1a2632;
+}
+
+body.dark-mode .filters select {
+  background: #2a313c;
+  border-color: #323b48;
+  color: #e5e9f0;
+}
+
+/* Semester Section */
+.semester-section {
+  margin-bottom: 2.5rem;
+}
+
+.semester-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #eef2f6;
+}
+
+body.dark-mode .semester-header {
+  border-bottom-color: #2a313c;
+}
+
+.semester-header h2 {
+  font-size: 1.3rem;
+  color: #1a2632;
+  margin: 0;
+}
+
+body.dark-mode .semester-header h2 {
+  color: #e5e9f0;
+}
+
+.semester-stats {
+  display: flex;
+  gap: 1rem;
+}
+
+.semester-sgpa, .semester-cgpa {
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+
+.semester-sgpa {
+  background: #e8f5e9;
+  color: #27ae60;
+}
+
+.semester-cgpa {
+  background: #e3f2fd;
+  color: #2196f3;
+}
+
+body.dark-mode .semester-sgpa {
+  background: #1a3a2a;
+  color: #6fbf73;
+}
+
+body.dark-mode .semester-cgpa {
+  background: #1a2a3a;
+  color: #64b5f6;
+}
+
+/* Grade Colors */
+.grade-cell {
+  font-weight: 600;
+}
+
+.grade-a {
+  color: #27ae60;
+}
+
+.grade-b {
+  color: #3498db;
+}
+
+.grade-c {
+  color: #f39c12;
+}
+
+.grade-d {
+  color: #e67e22;
+}
+
+.grade-f {
+  color: #e74c3c;
+}
+
+.grade-default {
+  color: #7f8c9f;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #7f8c9f;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #eef2f6;
+}
+
+body.dark-mode .empty-state {
+  background: #1e242c;
+  border-color: #2a313c;
+  color: #a0a8b7;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .exam-results-container {
+    padding: 1rem;
+  }
+  
+  .student-info {
+    grid-template-columns: 1fr;
+  }
+  
+  .semester-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .semester-stats {
+    gap: 0.5rem;
+  }
+  
+  .filters {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .results-table th,
+  .results-table td {
+    padding: 0.75rem;
+    font-size: 0.85rem;
+  }
+}
