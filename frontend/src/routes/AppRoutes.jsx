@@ -89,6 +89,8 @@ function AppRoutes() {
       <Route path="/lms/academics/my-courses" element={<LMSLayout><MyCoursesPage /></LMSLayout>} />
       <Route path="/lms/academics/results" element={<LMSLayout><ExamResultsPage /></LMSLayout>} />
       <Route path="/lms/update-results" element={<LMSLayout><UpdateResultsPage /></LMSLayout>} />
+      {/* Admin Exam Results */}
+      <Route path="/lms/admin/results" element={<LMSLayout><ExamResultsPage /></LMSLayout>} />
 
       {/* <Route path="/lms/appeals-and-welfare/bursary-appeals" element={<LMSLayout><BursaryAppealsPage /></LMSLayout>} />
       <Route path="/lms/appeals-and-welfare/hostel-appeals" element={<LMSLayout><HostelAppealsPage /></LMSLayout>} />

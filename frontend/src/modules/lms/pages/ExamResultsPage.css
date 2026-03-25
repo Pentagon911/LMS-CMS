@@ -3,33 +3,41 @@
   background: #f8fafd;
   min-height: 100vh;
 }
+
 body.dark-mode .exam-results-container {
   background: #0f1217;
 }
+
 .exam-results-header {
   margin-bottom: 2rem;
 }
+
 .exam-results-header h1 {
   font-size: 1.8rem;
   color: #1a2632;
 }
+
 body.dark-mode .exam-results-header h1 {
   color: #e5e9f0;
 }
+
 .filters {
   margin-bottom: 1.5rem;
 }
+
 .filters select {
   padding: 0.5rem 1rem;
   border-radius: 8px;
   border: 1px solid #eef2f6;
   background: white;
 }
+
 body.dark-mode .filters select {
   background: #2a313c;
   border-color: #323b48;
   color: #e5e9f0;
 }
+
 .gpa-card {
   background: white;
   border-radius: 12px;
@@ -38,61 +46,84 @@ body.dark-mode .filters select {
   text-align: center;
   border: 1px solid #eef2f6;
 }
+
 body.dark-mode .gpa-card {
   background: #1e242c;
   border-color: #2a313c;
 }
+
 .gpa-card h3 {
   margin: 0 0 0.5rem;
   color: #1a2632;
 }
+
 body.dark-mode .gpa-card h3 {
   color: #e5e9f0;
 }
+
 .gpa-value {
   font-size: 2.5rem;
   font-weight: bold;
   color: #27ae60;
 }
+
 .results-table-container {
   overflow-x: auto;
   background: white;
   border-radius: 12px;
   border: 1px solid #eef2f6;
 }
+
 body.dark-mode .results-table-container {
   background: #1e242c;
   border-color: #2a313c;
 }
+
 .results-table {
   width: 100%;
   border-collapse: collapse;
 }
+
 .results-table th,
 .results-table td {
   padding: 1rem;
   text-align: left;
   border-bottom: 1px solid #eef2f6;
 }
+
 .results-table th {
   background: #f8fafd;
   font-weight: 600;
   color: #1a2632;
 }
+
 body.dark-mode .results-table th {
   background: #2a313c;
   color: #e5e9f0;
 }
+
 body.dark-mode .results-table td {
   border-bottom-color: #2a313c;
   color: #e5e9f0;
 }
-.grade-A { color: #27ae60; font-weight: bold; }
-.grade-B { color: #3498db; font-weight: bold; }
-.grade-C { color: #f39c12; font-weight: bold; }
 
-.body.dark-mode .exam-results-desc{
-  color:#e5e9f0;
+.grade-A {
+  color: #27ae60;
+  font-weight: bold;
+}
+
+.grade-B {
+  color: #3498db;
+  font-weight: bold;
+}
+
+.grade-C {
+  color: #f39c12;
+  font-weight: bold;
+}
+
+.body.dark-mode .exam-results-desc {
+  color: #e5e9f0;
 }
 
 /* Loading State */
@@ -120,7 +151,9 @@ body.dark-mode .spinner {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Error State */
@@ -240,7 +273,8 @@ body.dark-mode .semester-header h2 {
   gap: 1rem;
 }
 
-.semester-sgpa, .semester-cgpa {
+.semester-sgpa,
+.semester-cgpa {
   font-weight: 600;
   padding: 0.25rem 0.75rem;
   border-radius: 20px;
@@ -317,29 +351,147 @@ body.dark-mode .empty-state {
   .exam-results-container {
     padding: 1rem;
   }
-  
+
   .student-info {
     grid-template-columns: 1fr;
   }
-  
+
   .semester-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
   }
-  
+
   .semester-stats {
     gap: 0.5rem;
   }
-  
+
   .filters {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .results-table th,
   .results-table td {
     padding: 0.75rem;
     font-size: 0.85rem;
   }
+}
+
+/* Filters Section for Admin/Instructor */
+.filters-section {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid #eef2f6;
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+body.dark-mode .filters-section {
+  background: #1e242c;
+  border-color: #2a313c;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-group label {
+  font-weight: 500;
+  color: #1a2632;
+  font-size: 0.9rem;
+}
+
+body.dark-mode .filter-group label {
+  color: #e5e9f0;
+}
+
+.filter-group select {
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #eef2f6;
+  background: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+body.dark-mode .filter-group select {
+  background: #2a313c;
+  border-color: #323b48;
+  color: #e5e9f0;
+}
+
+.filter-group select:focus {
+  outline: none;
+  border-color: #1a2632;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .filters-section {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .filter-group {
+    width: 100%;
+  }
+}
+
+/* Student Header for Admin View */
+.student-info-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.student-info-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #1a2632;
+}
+
+.student-index {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #7f8c9f;
+  font-family: monospace;
+}
+
+body.dark-mode .student-index {
+  color: #a0a8b7;
+}
+
+/* Student Header Container */
+.student-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: #f8fafd;
+  border-radius: 8px;
+  border-left: 4px solid #2c3e50;
+}
+
+body.dark-mode .student-header {
+  background: #2a313c;
+  border-left-color: #4a627a;
+}
+
+.student-cgpa {
+  font-weight: bold;
+  color: #27ae60;
+  font-size: 1.1rem;
+}
+
+body.dark-mode .student-cgpa {
+  color: #6fbf73;
 }
