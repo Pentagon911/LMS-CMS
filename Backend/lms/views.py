@@ -111,6 +111,35 @@ class EnrollmentViewSet(BaseModelViewSet):
             status=status.HTTP_201_CREATED
         )
 
+    @action(detail=False, methods=['post'], permission_classes=[IsStudentUser])
+    def unenroll_me(self, request):
+        """
+        Allow a student to drop/unenroll from a course.
+        """
+        course_id = request.data.get('course')
+        course = get_object_or_404(Course, id=course_id)
+        
+        try:
+            enrollment = Enrollment.objects.get(
+                student=request.user,
+                course=course,
+                status='enrolled'  # Only allow dropping from active enrollments
+            )
+        except Enrollment.DoesNotExist:
+            raise ValidationError("You are not enrolled in this course")
+        
+        # Delete the enrollment record
+        enrollment.delete()
+        
+        #Just mark as dropped (if want to keep history)
+        # enrollment.status = 'dropped'
+        # enrollment.save()
+        
+        return Response(
+            {"message": f"Successfully unenrolled from {course.code}: {course.name}"},
+            status=status.HTTP_200_OK
+        )
+
     @action(detail=False, methods=['get'], permission_classes=[IsStudentUser])
     def my_courses(self, request):
         enrollments = self.get_queryset().filter(student=request.user)
@@ -176,8 +205,7 @@ class EnrollmentViewSet(BaseModelViewSet):
             'history': history,
             'total_credits': total_credits,
             'total_gpa_credits': total_gpa_credits,
-        })
-    
+        })    
 
 class ExamTimetableViewSet(BaseModelViewSet):
     queryset = ExamTimetable.objects.all()
@@ -637,7 +665,7 @@ class StudentMyAppealsView(APIView):
 
         bursary = BursaryAppeal.objects.filter(student=student).select_related('department', 'faculty', 'batch')
         hostel = HostelAppeal.objects.filter(student=student).select_related('department', 'faculty', 'batch')
-        exam = ExamRewriteAppeal.objects.filter(student=student).select_related('department', 'faculty', 'batch', 'course', 'module')
+        exam = ExamRewriteAppeal.objects.filter(student=student).select_related('department', 'faculty', 'batch', 'course')
         medical = MedicalLeaveAppeal.objects.filter(student=student).select_related('department', 'faculty', 'batch')
         reeval = ResultReEvaluationAppeal.objects.filter(student=student).select_related('department', 'faculty', 'batch', 'exam_result')
 

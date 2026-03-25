@@ -1,9 +1,11 @@
 #CMS/ models.py
 from django.db import models
+import re
 from django.db.models import Sum
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from lms.models import *
+
 User = get_user_model()
 
 class Week(models.Model):
@@ -84,7 +86,7 @@ class Quiz(models.Model):
     week = models.ForeignKey(Week,on_delete = models.CASCADE,related_name='quizzes',null = True,blank = True)
     title = models.TextField()
     timeLimitMinutes = models.PositiveIntegerField(default=15)
-    description = models.TextField(blank=True)
+    description = models.TextField(blank=True,null=True)
 
     # Order of the quiz within the week
     order = models.PositiveIntegerField(default=1)
@@ -97,15 +99,21 @@ class Quiz(models.Model):
 
     def save(self,*args,**kwargs):
         """Override save to auto-generate quizId"""
-        if not self.quizId:
-            # Generate quizId like 'quiz001', 'quiz002', etc
-            lastQuiz = Quiz.objects.order_by('-id').first()
+        if not self.quizId:  # Only generate if it doesn't have an ID yet
+            lastQuiz = Quiz.objects.all().order_by('id').last()
+            
             if lastQuiz and lastQuiz.quizId:
-                lastNum = int(lastQuiz.quizId.replace('quiz', ''))
-                newNum = lastNum + 1
+                # Find all the numbers in the string (ignores words/dashes)
+                numbers = re.findall(r'\d+', lastQuiz.quizId)
+                if numbers:
+                    lastNum = int(numbers[-1])
+                else:
+                    lastNum = 0
             else:
-                newNum = 1
-            self.quizId = f"{self.QUIZ_ID_PREFIX}{newNum:03d}"
+                lastNum = 0
+                
+            self.quizId = f"quiz{lastNum + 1}"
+            
         super().save(*args, **kwargs)
 
             
@@ -308,3 +316,41 @@ class Announcement(models.Model):
             return f"Course {self.course.code}: {self.title}"
         else:
             return f"Week {self.week.order}: {self.title}"
+
+
+class AcademicCalendar(models.Model):
+    SEMESTER_CHOICES = [(i, f'Semester {i}') for i in range(1, 9)]  # 1-8
+
+    year = models.PositiveIntegerField(help_text="Academic year (e.g., 2024)")
+    semester = models.IntegerField(choices=SEMESTER_CHOICES, help_text="Semester number (1-8)")
+    faculty = models.CharField(max_length=200, help_text="Faculty/Department name")
+    pdf = models.FileField(upload_to='academic_calendars/', help_text="Timetable PDF file")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        ordering = ['-year', '-semester']
+        unique_together = ['year', 'semester', 'faculty']
+
+    def __str__(self):
+        return f"{self.year} Semester {self.semester} - {self.faculty}"
+    
+class PracticalTimetable(models.Model):
+    """Simplified practical timetable: year, semester, faculty, title, PDF."""
+    SEMESTER_CHOICES = [(i, f'Semester {i}') for i in range(1, 9)]
+
+    year = models.PositiveIntegerField(help_text="Academic year (e.g., 2024)")
+    semester = models.IntegerField(choices=SEMESTER_CHOICES, help_text="Semester number (1-8)")
+    faculty = models.CharField(max_length=200, help_text="Faculty/Department name")
+    title = models.CharField(max_length=200, help_text="Title of the practical schedule")
+    pdf = models.FileField(upload_to='practical_timetables/', help_text="Timetable PDF file")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        ordering = ['-year', '-semester', 'faculty']
+        # Optional: enforce uniqueness to avoid duplicates
+        unique_together = ['year', 'semester', 'faculty', 'title']
+
+    def __str__(self):
+        return f"{self.year} S{self.semester} {self.faculty} - {self.title}"

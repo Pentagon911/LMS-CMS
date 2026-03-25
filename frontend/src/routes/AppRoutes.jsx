@@ -74,7 +74,7 @@ function AppRoutes() {
       <Route path="/cms/quiz-editor" element={<CMSLayout> <QuizEditor /> </CMSLayout>} />
       <Route path="/cms/quizes" element={<CMSLayout> <Quiz /> </CMSLayout>} />
       <Route path="/cms/courses" element={<CMSLayout> <Coursepage /> </CMSLayout>} />
-      <Route path="/cms/course-content/:moduleCode" element={<CMSLayout> <CourseContentPage /> </CMSLayout>} />
+      <Route path="/cms/course-content/:moduleId" element={<CMSLayout> <CourseContentPage /> </CMSLayout>} />
       <Route path="/cms/announcements" element={<CMSLayout> <AnnouncementEditor /> </CMSLayout>} />
       <Route path="/cms/time-tables" element={<CMSLayout> <TimeTablePage /> </CMSLayout>} />
       <Route path="/cms/edit-profile" element={<CMSLayout> <EditProfile /> </CMSLayout>} />

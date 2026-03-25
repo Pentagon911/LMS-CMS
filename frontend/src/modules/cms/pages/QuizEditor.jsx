@@ -44,7 +44,10 @@ const CreateQuizPage = () => {
   useEffect(() => {
     const fetchModules = async () => {
       try {
+<<<<<<< HEAD
         setLoading(true);
+=======
+>>>>>>> b05018e57849741ed2c983d6e3a5305f58191b0a
         const data = await request.GET('/cms/courses/');
         setModules(data);
       } catch (err) {
@@ -61,8 +64,12 @@ const CreateQuizPage = () => {
   const fetchExistingQuizzes = async () => {
     try {
       setLoading(true);
+<<<<<<< HEAD
       // Using GET request to fetch all quizzes
       const data = await request.GET('/cms/quizzes/');
+=======
+      const data = await request.GET('/cms/quizzes/draft_quizzes/');
+>>>>>>> b05018e57849741ed2c983d6e3a5305f58191b0a
       setExistingQuizzes(data);
     } catch (err) {
       console.error('Failed to fetch quizzes', err);
@@ -86,9 +93,16 @@ const CreateQuizPage = () => {
   const loadQuizForEdit = async (id) => {
     try {
       setLoading(true);
+<<<<<<< HEAD
       // Using GET request to fetch single quiz by ID
       const quizToLoad = await request.GET(`/cms/quizzes/${id}/`);
       
+=======
+      let quizToLoad;
+      const data = await request.GET(`/cms/quizzes/${id}/`);
+      if (data) quizToLoad = data;
+
+>>>>>>> b05018e57849741ed2c983d6e3a5305f58191b0a
       const moduleInfo = modules.find(m => m.code === quizToLoad.course);
       
       setQuizData({
@@ -232,6 +246,7 @@ const CreateQuizPage = () => {
     }
   };
 
+<<<<<<< HEAD
   // Updated saveQuiz function with proper POST/PUT logic
   const saveQuiz = async () => {
     // Validation
@@ -239,24 +254,52 @@ const CreateQuizPage = () => {
       alert('Please enter a quiz title');
       return;
     }
+=======
+const saveQuiz = async () => {
+  if (!quizData.title) {
+    alert('Please enter a quiz title');
+    return;
+  }
+>>>>>>> b05018e57849741ed2c983d6e3a5305f58191b0a
 
-    if (!selectedModule) {
-      alert('Please select a module');
-      return;
-    }
+  if (!selectedModule) {
+    alert('Please select a module');
+    return;
+  }
 
-    if (quizData.questions.length === 0) {
-      alert('Please add at least one question');
-      return;
-    }
+  if (quizData.questions.length === 0) {
+    alert('Please add at least one question');
+    return;
+  }
 
+<<<<<<< HEAD
     try {
       setLoading(true);
       
       const moduleInfo = modules.find(m => m.code === selectedModule);
       
+=======
+  try {
+    setLoading(true);
+    const moduleInfo = modules.find(m => m.code === selectedModule);
+    
+    // Base data without quizId
+    const baseQuizData = {
+      title: quizData.title,
+      course: selectedModule,
+      time: quizData.time,
+      questions: quizData.questions,
+      createdAt: new Date().toISOString()
+    };
+    
+    let response;
+    
+    if (mode === 'edit' && quizData.quizId) {
+>>>>>>> b05018e57849741ed2c983d6e3a5305f58191b0a
       const finalQuizData = {
+        ...baseQuizData,
         quizId: quizData.quizId,
+<<<<<<< HEAD
         title: quizData.title,
         course: selectedModule,
         moduleTitle: moduleInfo?.title || '',
@@ -299,10 +342,28 @@ const CreateQuizPage = () => {
       }
     } finally {
       setLoading(false);
+=======
+      };
+      console.log('Updating quiz:', finalQuizData);
+      response = await request.PUT(`/cms/quizzes/${quizData.quizId}/`, finalQuizData);
+      alert('Quiz updated successfully!');
+    } else {
+      console.log('Creating new quiz:', baseQuizData);
+      response = await request.POST('/cms/quizzes/', baseQuizData);
+      alert('Quiz created successfully!');
+>>>>>>> b05018e57849741ed2c983d6e3a5305f58191b0a
     }
-  };
+    
+    navigate('/cms/courses');
+  } catch (err) {
+    console.error('Failed to save quiz', err);
+    alert('Failed to save quiz: ' + (err.message || 'Please try again'));
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const getModuleTitle = (code) => {
+    const getModuleTitle = (code) => {
     const module = modules.find(m => m.code === code);
     return module ? module.title : code;
   };

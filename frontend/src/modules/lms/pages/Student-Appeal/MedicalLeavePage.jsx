@@ -1,5 +1,5 @@
 // src/modules/lms/pages/MedicalLeavePage.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import request from '../../../../utils/requestMethods';
 import { MdSave, MdCancel, MdWarning, MdCheckCircle, MdDelete, MdCloudUpload, MdMedicalServices } from 'react-icons/md';
@@ -16,25 +16,48 @@ const MedicalLeavePage = () => {
   const [uploadingFile, setUploadingFile] = useState(false);
   
   // Get user data from localStorage
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  
-  // Extract IDs from profile (these are the IDs sent to backend)
-  const departmentId = user.profile?.department || '';
-  const facultyId = user.profile?.faculty || '';
-  const batchId = user.profile?.batch || '';
-  
-  // Extract display names from user object (these are from JWT response)
-  const departmentName = user.department_name || 'Not assigned';
-  const facultyName = user.faculty_name || 'Not assigned';
-  const batchName = user.batch_name || 'Not assigned';
+  const [user, setUser] = useState(null);
+  const [departmentId, setDepartmentId] = useState(null);
+  const [facultyId, setFacultyId] = useState(null);
+  const [batchId, setBatchId] = useState(null);
+  const [studentId, setStudentId] = useState(null);
+  const [departmentName, setDepartmentName] = useState('Not assigned');
+  const [facultyName, setFacultyName] = useState('Not assigned');
+  const [batchName, setBatchName] = useState('Not assigned');
+
+  // Define appeal type constant
+  const APPEAL_TYPE = 'MEDICAL_LEAVE';
+
+  // Load user data from localStorage
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+      setStudentId(parsedUser.id);
+      
+      if (parsedUser.profile) {
+        setDepartmentId(parsedUser.profile.department);
+        setFacultyId(parsedUser.profile.faculty);
+        setBatchId(parsedUser.profile.batch);
+        setDepartmentName(parsedUser.department_name || 'Not assigned');
+        setFacultyName(parsedUser.faculty_name || 'Not assigned');
+        setBatchName(parsedUser.batch_name || 'Not assigned');
+      } else {
+        setDepartmentId(parsedUser.department);
+        setFacultyId(parsedUser.faculty);
+        setBatchId(parsedUser.batch);
+        setDepartmentName(parsedUser.department_name || 'Not assigned');
+        setFacultyName(parsedUser.faculty_name || 'Not assigned');
+        setBatchName(parsedUser.batch_name || 'Not assigned');
+      }
+    }
+  }, []);
 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     academic_year: new Date().getFullYear() + '-' + (new Date().getFullYear() + 1),
-    department: departmentId,
-    faculty: facultyId,
-    batch: batchId,
     start_date: '',
     end_date: '',
     diagnosis: '',
@@ -120,20 +143,6 @@ const MedicalLeavePage = () => {
     setSupportingDocs(supportingDocs.filter((_, i) => i !== index));
   };
 
-  const uploadFile = async (file, type) => {
-    try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('file', file);
-      formDataToSend.append('description', `${type}_${file.name}`);
-      
-      const response = await request.UPLOAD('/lms/attachments/', formDataToSend);
-      return response;
-    } catch (err) {
-      console.error(`Error uploading ${type}:`, err);
-      throw err;
-    }
-  };
-
   const calculateDays = () => {
     if (formData.start_date && formData.end_date) {
       const start = new Date(formData.start_date);
@@ -150,22 +159,64 @@ const MedicalLeavePage = () => {
     setLoading(true);
     setError(null);
 
-    // Validate required fields
-    if (!formData.department || !formData.faculty || !formData.batch) {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      setError('You are not logged in. Please login again.');
+      setLoading(false);
+      navigate('/login');
+      return;
+    }
+
+    if (!studentId) {
+      setError('Student information is missing. Please log in again.');
+      setLoading(false);
+      return;
+    }
+
+    if (!departmentId || !facultyId || !batchId) {
       setError('Student profile information is incomplete. Please contact support.');
       setLoading(false);
       return;
     }
-    
-    // Validate required documents
-    if (!medicalReport) {
-      setError('Medical report is required');
+
+    if (!formData.title.trim()) {
+      setError('Please provide a title for your application.');
       setLoading(false);
       return;
     }
-    
+
+    if (!formData.description.trim()) {
+      setError('Please provide a description for your application.');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.start_date || !formData.end_date) {
+      setError('Please select both start and end dates.');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.hospital_name.trim()) {
+      setError('Please provide the hospital name.');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.doctor_name.trim()) {
+      setError('Please provide the doctor\'s name.');
+      setLoading(false);
+      return;
+    }
+
+    if (!medicalReport) {
+      setError('Medical report is required.');
+      setLoading(false);
+      return;
+    }
+
     if (!hospitalLetter) {
-      setError('Hospital letter is required');
+      setError('Hospital letter is required.');
       setLoading(false);
       return;
     }
@@ -173,42 +224,59 @@ const MedicalLeavePage = () => {
     try {
       setUploadingFile(true);
       
-      // Prepare appeal data
-      const submitData = {
-        ...formData,
-        department: parseInt(formData.department),
-        faculty: parseInt(formData.faculty),
-        batch: parseInt(formData.batch),
-      };
+      const formDataToSend = new FormData();
       
-      // Create the medical leave appeal
-      const appealResponse = await request.POST('/lms/appeals/medical-leave/', submitData);
+      formDataToSend.append('appeal_type', APPEAL_TYPE);
+      formDataToSend.append('student', studentId.toString());
+      formDataToSend.append('department', departmentId.toString());
+      formDataToSend.append('faculty', facultyId.toString());
+      if (batchId) {
+        formDataToSend.append('batch', batchId.toString());
+      }
       
-      // Upload medical report
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('academic_year', formData.academic_year);
+      formDataToSend.append('start_date', formData.start_date);
+      formDataToSend.append('end_date', formData.end_date);
+      formDataToSend.append('diagnosis', formData.diagnosis || '');
+      formDataToSend.append('hospital_name', formData.hospital_name);
+      formDataToSend.append('doctor_name', formData.doctor_name);
+      
       if (medicalReport) {
-        const medicalReportResponse = await uploadFile(medicalReport, 'medical_report');
-        await request.PATCH(`/lms/attachments/${medicalReportResponse.id}/`, {
-          appeal_type: 'medicalleaveappeal',
-          appeal_id: appealResponse.id
-        });
+        formDataToSend.append('medical_report', medicalReport);
       }
       
-      // Upload hospital letter
       if (hospitalLetter) {
-        const hospitalLetterResponse = await uploadFile(hospitalLetter, 'hospital_letter');
-        await request.PATCH(`/lms/attachments/${hospitalLetterResponse.id}/`, {
-          appeal_type: 'medicalleaveappeal',
-          appeal_id: appealResponse.id
-        });
+        formDataToSend.append('hospital_letter', hospitalLetter);
       }
       
-      // Upload supporting documents
-      for (const doc of supportingDocs) {
-        const docResponse = await uploadFile(doc, 'supporting_document');
-        await request.PATCH(`/lms/attachments/${docResponse.id}/`, {
-          appeal_type: 'medicalleaveappeal',
-          appeal_id: appealResponse.id
-        });
+      if (supportingDocs.length > 0) {
+        formDataToSend.append('supporting_documents', supportingDocs[0]);
+        
+        const additionalDocs = supportingDocs.slice(1);
+        if (additionalDocs.length > 0) {
+          console.log(`${additionalDocs.length} additional document(s) will be uploaded as attachments after appeal creation.`);
+        }
+      }
+      
+      const appealResponse = await request.POST('/lms/appeals/medical-leave/', formDataToSend, { isFormData: true });
+      
+      if (supportingDocs.length > 1 && appealResponse.id) {
+        try {
+          const additionalDocs = supportingDocs.slice(1);
+          for (const doc of additionalDocs) {
+            const attachmentFormData = new FormData();
+            attachmentFormData.append('file', doc);
+            attachmentFormData.append('description', `Supporting document: ${doc.name}`);
+            attachmentFormData.append('appeal_type', 'medicalleaveappeal');
+            attachmentFormData.append('appeal_id', appealResponse.id.toString());
+            
+            await request.POST('/lms/attachments/', attachmentFormData, { isFormData: true });
+          }
+        } catch (attachmentError) {
+          console.warn('Failed to upload additional documents:', attachmentError);
+        }
       }
       
       setSuccess(true);
@@ -216,8 +284,34 @@ const MedicalLeavePage = () => {
         navigate('/lms/appeals-and-welfare/my-appeals');
       }, 2000);
     } catch (err) {
-      console.Error('Error submitting medical leave:', err);
-      setError(err.message || 'Failed to submit application. Please try again.');
+      console.error('Error submitting medical leave:', err);
+      
+      let errorMessage = 'Failed to submit application. Please try again.';
+      
+      if (err.status === 401) {
+        errorMessage = 'Your session has expired. Please login again.';
+        setTimeout(() => navigate('/login'), 2000);
+      } else if (err.data) {
+        if (typeof err.data === 'object') {
+          const errorMessages = [];
+          for (const [key, value] of Object.entries(err.data)) {
+            if (Array.isArray(value)) {
+              errorMessages.push(`${key}: ${value.join(', ')}`);
+            } else if (typeof value === 'string') {
+              errorMessages.push(`${key}: ${value}`);
+            } else {
+              errorMessages.push(`${key}: ${JSON.stringify(value)}`);
+            }
+          }
+          errorMessage = errorMessages.join('; ');
+        } else if (typeof err.data === 'string') {
+          errorMessage = err.data;
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
       setUploadingFile(false);
@@ -254,7 +348,6 @@ const MedicalLeavePage = () => {
       )}
 
       <form onSubmit={handleSubmit} className="appeal-form">
-        {/* Student Information Section */}
         <div className="form-section">
           <h3>Student Information</h3>
           
@@ -262,7 +355,7 @@ const MedicalLeavePage = () => {
             <label>Student Name</label>
             <input
               type="text"
-              value={`${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.username || ''}
+              value={user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username || '' : ''}
               disabled
               className="readonly-field"
             />
@@ -315,7 +408,6 @@ const MedicalLeavePage = () => {
           </div>
         </div>
 
-        {/* Application Details Section */}
         <div className="form-section">
           <h3>Application Details</h3>
           
@@ -344,7 +436,6 @@ const MedicalLeavePage = () => {
           </div>
         </div>
 
-        {/* Leave Details Section */}
         <div className="form-section">
           <h3>Leave Details</h3>
 
@@ -385,13 +476,12 @@ const MedicalLeavePage = () => {
           )}
 
           <div className="form-group">
-            <label>Diagnosis *</label>
+            <label>Diagnosis</label>
             <input
               type="text"
               name="diagnosis"
               value={formData.diagnosis}
               onChange={handleInputChange}
-              required
               placeholder="e.g., Acute Bronchitis"
             />
           </div>
@@ -423,11 +513,9 @@ const MedicalLeavePage = () => {
           </div>
         </div>
 
-        {/* Supporting Documents Section */}
         <div className="form-section">
           <h3>Supporting Documents</h3>
           
-          {/* Medical Report Upload */}
           <div className="form-group">
             <label>Medical Report <span className="required">*</span></label>
             <div className="file-upload-area">
@@ -437,7 +525,6 @@ const MedicalLeavePage = () => {
                 accept=".pdf"
                 onChange={handleMedicalReportChange}
                 className="file-input-hidden"
-                required
               />
               <label htmlFor="medical-report" className="file-upload-label">
                 <MdCloudUpload />
@@ -459,7 +546,6 @@ const MedicalLeavePage = () => {
             <small>Upload detailed medical report from your doctor (PDF only, max 5MB)</small>
           </div>
 
-          {/* Hospital Letter Upload */}
           <div className="form-group">
             <label>Hospital Letter <span className="required">*</span></label>
             <div className="file-upload-area">
@@ -469,7 +555,6 @@ const MedicalLeavePage = () => {
                 accept=".pdf"
                 onChange={handleHospitalLetterChange}
                 className="file-input-hidden"
-                required
               />
               <label htmlFor="hospital-letter" className="file-upload-label">
                 <MdCloudUpload />
@@ -491,7 +576,6 @@ const MedicalLeavePage = () => {
             <small>Upload official letter from the hospital (PDF only, max 5MB)</small>
           </div>
 
-          {/* Supporting Documents Upload */}
           <div className="form-group">
             <label>Supporting Documents <span className="optional">(Optional)</span></label>
             <div className="file-upload-area">
