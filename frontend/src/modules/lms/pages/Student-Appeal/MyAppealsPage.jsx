@@ -104,7 +104,7 @@ const MyAppealsPage = () => {
       <div className="my-appeals-container">
         <div className="loading-spinner">
           <div className="spinner"></div>
-          <p>Loading your appeals...</p>
+          <p></p>
         </div>
       </div>
     );

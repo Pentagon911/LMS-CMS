@@ -180,7 +180,7 @@ const AdminResultReevalAppeals = () => {
                   </td>
                   <td className="actions">
                     <button
-                      className="action-btn view-btn"
+                      className="action-btn-view-btn"
                       onClick={() => handleViewDetails(appeal)}
                       title="View Details"
                     >

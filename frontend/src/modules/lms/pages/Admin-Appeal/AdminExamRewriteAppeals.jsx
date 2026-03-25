@@ -1,7 +1,7 @@
 // src/modules/lms/pages/Admin-Appeal/AdminExamRewriteAppeals.jsx
 import { useState, useEffect } from 'react';
 import request from '../../../../utils/requestMethods';
-import { MdRefresh, MdVisibility, MdCheckCircle, MdCancel, MdWarning, MdDownload, MdClose } from 'react-icons/md';
+import { MdRefresh, MdVisibility, MdCheckCircle, MdCancel, MdWarning, MdDownload, MdClose ,MdDelete} from 'react-icons/md';
 import './AdminAppealPage.css';
 
 const AdminExamRewriteAppeals = () => {
@@ -181,12 +181,13 @@ const AdminExamRewriteAppeals = () => {
                   </td>
                   <td className="actions">
                     <button
-                      className="action-btn view-btn"
+                      className="action-btn-view-btn"
                       onClick={() => handleViewDetails(appeal)}
                       title="View Details"
                     >
                       <MdVisibility />
                     </button>
+                    
                   </td>
                 </tr>
               ))}

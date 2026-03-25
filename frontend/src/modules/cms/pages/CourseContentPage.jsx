@@ -7,7 +7,7 @@ import './CourseContentPage.css';
 import { MdCalendarMonth, MdLibraryBooks } from 'react-icons/md';
 
 const CourseContentPage = () => {
-  const { moduleCode } = useParams();
+  const { moduleId } = useParams();
   const navigate = useNavigate();
   
   const [courseData, setCourseData] = useState(null);
@@ -18,70 +18,78 @@ const CourseContentPage = () => {
   const [showAddWeekModal, setShowAddWeekModal] = useState(false);
   const [newWeekName, setNewWeekName] = useState('');
 
+  useEffect(() => {
+    const token = getUserFromToken();
+    setUser(token);
+  }, []);
 
-  useEffect(()=>{
-      const token = getUserFromToken();
-      setUser(token);
-  },[]);
-
-  // Fetch course content based on module code
+  // Fetch course content based on module ID
   useEffect(() => {
     const fetchCourseContent = async () => {
+      if (!moduleId) {
+        console.log("No moduleId provided");
+        setError("No module ID provided");
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
-        console.log(`Fetching data for module: ${moduleCode} from /_data/${moduleCode}.json`);
+        console.log(`Fetching data for module ID: ${moduleId}`);
         
-        const data = await request.GET(`/cms/courses/${moduleCode}/dashboard`);
-        console.log("Raw data received:", data);
-        
-        // Check if data exists and has the expected structure
-        if (data && typeof data === 'object') {
-          console.log("Data type:", Array.isArray(data) ? "array" : "object");
-          console.log("Data keys:", Object.keys(data));
-          
-          // Check for courseTitle specifically
-          if (data.courseTitle) {
-            console.log("Found courseTitle:", data.courseTitle);
-            setCourseTitle(data.courseTitle);
-          } else {
-            console.log("No courseTitle found in data");
-            setCourseTitle('Course Content');
-          }
-          
-          // Check for weeks
-          if (data.weeks && Array.isArray(data.weeks)) {
-            console.log("Found weeks array with length:", data.weeks.length);
-            setCourseData(data.weeks);
-          } else if (Array.isArray(data)) {
-            console.log("Data is array, using as weeks array");
-            setCourseData(data);
-          } else {
-            console.log("No weeks array found");
-            setCourseData([]);
-          }
-        } else {
-          console.log("Invalid data format received");
-          setError("Invalid data format");
+        let data;
+        try {
+          data = await request.GET(`/cms/courses/${moduleId}/dashboard/`);
+          console.log("Data from dashboard endpoint:", data);
+        } catch (dashboardError) {
+          console.log("Dashboard endpoint failed, trying courses endpoint");
         }
+        
+        if (!data) {
+          throw new Error("No data received from server");
+        }
+        
+        // Parse the response based on structure
+        let weeks = [];
+        let title = '';
+        
+        if (data.weeks && Array.isArray(data.weeks)) {
+          weeks = data.weeks;
+          title = data.courseTitle || data.title || 'Course Content';
+        } else if (data.content && Array.isArray(data.content)) {
+          weeks = data.content;
+          title = data.courseTitle || data.title || 'Course Content';
+        } else if (Array.isArray(data)) {
+          weeks = data;
+          title = 'Course Content';
+        } else {
+          console.log("Unexpected data structure:", Object.keys(data));
+          // If the data is the weeks array directly
+          if (data.length !== undefined) {
+            weeks = data;
+            title = 'Course Content';
+          } else {
+            throw new Error("Invalid data format");
+          }
+        }
+        
+        console.log("Parsed weeks:", weeks);
+        setCourseTitle(title);
+        setCourseData(weeks);
+        setError(null);
         
       } catch (err) {
         console.error("Failed to load course content:", err);
-        setError(err.message);
+        console.error("Error details:", err.message);
+        setError(err.message || 'Failed to load course content');
+        setCourseData([]);
       } finally {
         setLoading(false);
       }
     };
 
-    if (moduleCode) {
-      fetchCourseContent();
-    }
-  }, [moduleCode]);
-
-  // Debug effect to track state changes
-  useEffect(() => {
-    console.log("Current state - courseTitle:", courseTitle);
-    console.log("Current state - courseData:", courseData);
-  }, [courseTitle, courseData]);
+    fetchCourseContent();
+  }, [moduleId]);
 
   const handleContentClick = (item) => {
     console.log("Content clicked:", item);
@@ -106,35 +114,61 @@ const CourseContentPage = () => {
     }
   };
 
-  const handleAddContent = async (weekIndex, newItem) => {
-    if (!user || user.role === 'student') return;
+const handleAddContent = async (weekIndex, newItem) => {
+  if (!user || user.role === 'student') return;
+  
+  try {
+    if (!['content', 'quiz', 'announcement'].includes(newItem.type)) {
+      throw new Error('Invalid item type. Only content, quiz, and announcement are allowed.');
+    }
+
+    console.log("Adding content:", { weekIndex, newItem });
+    
+    let response;
+    let apiUrl;
+    
+    if (newItem.type === 'quiz') {
+      // Quiz endpoint
+      apiUrl = `/cms/quizzes/${quizzId}/add_to_week/`;
+      response = await request.POST(apiUrl, newItem);
+    } else if(newItem.type === 'announcement') {
+      apiUrl = `/cms/courses/${moduleId}/weeks/${weekIndex + 1}/announcement/create/`;
+      response = await request.POST(apiUrl, newItem);
+    } else{
+        apiUrl = '/cms/weeks/${weekIndex + 1}/upload/';
+        response = await request.POST(apiUrl, newItem);
+    }
+    // Update local state with the response
+    const updatedData = [...courseData];
+    updatedData[weekIndex].items.push(response.data || newItem);
+    setCourseData(updatedData);
+    
+  } catch (err) {
+    console.error("Failed to add content", err);
+    alert("Failed to add content. Please try again.");
+  }
+};
+
+  const handleAddWeek = async () => {
+    if (!newWeekName.trim()) return;
     
     try {
-      if (!['content', 'quiz', 'announcement'].includes(newItem.type)) {
-        throw new Error('Invalid item type. Only content, quiz, and announcement are allowed.');
-      }
-
-      console.log("Adding content:", { weekIndex, newItem });
+      // Make API call to add week
+      const response = await request.POST(`/cms/courses/${moduleId}/weeks/`, {
+        name: newWeekName,
+        weekNumber: courseData.length + 1
+      });
+      console.log("Week added:", response);
       
-      const updatedData = [...courseData];
-      updatedData[weekIndex].items.push(newItem);
-      setCourseData(updatedData);
+      const newWeek = response.data || { week: newWeekName, items: [] };
+      setCourseData([...courseData, newWeek]);
+      setShowAddWeekModal(false);
+      setNewWeekName('');
       
     } catch (err) {
-      console.error("Failed to add content", err);
-      alert("Failed to add content. Please try again.");
+      console.error("Failed to add week", err);
+      alert("Failed to add week. Please try again.");
     }
-  };
-
-  const handleAddWeek = () => {
-    if (!newWeekName.trim()) return; 
-    const newWeek = {
-      week: newWeekName,
-      items: []
-    };
-    setCourseData([...courseData, newWeek]);
-    setShowAddWeekModal(false);
-    setNewWeekName('');
   };
 
   const isLecturer = user?.role && user?.role !== 'student';
@@ -148,11 +182,27 @@ const CourseContentPage = () => {
     );
   }
 
-  if (error || !courseData || courseData.length === 0) {
+  if (error) {
     return (
       <div className="course-content-error">
-        <p>Error: {error || 'Course not found or empty'}</p>
-        <p>Module Code: {moduleCode}</p>
+        <p>Error: {error}</p>
+        <p>Module ID: {moduleId}</p>
+        <button onClick={() => navigate('/cms/courses')}>
+          Back to Courses
+        </button>
+      </div>
+    );
+  }
+
+  if (!courseData || courseData.length === 0) {
+    return (
+      <div className="course-content-empty">
+        <p>No content available for this module.</p>
+        {isLecturer && (
+          <button className="add-week-btn" onClick={() => setShowAddWeekModal(true)}>
+            + Add First Week
+          </button>
+        )}
         <button onClick={() => navigate('/cms/courses')}>
           Back to Courses
         </button>
@@ -162,7 +212,6 @@ const CourseContentPage = () => {
 
   return (
     <div className="course-content-container">
-
       {/* Course Header */}
       <div className="course-header">
         <button className="back-btn" onClick={() => navigate('/cms/courses')}>
@@ -171,7 +220,7 @@ const CourseContentPage = () => {
         
         <div className="course-info">
           <h1 className="course-title">
-            <span className="module-code">{moduleCode}:</span> {courseTitle}
+            <span className="module-code">{moduleId}:</span> {courseTitle}
           </h1>
           
           <div className="course-meta">
@@ -203,11 +252,11 @@ const CourseContentPage = () => {
         ))}
       </div>
 
-      {/* Floating Action Button for Lecturers */}
+      {/* Add Week Button for Lecturers */}
       {isLecturer && (
-      <button className="add-week-btn" onClick={() => setShowAddWeekModal(true)}>
-        + Add New Week
-      </button>
+        <button className="add-week-btn" onClick={() => setShowAddWeekModal(true)}>
+          + Add New Week
+        </button>
       )}
 
       {/* Add Week Modal */}
