@@ -31,7 +31,7 @@ body.dark-mode .filters select {
   color: #e5e9f0;
 }
 .gpa-card {
-  background: white;
+  background: linear-gradient(135deg, #1061b1 0%, #2c3e50 100%);
   border-radius: 12px;
   padding: 1rem;
   margin-bottom: 1.5rem;
@@ -44,7 +44,7 @@ body.dark-mode .gpa-card {
 }
 .gpa-card h3 {
   margin: 0 0 0.5rem;
-  color: #1a2632;
+  color: #e8eaec;
 }
 body.dark-mode .gpa-card h3 {
   color: #e5e9f0;
@@ -139,8 +139,13 @@ body.dark-mode .error-state {
 }
 
 /* Student Info Card */
+
+body.dark-mode .student-info-card{
+  background: #1e242c;
+}
+
 .student-info-card {
-  background: linear-gradient(135deg, #1a2632 0%, #2c3e50 100%);
+  background: linear-gradient(135deg, #1061b1 0%, #2c3e50 100%);
   border-radius: 16px;
   padding: 1.5rem;
   margin-bottom: 2rem;
@@ -167,6 +172,7 @@ body.dark-mode .error-state {
 
 .info-value {
   font-weight: 500;
+  color: #e3f2fd;
 }
 
 /* Filters */

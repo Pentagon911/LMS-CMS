@@ -44,10 +44,6 @@ const CreateQuizPage = () => {
   useEffect(() => {
     const fetchModules = async () => {
       try {
-<<<<<<< HEAD
-        setLoading(true);
-=======
->>>>>>> b05018e57849741ed2c983d6e3a5305f58191b0a
         const data = await request.GET('/cms/courses/');
         setModules(data);
       } catch (err) {
@@ -64,12 +60,7 @@ const CreateQuizPage = () => {
   const fetchExistingQuizzes = async () => {
     try {
       setLoading(true);
-<<<<<<< HEAD
-      // Using GET request to fetch all quizzes
-      const data = await request.GET('/cms/quizzes/');
-=======
       const data = await request.GET('/cms/quizzes/draft_quizzes/');
->>>>>>> b05018e57849741ed2c983d6e3a5305f58191b0a
       setExistingQuizzes(data);
     } catch (err) {
       console.error('Failed to fetch quizzes', err);
@@ -93,16 +84,10 @@ const CreateQuizPage = () => {
   const loadQuizForEdit = async (id) => {
     try {
       setLoading(true);
-<<<<<<< HEAD
-      // Using GET request to fetch single quiz by ID
-      const quizToLoad = await request.GET(`/cms/quizzes/${id}/`);
-      
-=======
       let quizToLoad;
       const data = await request.GET(`/cms/quizzes/${id}/`);
       if (data) quizToLoad = data;
 
->>>>>>> b05018e57849741ed2c983d6e3a5305f58191b0a
       const moduleInfo = modules.find(m => m.code === quizToLoad.course);
       
       setQuizData({
@@ -246,21 +231,11 @@ const CreateQuizPage = () => {
     }
   };
 
-<<<<<<< HEAD
-  // Updated saveQuiz function with proper POST/PUT logic
-  const saveQuiz = async () => {
-    // Validation
-    if (!quizData.title) {
-      alert('Please enter a quiz title');
-      return;
-    }
-=======
 const saveQuiz = async () => {
   if (!quizData.title) {
     alert('Please enter a quiz title');
     return;
   }
->>>>>>> b05018e57849741ed2c983d6e3a5305f58191b0a
 
   if (!selectedModule) {
     alert('Please select a module');
@@ -272,13 +247,6 @@ const saveQuiz = async () => {
     return;
   }
 
-<<<<<<< HEAD
-    try {
-      setLoading(true);
-      
-      const moduleInfo = modules.find(m => m.code === selectedModule);
-      
-=======
   try {
     setLoading(true);
     const moduleInfo = modules.find(m => m.code === selectedModule);
@@ -295,54 +263,9 @@ const saveQuiz = async () => {
     let response;
     
     if (mode === 'edit' && quizData.quizId) {
->>>>>>> b05018e57849741ed2c983d6e3a5305f58191b0a
       const finalQuizData = {
         ...baseQuizData,
         quizId: quizData.quizId,
-<<<<<<< HEAD
-        title: quizData.title,
-        course: selectedModule,
-        moduleTitle: moduleInfo?.title || '',
-        time: quizData.time,
-        createdAt: quizData.createdAt || new Date().toISOString(),
-        questions: quizData.questions
-      };
-      
-      console.log('Saving quiz:', finalQuizData);
-      
-      let response;
-      
-      // Check if we're editing an existing quiz or creating a new one
-      if (mode === 'edit' && selectedQuiz) {
-        // UPDATE existing quiz - using PUT request
-        response = await request.PUT(`/cms/quizzes/${quizData.quizId}/`, finalQuizData);
-        alert('Quiz updated successfully!');
-      } else {
-        // CREATE new quiz - using POST request
-        response = await request.POST('/cms/quizzes/', finalQuizData);
-        alert('Quiz created successfully!');
-      }
-      
-      // Refresh the quizzes list
-      await fetchExistingQuizzes();
-      
-      // Navigate back to quiz list or to courses page
-      navigate('/cms/courses');
-      
-    } catch (err) {
-      console.error('Failed to save quiz', err);
-      
-      // Handle different error status codes
-      if (err.status === 401) {
-        alert('Your session has expired. Please login again.');
-      } else if (err.status === 400) {
-        alert(`Validation error: ${err.data?.message || 'Please check your input'}`);
-      } else {
-        alert(`Failed to save quiz: ${err.message || 'Please try again'}`);
-      }
-    } finally {
-      setLoading(false);
-=======
       };
       console.log('Updating quiz:', finalQuizData);
       response = await request.PUT(`/cms/quizzes/${quizData.quizId}/`, finalQuizData);
@@ -351,7 +274,6 @@ const saveQuiz = async () => {
       console.log('Creating new quiz:', baseQuizData);
       response = await request.POST('/cms/quizzes/', baseQuizData);
       alert('Quiz created successfully!');
->>>>>>> b05018e57849741ed2c983d6e3a5305f58191b0a
     }
     
     navigate('/cms/courses');
