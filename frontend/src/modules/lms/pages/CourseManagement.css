@@ -38,7 +38,7 @@ body.dark-mode .course-management-header p {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: #1a2632;
+  background: #0f4bce;
   color: white;
   border: none;
   border-radius: 8px;
@@ -49,7 +49,7 @@ body.dark-mode .course-management-header p {
 }
 
 .add-course-btn:hover {
-  background: #2c3e50;
+  background: #0b70d4;
   transform: translateY(-2px);
 }
 

@@ -29,7 +29,6 @@ const Header = () => {
       ],
       student: [
         { name: 'Enrollments', path: '/lms/academics/enrollment', icon: <MdMenuBook /> },
-        { name: 'My Courses', path: '/lms/academics/my-courses', icon: <MdAssignment /> },
         { name: 'Exam Results', path: '/lms/academics/results', icon: <MdGrade /> },
         { name: 'Exam Timetables', path: '/lms/academics/time-tables', icon: <MdEvent /> },
       ],
@@ -57,7 +56,7 @@ const Header = () => {
     'Server Managements': {
       admin: [
         { name: 'User Management', path: '/lms/server-management/users', icon: <MdPeople /> },
-        { name: 'Course Management', path: '/lms/server-management/courses', icon: <MdMenuBook /> },
+        { name: 'Course Management', path: '/lms/academics/my-courses', icon: <MdMenuBook /> },
       ]
     }
   };
