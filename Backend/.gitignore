@@ -1,5 +1,4 @@
-e
-nv/
+venv/
 db.sqlite3
 *.pyc
 Backend/__pycache__/
