@@ -119,7 +119,7 @@ class CourseViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(course,context = {'request':request})
         return Response(serializer.data)  
 
-    @action(detail = True, methods = ['post'],url_path='dashboard')
+    @action(detail = True, methods = ['post'],url_path='dashboard/add_week/')
     def add_week(self, request, pk=None):
         course = self.get_object()
         
