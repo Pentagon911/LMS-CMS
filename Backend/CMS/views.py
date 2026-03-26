@@ -94,7 +94,7 @@ class CourseViewSet(viewsets.ModelViewSet):
             announcements.sort(key=lambda x: x['created_at'], reverse=True)
         return announcements[:3]
     
-    @action(detail = True, methods = ['get'],url_path='dashboard')
+    @action(detail = True, methods =['get'],url_path='dashboard')
     def dashboard(self,request,pk = None):
         """
         Returns complete course dashboard with weeks, content, quizzes, and announcements
@@ -113,7 +113,61 @@ class CourseViewSet(viewsets.ModelViewSet):
                 return Response({'error': 'Not your Course'},status=403)
 
         serializer = self.get_serializer(course,context = {'request':request})
-        return Response(serializer.data)            
+        return Response(serializer.data)  
+
+    @action(detail = True, methods = ['post'],url_path='dashboard')
+    def add_week(self, request, pk=None):
+        course = self.get_object()
+        
+        # Check permissions (only instructors can add weeks)
+        if request.user.role != 'instructor':
+            return Response(
+                {'error': 'Only instructors can add weeks to a course'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        if request.user != course.instructor:
+            return Response(
+                {'error': 'You are not the instructor of this course'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Validate input
+        topic = request.data.get('topic')
+        if not topic:
+            return Response(
+                {'error': 'Topic is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Calculate next order number
+        # Get the highest order number for this course
+        max_order = Week.objects.filter(course=course).aggregate(
+            max_order=models.Max('order')
+        )['max_order']
+        
+        # If no weeks exist yet, start at 1, otherwise increment by 1
+        next_order = (max_order or 0) + 1
+        
+        # Create the week with transaction to ensure data integrity
+        with transaction.atomic():
+            week = Week.objects.create(
+                course=course,
+                order=next_order,
+                topic=topic,
+                description=request.data.get('description', '')  # Optional description
+            )
+        
+        # Return success response with week details
+        return Response({
+            'success': True,
+            'message': f'Week "{topic}" created successfully',
+            'week_id': week.id,
+            'topic': week.topic,
+            'order': week.order,
+            'course_id': course.id,
+            'course_title': course.name
+        }, status=status.HTTP_201_CREATED)        
 
 class QuizViewSet(viewsets.ModelViewSet):
     """
@@ -802,6 +856,7 @@ class AcademicCalendarViewSet(viewsets.ModelViewSet):
     queryset = AcademicCalendar.objects.all()
     serializer_class = AcademicCalendarSerializer
     permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
