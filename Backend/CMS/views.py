@@ -1,20 +1,17 @@
-import json
-
 from django.shortcuts import render,get_object_or_404
-from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework.parsers import MultiPartParser, FormParser,JSONParser
 from users.permissions import *
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response 
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from django.utils import timezone
 from django.db.models import Q
 from datetime import datetime
 from lms.models import *
 from .models import *
 from .serializers import *
-
+import json
 # Create your views here.
 class CourseViewSet(viewsets.ModelViewSet):
     """ViewSet for courses
@@ -43,7 +40,9 @@ class CourseViewSet(viewsets.ModelViewSet):
                 enrollments__student=user,  # Note: enrollments__student (singular)
                 enrollments__status='enrolled'
             ).distinct()
-
+        elif user.role == 'admin':
+            return Course.objects.all()
+            
         return Course.objects.none()
     
     def list(self,request,*args,**kwargs):
@@ -121,74 +120,106 @@ class CourseViewSet(viewsets.ModelViewSet):
 class QuizViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Quiz operations
+    Supports nested URLs: /courses/{course_id}/weeks/{week_number}/quizzes/
     """
     queryset = Quiz.objects.all()
+    
+    # 1. ADD THIS: Tell the ViewSet it can accept both normal JSON and FormData
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
     
     def get_serializer_class(self):
         if self.action == 'create':
             return QuizCreateSerializer
-        
         elif self.action in ['update','partial_update']:
             return QuizCreateSerializer
-
         elif self.action in ['retrieve']:
             user = self.request.user
-            if user.role == 'student':
-                return StudentQuizSerializer
-            elif user.role == 'instructor':
-                return InstructorQuizSerializer
-            
+            # Note: Ensure you handle cases where request.user is AnonymousUser if using AllowAny
+            if hasattr(user, 'role'):
+                if user.role == 'student':
+                    return StudentQuizSerializer
+                elif user.role in ['instructor', 'admin']:
+                    return InstructorQuizSerializer
+            return StudentQuizSerializer
         return StudentQuizSerializer
     
     def get_permissions(self):
-        """
-        Assign different permissions based on the action.
-        This is where we use the permissions from Users app.
-        """
-
-        # Write operations (create, update, delete) - Only instructors/admins
+        # Write operations (create, update, delete)
         if self.action in ['create', 'update', 'partial_update', 'destroy',]:
-            # permission_classes = [IsAuthenticated,IsInstructorUser]
             permission_classes = [permissions.AllowAny]
         elif self.action in ['submit']:
-            # permission_classes = [IsAuthenticated,IsStudentUser]
             permission_classes = [permissions.AllowAny]
         else:
-            # permission_classes = [IsAuthenticated]
             permission_classes = [permissions.AllowAny]
-
         return [permission() for permission in permission_classes]
 
     def retrieve(self,request,*args,**kwargs):
         quiz = self.get_object()
         serializer = self.get_serializer(quiz)
-        
         return Response(serializer.data)
     
-    def create(self,request,*args,**kwargs):
-        """Create quiz - validation happens in serializer"""
-        serializer = self.get_serializer(data = request.data)
-        serializer.is_valid(raise_exception = True)
+    # 2. UPDATE THIS: Handle the FormData mapping for Creation
+    def create(self, request, *args, **kwargs):
+        """Create quiz - handles stringified JSON + Images from FormData"""
+        
+        # Check if the data is coming in as FormData ('quiz_data' string)
+        if 'quiz_data' in request.data:
+            try:
+                quiz_data = json.loads(request.data.get('quiz_data'))
+            except json.JSONDecodeError:
+                return Response({"error": "Invalid JSON format in quiz_data"}, status=status.HTTP_400_BAD_REQUEST)
 
+            # Map the files to the correct questions
+            questions = quiz_data.get('questions', [])
+            for index, question in enumerate(questions):
+                image_key = f'image_{index}'
+                if image_key in request.FILES:
+                    question['image'] = request.FILES[image_key]
+        else:
+            # Fallback just in case standard JSON is sent without images
+            quiz_data = request.data
+
+        # Pass context so absolute Image URLs are generated
+        serializer = self.get_serializer(data=quiz_data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
         quiz = serializer.save()
+        
         return Response({
             'id': quiz.id,
             'quizId': quiz.quizId,
-            'message': 'Quiz created successfully'}, 
-            status=status.HTTP_201_CREATED)
+            'message': 'Quiz created successfully'
+        }, status=status.HTTP_201_CREATED)
     
-
-    def update(self,request,pk=None,*args,**kwargs):
+    # 3. UPDATE THIS: Handle the FormData mapping for Updates
+    def update(self, request, pk=None, *args, **kwargs):
+        """Update quiz - handles stringified JSON + Images from FormData"""
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+
+        # Same logic as create: unpack FormData if it exists
+        if 'quiz_data' in request.data:
+            try:
+                quiz_data = json.loads(request.data.get('quiz_data'))
+            except json.JSONDecodeError:
+                return Response({"error": "Invalid JSON format in quiz_data"}, status=status.HTTP_400_BAD_REQUEST)
+
+            questions = quiz_data.get('questions', [])
+            for index, question in enumerate(questions):
+                image_key = f'image_{index}'
+                if image_key in request.FILES:
+                    question['image'] = request.FILES[image_key]
+        else:
+            quiz_data = request.data
+
+        serializer = self.get_serializer(instance, data=quiz_data, partial=partial, context={'request': request})
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
+        
         return Response({
             'id': instance.id,
             'quizId': instance.quizId,
-            'message': 'Quiz updated successfully'}, 
-            status=status.HTTP_200_OK)
+            'message': 'Quiz updated successfully'
+        }, status=status.HTTP_200_OK)
     
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
@@ -343,103 +374,38 @@ class QuizViewSet(viewsets.ModelViewSet):
     
 class QuestionViewSet(viewsets.ModelViewSet):
     """
-    Manage Questions with unified image upload support
-    - Use same endpoint for both JSON and FormData
-    - Image can be included directly in create/update
+    - Manage Questions
     """
+
     queryset = Question.objects.all()
-    parser_classes = [MultiPartParser, FormParser, JSONParser]
+    
+    def get_permissions(self):
+        """Simple permission control"""
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            # Only instructors can modify questions
+            permission_classes = [IsAuthenticated, IsInstructorUser]
+            # permission_classes = [permissions.AllowAny]
+        else:
+            # Anyone authenticated can view
+            permission_classes = [IsAuthenticated]
+            # permission_classes = [permissions.AllowAny]
+        
+        return [permission() for permission in permission_classes]
     
     def get_serializer_class(self):
-        if self.action in ['create', 'update', 'partial_update']:
-            return QuestionCreateUpdateSerializer
-        elif self.request.user.role == 'student':
+        """Different serializers for different roles"""
+        if self.request.user.role == 'student':
             return StudentQuestionSerializer
-        else:
+        elif self.request.user.role in ['instructor', 'admin']:
             return InstructorQuestionSerializer
+        return StudentQuestionSerializer
     
-    def create(self, request, *args, **kwargs):
-        """Create question with optional image - handles both JSON and FormData"""
-        # Make mutable copy
-        data = request.data.copy()
-        
-        # Handle options if it's a JSON string (from FormData)
-        if 'options' in data and isinstance(data['options'], str):
-            try:
-                data['options'] = json.loads(data['options'])
-            except json.JSONDecodeError:
-                return Response(
-                    {'error': 'Invalid JSON format for options'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        
-        # Handle quiz ID conversion
-        if 'quiz' in data and isinstance(data['quiz'], str):
-            try:
-                data['quiz'] = int(data['quiz'])
-            except ValueError:
-                return Response(
-                    {'error': 'Invalid quiz ID'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        
-        serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        
-        return Response({
-            'id': serializer.instance.id,
-            'questionId': serializer.instance.questionId,
-            'text': serializer.instance.text,
-            'image_url': serializer.instance.image.url if serializer.instance.image else None,
-            'message': 'Question created successfully'
-        }, status=status.HTTP_201_CREATED)
-    
-    def update(self, request, *args, **kwargs):
-        """Update question with optional image - handles both JSON and FormData"""
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        
-        # Make mutable copy
-        data = request.data.copy()
-        
-        # Handle options if it's a JSON string (from FormData)
-        if 'options' in data and isinstance(data['options'], str):
-            try:
-                data['options'] = json.loads(data['options'])
-            except json.JSONDecodeError:
-                return Response(
-                    {'error': 'Invalid JSON format for options'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        
-        # Handle quiz ID conversion
-        if 'quiz' in data and isinstance(data['quiz'], str):
-            try:
-                data['quiz'] = int(data['quiz'])
-            except ValueError:
-                return Response(
-                    {'error': 'Invalid quiz ID'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        
-        serializer = self.get_serializer(instance, data=data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        
-        return Response({
-            'id': instance.id,
-            'questionId': instance.questionId,
-            'text': instance.text,
-            'image_url': instance.image.url if instance.image else None,
-            'message': 'Question updated successfully'
-        }, status=status.HTTP_200_OK)
-    # def get_queryset(self):
-    #     queryset = Question.objects.all()
-    #     quiz_id = self.request.query_params.get('quiz', None)
-    #     if quiz_id:
-    #         queryset = queryset.filter(quiz_id=quiz_id)
-    #     return queryset.order_by('order')
+    def get_queryset(self):
+        queryset = Question.objects.all()
+        quiz_id = self.request.query_params.get('quiz', None)
+        if quiz_id:
+            queryset = queryset.filter(quiz_id=quiz_id)
+        return queryset.order_by('order')
 
 class OptionViewSet(viewsets.ModelViewSet):
     """ViewSet for managing options"""

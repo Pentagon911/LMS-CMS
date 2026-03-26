@@ -184,7 +184,7 @@ class BaseQuestionSerializer(serializers.ModelSerializer):
     """
     questionId = serializers.CharField()
     multipleAnswers = serializers.SerializerMethodField()
-    image = serializers.ImageField(allow_null = True,required = False)
+    image = serializers.SerializerMethodField()
     totalPoints = serializers.SerializerMethodField()
     class Meta:
         model = Question
@@ -196,6 +196,11 @@ class BaseQuestionSerializer(serializers.ModelSerializer):
     def get_totalPoints(self, obj):
         """Count number of correct options (each = 1 point)"""
         return obj.options.filter(is_correct=True).count()
+    
+    def get_image(self, obj):
+        if obj.image:
+            return obj.image.url
+        return None
 
 class BaseQuizSerializer(serializers.ModelSerializer):
     """
@@ -227,7 +232,7 @@ class StudentQuestionSerializer(BaseQuestionSerializer):
     options = serializers.SerializerMethodField()
 
     class Meta(BaseQuestionSerializer.Meta):
-        fields = BaseOptionSerializer.Meta.fields + ['options']
+        fields = BaseQuestionSerializer.Meta.fields + ['options']
 
     def get_options(self,obj):
         """Get options for this question without correct answers"""
@@ -262,7 +267,7 @@ class InstructorQuestionSerializer(BaseQuestionSerializer):
     options = serializers.SerializerMethodField()
 
     class Meta(BaseQuestionSerializer.Meta):
-        fields = BaseOptionSerializer.Meta.fields + ['options']
+        fields = BaseQuestionSerializer.Meta.fields + ['options']
 
     def get_options(self,obj):
         options = obj.options.all().order_by('order')
@@ -319,7 +324,6 @@ class QuestionCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = ['questionId', 'text', 'multipleAnswers', 'image', 'options']
-        read_only_fields = ['id', 'questionId']
 
     def validate(self, data):
         is_multiple = str(data.pop('multipleAnswers', 'false')).lower()
@@ -367,7 +371,7 @@ class QuizCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Quiz
-        fields = ['quizId', 'title', 'course', 'time', 'questions', 'start_time', 'description', 'status', ]
+        fields = ['quizId', 'title', 'course', 'time', 'questions', 'start_time', 'description', 'status']
 
     def create(self, validated_data):
         questionsData = validated_data.pop('questions', [])
@@ -716,74 +720,3 @@ class PracticalTimetableSerializer(serializers.ModelSerializer):
         if value.size > 10 * 1024 * 1024:
             raise serializers.ValidationError("File size must be under 10 MB.")
         return value
-
-
-class QuestionCreateUpdateSerializer(serializers.ModelSerializer):
-    """Unified serializer that handles both JSON and FormData with image"""
-    multipleAnswers = serializers.CharField(write_only=True, required=False)
-    options = serializers.JSONField(write_only=True, required=False)
-    
-    class Meta:
-        model = Question
-        fields = ['id', 'questionId', 'text', 'multipleAnswers', 'image', 'options', 'quiz', 'order']
-        read_only_fields = ['id', 'questionId']
-    
-    def validate(self, data):
-        # Handle multipleAnswers
-        is_multiple = str(data.pop('multipleAnswers', 'false')).lower()
-        question_type = 'multiple' if is_multiple == 'true' else 'single'
-        data['questionTypes'] = question_type
-
-        options = data.get('options', [])
-
-        # Validate text
-        if not data.get('text'):
-            raise serializers.ValidationError("Question Text is required")
-        
-        # Validate options for multiple choice
-        if question_type in ['single', 'multiple']:
-            if not options:
-                raise serializers.ValidationError("Multiple choice question must have options")
-            if len(options) < 2:
-                raise serializers.ValidationError("Multiple choice must have at least 2 options")
-        
-        # Validate correct options
-        if options:
-            correctCount = sum(1 for opt in options if opt.get('is_correct'))
-            
-            if correctCount == 0:
-                snippet = str(data.get('text'))[:30]
-                raise serializers.ValidationError(f"At least one option must be correct. (Failed on: '{snippet}...')")
-                
-            if question_type == 'single' and correctCount > 1:
-                raise serializers.ValidationError("Single answer questions can only have one correct option")
-        
-        return data
-    
-    def create(self, validated_data):
-        options_data = validated_data.pop('options', [])
-        question = Question.objects.create(**validated_data)
-        
-        # Create options
-        for index, opt_data in enumerate(options_data, start=1):
-            opt_data['order'] = index
-            Option.objects.create(question=question, **opt_data)
-        
-        return question
-    
-    def update(self, instance, validated_data):
-        options_data = validated_data.pop('options', None)
-        
-        # Update basic fields
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-        
-        # Update options if provided
-        if options_data is not None:
-            instance.options.all().delete()
-            for index, opt_data in enumerate(options_data, start=1):
-                opt_data['order'] = index
-                Option.objects.create(question=instance, **opt_data)
-        
-        return instance
