@@ -48,7 +48,7 @@ class Command(BaseCommand):
             self.stdout.write('\n📝 Creating enrollments...')
             self.create_enrollments(users['students'], courses)
             
-            # 8. Create exam timetables
+            # 8. Create exam timetables (PDF uploads only)
             self.stdout.write('\n📅 Creating exam timetables...')
             self.create_exam_timetables(courses)
             
@@ -153,8 +153,28 @@ class Command(BaseCommand):
         programs = []
         self.default_programs = {}   # attribute to store default program for each department
 
-        program_templates = { ... }   # unchanged
-
+        program_templates = {
+            'CS': [
+                {'code': 'BSCS', 'name': 'Bachelor of Science in Computer Science', 'description': 'Comprehensive computer science program'},
+                {'code': 'BSIT', 'name': 'Bachelor of Science in Information Technology', 'description': 'IT and systems management'},
+            ],
+            'EE': [
+                {'code': 'BSEE', 'name': 'Bachelor of Science in Electrical Engineering', 'description': 'Electrical engineering program'},
+            ],
+            'ME': [
+                {'code': 'BSME', 'name': 'Bachelor of Science in Mechanical Engineering', 'description': 'Mechanical engineering program'},
+            ],
+            'CE': [
+                {'code': 'BSCE', 'name': 'Bachelor of Science in Civil Engineering', 'description': 'Civil engineering program'},
+            ],
+            'MATH': [
+                {'code': 'BSMATH', 'name': 'Bachelor of Science in Mathematics', 'description': 'Mathematics program'},
+            ],
+            'MGT': [
+                {'code': 'BBA', 'name': 'Bachelor of Business Administration', 'description': 'Business administration program'},
+            ],
+        }
+        
         for department in departments:
             if department.code in program_templates:
                 for template in program_templates[department.code]:
@@ -377,7 +397,7 @@ class Command(BaseCommand):
                 # Create modules for each course
                 for j in range(1, 3):
                     module, created = Module.objects.get_or_create(
-                        code=f"{course.code}_M{j}",
+                        code=f"{course_code}_M{j}",
                         course=course,
                         defaults={
                             'name': f"Module {j}: {course.name} Part {j}",
@@ -406,24 +426,29 @@ class Command(BaseCommand):
         self.stdout.write(f"  ✓ Created {enrollment_count} enrollments for {len(students)} students")
     
     def create_exam_timetables(self, courses):
-        """Create exam timetables for all courses"""
+        """Create exam timetables for all courses (without date/time fields)"""
         exam_count = 0
-        exam_date = date.today() + timedelta(days=30)  # start from next month
+        
+        exam_titles = [
+            "Final Exam",
+            "Mid-term Exam",
+            "Quiz 1",
+            "Quiz 2",
+            "Practical Exam",
+            "Theory Exam"
+        ]
         
         for course in courses:
             exam, created = ExamTimetable.objects.get_or_create(
                 course=course,
-                title=f"Final Exam - {course.code}",
+                title=f"{random.choice(exam_titles)} - {course.code}",
                 defaults={
-                    'date': exam_date,
-                    'start_time': time(9, 0),
-                    'end_time': time(12, 0),
-                    'location': f"Hall {random.choice(['A', 'B', 'C'])}"
+                    'semester': course.semester if hasattr(course, 'semester') else random.randint(1, 8),
+                    # PDF will be uploaded separately by admins
                 }
             )
             if created:
                 exam_count += 1
-            exam_date += timedelta(days=1)
         
         self.stdout.write(f"  ✓ Created {exam_count} exam timetables")
     
