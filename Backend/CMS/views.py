@@ -802,6 +802,7 @@ class AcademicCalendarViewSet(viewsets.ModelViewSet):
     queryset = AcademicCalendar.objects.all()
     serializer_class = AcademicCalendarSerializer
     permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
