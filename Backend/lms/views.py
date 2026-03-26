@@ -41,9 +41,10 @@ class BaseModelViewSet(viewsets.ModelViewSet):
             return [IsStaffOrReadOnly()]
         return [IsAuthenticated()]
 
-# ViewSets for Course, Enrollment, ExamTimetable, ExamResult, SystemSetting
-from users.permissions import IsAdminUser  # ensure this import is present
-
+class ProgramViewSet(BaseModelViewSet):
+    queryset = Program.objects.all()
+    serializer_class = ProgramSerializer
+    permission_classes = [IsAdminUser]  # Only admin can manage programs
 class CourseViewSet(BaseModelViewSet):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
@@ -630,20 +631,20 @@ class BatchDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAdminUser]
 
 
-class CourseListCreateView(generics.ListCreateAPIView):
-    queryset = Course.objects.all()
-    serializer_class = CourseSerializer
-    permission_classes = [IsAdminUser]
+# class CourseListCreateView(generics.ListCreateAPIView):
+#     queryset = Course.objects.all()
+#     serializer_class = CourseSerializer
+#     permission_classes = [IsAdminUser]
     
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        department_id = self.request.query_params.get('department')
-        if department_id:
-            queryset = queryset.filter(department_id=department_id)
-        semester = self.request.query_params.get('semester')
-        if semester:
-            queryset = queryset.filter(semester=semester)
-        return queryset
+#     def get_queryset(self):
+#         queryset = super().get_queryset()
+#         department_id = self.request.query_params.get('department')
+#         if department_id:
+#             queryset = queryset.filter(department_id=department_id)
+#         semester = self.request.query_params.get('semester')
+#         if semester:
+#             queryset = queryset.filter(semester=semester)
+#         return queryset
 
 
 class CourseDetailView(generics.RetrieveUpdateDestroyAPIView):
