@@ -102,14 +102,7 @@ const AdminHostelAppeals = () => {
   };
 
   if (loading) {
-    return (
-      <div className="admin-appeal-page">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Loading hostel appeals...</p>
-        </div>
-      </div>
-    );
+    return;
   }
 
   return (
@@ -206,31 +199,31 @@ const AdminHostelAppeals = () => {
               <div className="appeal-info">
                 <div className="info-row">
                   <label>Appeal ID:</label>
-                  <span>{selectedAppeal.appeal_id}</span>
+                  <span className = "user-hostel-data">{selectedAppeal.appeal_id}</span>
                 </div>
                 <div className="info-row">
                   <label>Student:</label>
-                  <span>{selectedAppeal.student_name}</span>
+                  <span className = "user-hostel-data">{selectedAppeal.student_name}</span>
                 </div>
                 <div className="info-row">
                   <label>Title:</label>
-                  <span>{selectedAppeal.title}</span>
+                  <span className = "user-hostel-data">{selectedAppeal.title}</span>
                 </div>
                 <div className="info-row">
                   <label>Department:</label>
-                  <span>{selectedAppeal.department_name}</span>
+                  <span className = "user-hostel-data">{selectedAppeal.department_name}</span>
                 </div>
                 <div className="info-row">
                   <label>Faculty:</label>
-                  <span>{selectedAppeal.faculty_name}</span>
+                  <span className = "user-hostel-data">{selectedAppeal.faculty_name}</span>
                 </div>
                 <div className="info-row">
                   <label>Batch:</label>
-                  <span>{selectedAppeal.batch_name || 'N/A'}</span>
+                  <span className = "user-hostel-data">{selectedAppeal.batch_name || 'N/A'}</span>
                 </div>
                 <div className="info-row">
                   <label>Academic Year:</label>
-                  <span>{selectedAppeal.academic_year}</span>
+                  <span className = "user-hostel-data">{selectedAppeal.academic_year}</span>
                 </div>
                 <div className="info-row">
                   <label>Description:</label>
@@ -242,19 +235,19 @@ const AdminHostelAppeals = () => {
                 <h3>Hostel Details</h3>
                 <div className="info-row">
                   <label>Preferred Check-in:</label>
-                  <span>{formatDate(selectedAppeal.preferred_check_in)}</span>
+                  <span className = "user-hostel-data">{formatDate(selectedAppeal.preferred_check_in)}</span>
                 </div>
                 <div className="info-row">
                   <label>Duration (months):</label>
-                  <span>{selectedAppeal.duration_months}</span>
+                  <span className = "user-hostel-data">{selectedAppeal.duration_months}</span>
                 </div>
                 <div className="info-row">
                   <label>Special Requirements:</label>
-                  <p>{selectedAppeal.special_requirements || 'None'}</p>
+                  <p className = "user-hostel-data">{selectedAppeal.special_requirements || 'None'}</p>
                 </div>
                 <div className="info-row">
                   <label>Has Medical Condition:</label>
-                  <span>{selectedAppeal.has_medical_condition ? 'Yes' : 'No'}</span>
+                  <span className = "user-hostel-data">{selectedAppeal.has_medical_condition ? 'Yes' : 'No'}</span>
                 </div>
                 {selectedAppeal.medical_certificate && (
                   <div className="info-row">

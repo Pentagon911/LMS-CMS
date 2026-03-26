@@ -14,12 +14,13 @@ const TimetablePage = () => {
   const [practicalTimetables, setPracticalTimetables] = useState([]);
   const [modules, setModules] = useState([]);
   const [userModules, setUserModules] = useState([]);
+  const [faculties, setFaculties] = useState([]);
   
   // Filter states
   const [semesterFilter, setSemesterFilter] = useState({
     year: '',
     semester: '',
-    department: ''
+    faculty: ''
   });
   const [practicalFilter, setPracticalFilter] = useState({
     year: '',
@@ -33,7 +34,7 @@ const TimetablePage = () => {
   const [formData, setFormData] = useState({
     year: '',
     semester: '',
-    department: '',
+    faculty: '',
     moduleCode: '',
     title: '',
     file: null
@@ -42,8 +43,7 @@ const TimetablePage = () => {
   
   // Years
   const years = ['2024', '2025', '2026', '2027', '2028'];
-  const semesters = ['Semester 1', 'Semester 2'];
-  const departments = ['Computer Science', 'Information Technology', 'Software Engineering', 'Data Science'];
+  const semesters = ['1', '2','3','4','5','6','7','8'];
 
   // Get user from localStorage
   useEffect(() => {
@@ -58,23 +58,34 @@ const TimetablePage = () => {
     }
   }, []);
 
+  // Load faculties
+  useEffect(() => {
+    const fetchFaculties = async () => {
+      try {
+        const data = await request.GET('/lms/faculties/');
+        setFaculties(data.results || data);
+      } catch (err) {
+        console.error("Failed to load faculties", err);
+      }
+    };
+    fetchFaculties();
+  }, []);
+
   // Load modules
   useEffect(() => {
     const fetchModules = async () => {
       try {
-        const data = await request.GET('/_data/moduleCard.json');
-        setModules(data);
+        const data = await request.GET('/lms/courses/');
+        setModules(data.results || data);
         
         // Get user's assigned modules (for students)
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
           const userData = JSON.parse(storedUser);
           if (userData.role === 'student') {
-            // Assuming student has enrolled modules in user data
-            // For now, show all modules as demo
-            setUserModules(data);
+            setUserModules(data.results || data);
           } else {
-            setUserModules(data);
+            setUserModules(data.results || data);
           }
         }
       } catch (err) {
@@ -92,12 +103,8 @@ const TimetablePage = () => {
 
   const fetchSemesterTimetables = async () => {
     try {
-      // In real app: const data = await request.GET('/api/timetables/semester');
-      const mockData = [
-        { id: 1, year: '2026', semester: 'Semester 1', department: 'Computer Science', title: 'CS Semester 1 Timetable', fileUrl: '/timetables/cs_s1_2026.pdf', uploadedAt: '2026-01-15' },
-        { id: 2, year: '2026', semester: 'Semester 1', department: 'Information Technology', title: 'IT Semester 1 Timetable', fileUrl: '/timetables/it_s1_2026.pdf', uploadedAt: '2026-01-15' }
-      ];
-      setSemesterTimetables(mockData);
+      const data = await request.GET("/cms/academic-calendars/");
+      setSemesterTimetables(data.results || data);
     } catch (err) {
       console.error("Failed to fetch semester timetables", err);
     }
@@ -105,19 +112,16 @@ const TimetablePage = () => {
 
   const fetchPracticalTimetables = async () => {
     try {
-      // In real app: const data = await request.GET('/api/timetables/practical');
-      const mockData = [
-        { id: 1, year: '2026', semester: 'Semester 1', moduleCode: 'CS1012', moduleTitle: 'Programming Fundamentals', title: 'CS1012 Practical Schedule', fileUrl: '/timetables/cs1012_practical.pdf', uploadedAt: '2026-01-15' },
-        { id: 2, year: '2026', semester: 'Semester 1', moduleCode: 'CS2023', moduleTitle: 'Data Structures', title: 'CS2023 Practical Schedule', fileUrl: '/timetables/cs2023_practical.pdf', uploadedAt: '2026-01-15' }
-      ];
-      setPracticalTimetables(mockData);
+      const data = await request.GET('/cms/practical-timetables/');
+      setPracticalTimetables(data.results || data);
     } catch (err) {
       console.error("Failed to fetch practical timetables", err);
     }
   };
 
   const handleDownload = (fileUrl, title) => {
-    window.open(fileUrl, '_blank');
+    const newBaseUrl = `${request.getBaseUrl()}${fileUrl}`;
+    window.open(newBaseUrl, '_blank');
   };
 
   const handleAdd = () => {
@@ -125,7 +129,7 @@ const TimetablePage = () => {
     setFormData({
       year: '',
       semester: '',
-      department: '',
+      faculty: '',
       moduleCode: '',
       title: '',
       file: null
@@ -138,7 +142,7 @@ const TimetablePage = () => {
     setFormData({
       year: item.year,
       semester: item.semester,
-      department: item.department || '',
+      faculty: item.faculty || '',
       moduleCode: item.moduleCode || '',
       title: item.title,
       file: null
@@ -149,7 +153,12 @@ const TimetablePage = () => {
   const handleDelete = async (id, type) => {
     if (window.confirm('Are you sure you want to delete this timetable?')) {
       try {
-        // In real app: await request.DELETE(`/api/timetables/${type}/${id}`);
+        const endpoint = type === 'semester' 
+          ? `/cms/academic-calendars/${id}/`
+          : `/cms/practical-timetables/${id}/`;
+        
+        await request.DELETE(endpoint);
+        
         if (type === 'semester') {
           setSemesterTimetables(prev => prev.filter(item => item.id !== id));
         } else {
@@ -157,49 +166,146 @@ const TimetablePage = () => {
         }
       } catch (err) {
         console.error("Failed to delete", err);
+        alert("Failed to delete. Please try again.");
       }
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    try {
-      // In real app: await request.POST('/api/timetables', formData);
-      const newItem = {
-        id: Date.now(),
-        ...formData,
-        uploadedAt: new Date().toISOString(),
-        fileUrl: formData.file ? URL.createObjectURL(formData.file) : (editingItem?.fileUrl || '')
-      };
-      
-      if (activeTab === 'semester') {
-        if (editingItem) {
-          setSemesterTimetables(prev => prev.map(item => item.id === editingItem.id ? newItem : item));
-        } else {
-          setSemesterTimetables(prev => [...prev, newItem]);
-        }
-      } else {
-        if (editingItem) {
-          setPracticalTimetables(prev => prev.map(item => item.id === editingItem.id ? newItem : item));
-        } else {
-          setPracticalTimetables(prev => [...prev, newItem]);
-        }
-      }
-      
-      setShowAddModal(false);
-    } catch (err) {
-      console.error("Failed to save", err);
-    } finally {
-      setLoading(false);
-    }
+  const resetForm = () => {
+    setFormData({
+      year: '',
+      semester: '',
+      faculty: '',
+      moduleCode: '',
+      title: '',
+      file: null
+    });
+    setEditingItem(null);
   };
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  
+  try {
+    const formDataObj = new FormData();
+    formDataObj.append('year', formData.year);
+    formDataObj.append('semester', formData.semester);
+
+    
+    if (activeTab === 'semester') {
+      if (!formData.faculty) {
+        throw new Error("Please select a faculty");
+      }
+      formDataObj.append('faculty', formData.faculty);
+    } else {
+      if (!formData.moduleCode) {
+        throw new Error("Please select a module");
+      }
+      formDataObj.append('faculty', formData.moduleCode);
+    }
+    
+    // Add title
+    if (formData.title) {
+      formDataObj.append('title', formData.title);
+    }
+    
+    // Append the file if it exists
+    if (formData.file) {
+      formDataObj.append('pdf', formData.file);
+    } else if (!editingItem) {
+      throw new Error("Please select a PDF file");
+    }
+    
+    // Debug: Log FormData contents
+    console.log("FormData contents:");
+    for (let pair of formDataObj.entries()) {
+      console.log(pair[0], pair[1]);
+    }
+    
+    // Use UPLOAD helper which already handles FormData correctly
+    let response;
+    let endpoint;
+    
+    if (activeTab === 'semester') {
+      if (editingItem) {
+        endpoint = `/cms/academic-calendars/${editingItem.id}/`;
+        response = await request.UPDATE_FILE(endpoint, formDataObj);
+      } else {
+        endpoint = '/cms/academic-calendars/';
+        response = await request.UPLOAD(endpoint, formDataObj);
+      }
+    } else {
+      if (editingItem) {
+        endpoint = `/cms/practical-timetables/${editingItem.id}/`;
+        response = await request.UPDATE_FILE(endpoint, formDataObj);
+      } else {
+        endpoint = '/cms/practical-timetables/';
+        response = await request.UPLOAD(endpoint, formDataObj);
+      }
+    }
+    
+    console.log("API Response:", response);
+    
+    // Rest of the code remains the same...
+    const responseData = response.data || response;
+    
+    const newItem = {
+      id: responseData.id || Date.now(),
+      year: responseData.year || formData.year,
+      semester: responseData.semester || formData.semester,
+      title: responseData.title || formData.title,
+      uploadedAt: responseData.created_at || responseData.uploaded_at || new Date().toISOString(),
+      fileUrl: responseData.pdf_url || responseData.file_url || (formData.file ? URL.createObjectURL(formData.file) : '')
+    };
+    
+    if (activeTab === 'semester') {
+      newItem.faculty = responseData.faculty || formData.faculty;
+      
+      if (editingItem) {
+        setSemesterTimetables(prev => prev.map(item => item.id === editingItem.id ? newItem : item));
+      } else {
+        setSemesterTimetables(prev => [...prev, newItem]);
+      }
+    } else {
+      newItem.moduleCode = responseData.faculty || formData.moduleCode;
+      newItem.moduleTitle = responseData.module_title || modules.find(m => m.code === formData.moduleCode)?.title || '';
+      
+      if (editingItem) {
+        setPracticalTimetables(prev => prev.map(item => item.id === editingItem.id ? newItem : item));
+      } else {
+        setPracticalTimetables(prev => [...prev, newItem]);
+      }
+    }
+    
+    setShowAddModal(false);
+    resetForm();
+    
+  } catch (err) {
+    console.error("Failed to save timetable:", err);
+    
+    let errorMessage = "Failed to save timetable. Please try again.";
+    if (err.response?.data) {
+      if (typeof err.response.data === 'object') {
+        const errors = Object.values(err.response.data).flat();
+        errorMessage = errors.join(', ');
+      } else if (typeof err.response.data === 'string') {
+        errorMessage = err.response.data;
+      }
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    
+    alert(errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const filteredSemesterTimetables = semesterTimetables.filter(item => {
     if (semesterFilter.year && item.year !== semesterFilter.year) return false;
     if (semesterFilter.semester && item.semester !== semesterFilter.semester) return false;
-    if (semesterFilter.department && item.department !== semesterFilter.department) return false;
+    if (semesterFilter.faculty && item.faculty !== semesterFilter.faculty) return false;
     return true;
   });
 
@@ -264,13 +370,13 @@ const TimetablePage = () => {
                 {semesters.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
               <select
-                value={semesterFilter.department}
-                onChange={(e) => setSemesterFilter({ ...semesterFilter, department: e.target.value })}
+                value={semesterFilter.faculty}
+                onChange={(e) => setSemesterFilter({ ...semesterFilter, faculty: e.target.value })}
               >
-                <option value="">All Departments</option>
-                {departments.map(d => <option key={d} value={d}>{d}</option>)}
+                <option value="">All Faculties</option>
+                {faculties.map(f => <option key={f.id} value={f.name}>{f.name}</option>)}
               </select>
-              <button className="clear-filters" onClick={() => setSemesterFilter({ year: '', semester: '', department: '' })}>
+              <button className="clear-filters" onClick={() => setSemesterFilter({ year: '', semester: '', faculty: '' })}>
                 Clear Filters
               </button>
             </div>
@@ -288,20 +394,23 @@ const TimetablePage = () => {
             {filteredSemesterTimetables.length === 0 ? (
               <div className="empty-state">
                 <p>No semester timetables found</p>
+                {isAdmin && (
+                  <button className="add-first-btn" onClick={handleAdd}>
+                    Add your first timetable
+                  </button>
+                )}
               </div>
             ) : (
               filteredSemesterTimetables.map(item => (
                 <div key={item.id} className="timetable-card">
                   <div className="timetable-info">
-                    <h3>{item.title}</h3>
+                    <h3>{item.title || `${item.faculty}  -  [ Semester ${item.semester}  ,  Year ${item.year} ]`}</h3>
                     <div className="timetable-meta">
-                      <span>{item.year} • {item.semester}</span>
-                      <span>{item.department}</span>
-                      <span>Uploaded: {new Date(item.uploadedAt).toLocaleDateString()}</span>
+                      <span>Uploaded: {new Date(item.uploaded_at).toLocaleDateString()}</span>
                     </div>
                   </div>
                   <div className="timetable-actions">
-                    <button className="download-btn" onClick={() => handleDownload(item.fileUrl, item.title)}>
+                    <button className="download-btn" onClick={() => handleDownload(item.pdf_url, item.title)}>
                       <MdDownload /> Download
                     </button>
                     {isAdmin && (
@@ -343,14 +452,14 @@ const TimetablePage = () => {
                 onChange={(e) => setPracticalFilter({ ...practicalFilter, semester: e.target.value })}
               >
                 <option value="">All Semesters</option>
-                {semesters.map(s => <option key={s} value={s}>{s}</option>)}
+                {semesters.map(s => <option key={s} value={s}> Semester {s}</option>)}
               </select>
               <select
                 value={practicalFilter.moduleCode}
                 onChange={(e) => setPracticalFilter({ ...practicalFilter, moduleCode: e.target.value })}
               >
                 <option value="">All Modules</option>
-                {userModules.map(m => <option key={m.code} value={m.code}>{m.code} - {m.title}</option>)}
+                {userModules.map(m => <option key={m.code || m.id} value={m.code || m.id}>{m.code} - {m.name}</option>)}
               </select>
               <button className="clear-filters" onClick={() => setPracticalFilter({ year: '', semester: '', moduleCode: '' })}>
                 Clear Filters
@@ -361,7 +470,7 @@ const TimetablePage = () => {
           {/* Add Button */}
           {isAdmin && (
             <button className="add-btn" onClick={handleAdd}>
-              <MdAdd /> Add
+              <MdAdd /> Add 
             </button>
           )}
 
@@ -370,20 +479,24 @@ const TimetablePage = () => {
             {filteredPracticalTimetables.length === 0 ? (
               <div className="empty-state">
                 <p>No practical timetables found</p>
+                {isAdmin && (
+                  <button className="add-first-btn" onClick={handleAdd}>
+                    Add your first timetable
+                  </button>
+                )}
               </div>
             ) : (
               filteredPracticalTimetables.map(item => (
                 <div key={item.id} className="timetable-card">
                   <div className="timetable-info">
-                    <h3>{item.title}</h3>
+                    <h3>{`${item.title} - [ Semester ${item.semester} , Year ${item.year} ]`}</h3>
                     <div className="timetable-meta">
-                      <span>{item.year} • {item.semester}</span>
-                      <span>{item.moduleCode} - {item.moduleTitle}</span>
-                      <span>Uploaded: {new Date(item.uploadedAt).toLocaleDateString()}</span>
+                      <span>Module {item.faculty}</span>
+                      <span>Uploaded: {new Date(item.uploaded_at).toLocaleDateString()}</span>
                     </div>
                   </div>
                   <div className="timetable-actions">
-                    <button className="download-btn" onClick={() => handleDownload(item.fileUrl, item.title)}>
+                    <button className="download-btn" onClick={() => handleDownload(item.pdf_url, item.title)}>
                       <MdDownload /> Download
                     </button>
                     {isAdmin && (
@@ -416,7 +529,7 @@ const TimetablePage = () => {
             </div>
             <form onSubmit={handleSubmit} className="modal-form">
               <div className="form-group">
-                <label>Year</label>
+                <label>Year *</label>
                 <select
                   value={formData.year}
                   onChange={(e) => setFormData({ ...formData, year: e.target.value })}
@@ -428,56 +541,55 @@ const TimetablePage = () => {
               </div>
 
               <div className="form-group">
-                <label>Semester</label>
+                <label>Semester *</label>
                 <select
                   value={formData.semester}
                   onChange={(e) => setFormData({ ...formData, semester: e.target.value })}
                   required
                 >
                   <option value="">Select Semester</option>
-                  {semesters.map(s => <option key={s} value={s}>{s}</option>)}
+                  {semesters.map(s => <option key={s} value={s}>Semester {s}</option>)}
                 </select>
               </div>
 
               {activeTab === 'semester' ? (
                 <div className="form-group">
-                  <label>Department</label>
+                  <label>Faculty *</label>
                   <select
-                    value={formData.department}
-                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                    value={formData.faculty}
+                    onChange={(e) => setFormData({ ...formData, faculty: e.target.value })}
                     required
                   >
-                    <option value="">Select Department</option>
-                    {departments.map(d => <option key={d} value={d}>{d}</option>)}
+                    <option value="">Select Faculty</option>
+                    {faculties.map(f => <option key={f.id} value={f.name}>{f.name}</option>)}
                   </select>
                 </div>
               ) : (
                 <div className="form-group">
-                  <label>Module</label>
+                  <label>Module *</label>
                   <select
                     value={formData.moduleCode}
                     onChange={(e) => setFormData({ ...formData, moduleCode: e.target.value })}
                     required
                   >
                     <option value="">Select Module</option>
-                    {modules.map(m => <option key={m.code} value={m.code}>{m.code} - {m.title}</option>)}
+                    {modules.map(m => <option key={m.code || m.id} value={m.code || m.id}>{m.code} - {m.name}</option>)}
                   </select>
                 </div>
               )}
 
               <div className="form-group">
-                <label>Title</label>
+                <label>Title (Optional)</label>
                 <input
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="e.g., CS Semester 1 Timetable"
-                  required
+                  placeholder="e.g., CS Semester 1 Timetable 2024"
                 />
               </div>
 
               <div className="form-group">
-                <label>PDF File</label>
+                <label>PDF File {!editingItem && '*'}</label>
                 <input
                   type="file"
                   accept=".pdf"
@@ -485,7 +597,7 @@ const TimetablePage = () => {
                   required={!editingItem}
                 />
                 {editingItem && !formData.file && (
-                  <p className="file-note">Current file: {editingItem.title}.pdf</p>
+                  <p className="file-note">Leave empty to keep existing file</p>
                 )}
               </div>
 

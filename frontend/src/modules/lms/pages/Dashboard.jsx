@@ -59,12 +59,7 @@ const Dashboard = () => {
   };
 
   if (loading) {
-    return (
-      <div className="lms-loading">
-        <div className="lms-spinner"></div>
-        <p>Loading your dashboard...</p>
-      </div>
-    );
+    return;
   }
 
   if (!userData) {
@@ -82,7 +77,7 @@ const Dashboard = () => {
     <div className="lms-dashboard">
       <div className="lms-welcome-section">
         <h1 className="lms-welcome-title">
-          Welcome back, {userData.first_name}! 👋
+          Welcome back, {userData.first_name}!
         </h1>
         <p className="lms-welcome-subtitle">
           Here's what's happening with your account today.

@@ -180,7 +180,7 @@ class Question(models.Model):
     questionTypes = models.CharField(max_length =20,choices = QUESTION_TYPES,default='single')
     text = models.TextField()
     image = models.ImageField(
-        upload_to='question_images/',
+        upload_to='quiz/questions/',
         null = True,
         blank=True
     ) 

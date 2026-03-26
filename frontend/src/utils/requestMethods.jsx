@@ -232,6 +232,51 @@ const UPLOAD = async (url, fileData, options = {}) => {
   return POST(url, formData, { ...options, isFormData: true });
 };
 
+const UPDATE_FILE = async (url, fileData, options = {}) => {
+  const formData = new FormData();
+  
+  if (fileData instanceof FormData) {
+    return PATCH(url, fileData, { ...options, isFormData: true });
+  }
+  
+  Object.keys(fileData).forEach(key => {
+    if (fileData[key] !== null && fileData[key] !== undefined) {
+      if (Array.isArray(fileData[key])) {
+        fileData[key].forEach(item => formData.append(`${key}[]`, item));
+      } else if (key === 'file' && fileData[key] instanceof File) {
+        // Handle file upload
+        formData.append('pdf', fileData[key]);
+      } else {
+        formData.append(key, fileData[key]);
+      }
+    }
+  });
+  
+  return PATCH(url, formData, { ...options, isFormData: true });
+};
+
+const PUT_FILE = async (url, fileData, options = {}) => {
+  const formData = new FormData();
+  
+  if (fileData instanceof FormData) {
+    return PUT(url, fileData, { ...options, isFormData: true });
+  }
+  
+  Object.keys(fileData).forEach(key => {
+    if (fileData[key] !== null && fileData[key] !== undefined) {
+      if (Array.isArray(fileData[key])) {
+        fileData[key].forEach(item => formData.append(`${key}[]`, item));
+      } else if (key === 'file' && fileData[key] instanceof File) {
+        formData.append('pdf', fileData[key]);
+      } else {
+        formData.append(key, fileData[key]);
+      }
+    }
+  });
+  
+  return PUT(url, formData, { ...options, isFormData: true });
+};
+
 // Export all methods
 const request = {
   GET,
@@ -240,6 +285,8 @@ const request = {
   PATCH,
   DELETE,
   UPLOAD,
+  PUT_FILE,
+  UPDATE_FILE,
   // Token management helpers
   setTokens,
   clearTokens,

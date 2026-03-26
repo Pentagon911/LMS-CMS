@@ -623,3 +623,40 @@ body.dark-mode .spinner {
   transform: translateY(-15px);
   width: 30px;
 }
+
+body.dark-mode .user-medical-data,
+body.dark-mode .user-bursary-data,
+body.dark-mode .user-hostel-data,
+body.dark-mode .user-examrw-data,
+body.dark-mode .user-resulteval-data{
+  color: white;
+}
+
+
+/* Ensure only the modal content scrolls */
+.modal-content {
+  overflow-y: auto;
+  max-height: 80vh; /* or whatever height you prefer */
+}
+
+/* Remove overflow from inner containers */
+.appeal-info,
+.type-specific,
+.review-section {
+  overflow: visible;
+}
+
+/* If any inner element has a fixed height, make it auto */
+.appeal-info,
+.type-specific,
+.review-section {
+  height: auto;
+  
+}
+
+/* Ensure the modal container doesn't force extra scrolling */
+.modal-container {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
