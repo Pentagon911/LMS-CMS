@@ -184,7 +184,7 @@ class BaseQuestionSerializer(serializers.ModelSerializer):
     """
     questionId = serializers.CharField()
     multipleAnswers = serializers.SerializerMethodField()
-    image = serializers.ImageField(allow_null = True,required = False)
+    image = serializers.SerializerMethodField()
     totalPoints = serializers.SerializerMethodField()
     class Meta:
         model = Question
@@ -196,6 +196,11 @@ class BaseQuestionSerializer(serializers.ModelSerializer):
     def get_totalPoints(self, obj):
         """Count number of correct options (each = 1 point)"""
         return obj.options.filter(is_correct=True).count()
+    
+    def get_image(self, obj):
+        if obj.image:
+            return obj.image.url
+        return None
 
 class BaseQuizSerializer(serializers.ModelSerializer):
     """
@@ -227,7 +232,7 @@ class StudentQuestionSerializer(BaseQuestionSerializer):
     options = serializers.SerializerMethodField()
 
     class Meta(BaseQuestionSerializer.Meta):
-        fields = BaseOptionSerializer.Meta.fields + ['options']
+        fields = BaseQuestionSerializer.Meta.fields + ['options']
 
     def get_options(self,obj):
         """Get options for this question without correct answers"""
@@ -262,7 +267,7 @@ class InstructorQuestionSerializer(BaseQuestionSerializer):
     options = serializers.SerializerMethodField()
 
     class Meta(BaseQuestionSerializer.Meta):
-        fields = BaseOptionSerializer.Meta.fields + ['options']
+        fields = BaseQuestionSerializer.Meta.fields + ['options']
 
     def get_options(self,obj):
         options = obj.options.all().order_by('order')

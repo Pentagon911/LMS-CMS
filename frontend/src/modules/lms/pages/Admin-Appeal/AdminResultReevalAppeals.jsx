@@ -103,14 +103,7 @@ const AdminResultReevalAppeals = () => {
   };
 
   if (loading) {
-    return (
-      <div className="admin-appeal-page">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Loading result re-evaluation appeals...</p>
-        </div>
-      </div>
-    );
+    return;
   }
 
   return (
@@ -209,31 +202,31 @@ const AdminResultReevalAppeals = () => {
               <div className="appeal-info">
                 <div className="info-row">
                   <label>Appeal ID:</label>
-                  <span>{selectedAppeal.appeal_id}</span>
+                  <span className = "user-resulteval-data">{selectedAppeal.appeal_id}</span>
                 </div>
                 <div className="info-row">
                   <label>Student:</label>
-                  <span>{selectedAppeal.student_name}</span>
+                  <span className = "user-resulteval-data">{selectedAppeal.student_name}</span>
                 </div>
                 <div className="info-row">
                   <label>Title:</label>
-                  <span>{selectedAppeal.title}</span>
+                  <span className = "user-resulteval-data">{selectedAppeal.title}</span>
                 </div>
                 <div className="info-row">
                   <label>Department:</label>
-                  <span>{selectedAppeal.department_name}</span>
+                  <span className = "user-resulteval-data">{selectedAppeal.department_name}</span>
                 </div>
                 <div className="info-row">
                   <label>Faculty:</label>
-                  <span>{selectedAppeal.faculty_name}</span>
+                  <span className = "user-resulteval-data">{selectedAppeal.faculty_name}</span>
                 </div>
                 <div className="info-row">
                   <label>Batch:</label>
-                  <span>{selectedAppeal.batch_name || 'N/A'}</span>
+                  <span className = "user-resulteval-data">{selectedAppeal.batch_name || 'N/A'}</span>
                 </div>
                 <div className="info-row">
                   <label>Academic Year:</label>
-                  <span>{selectedAppeal.academic_year}</span>
+                  <span className = "user-resulteval-data">{selectedAppeal.academic_year}</span>
                 </div>
                 <div className="info-row">
                   <label>Description:</label>
@@ -245,11 +238,11 @@ const AdminResultReevalAppeals = () => {
                 <h3>Exam Result Details</h3>
                 <div className="info-row">
                   <label>Exam:</label>
-                  <span>{selectedAppeal.exam_title || selectedAppeal.exam_result?.exam?.title}</span>
+                  <span className = "user-resulteval-data">{selectedAppeal.exam_title || selectedAppeal.exam_result?.exam?.title}</span>
                 </div>
                 <div className="info-row">
                   <label>Current Score:</label>
-                  <span>{selectedAppeal.exam_result?.score} / 100</span>
+                  <span className = "user-resulteval-data">{selectedAppeal.exam_result?.score} / 100</span>
                 </div>
                 <div className="info-row">
                   <label>Current Grade:</label>

@@ -100,14 +100,7 @@ const StudentAppealDashboard = () => {
   };
 
   if (loading) {
-    return (
-      <div className="student-dashboard-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p></p>
-        </div>
-      </div>
-    );
+    return;
   }
 
   return (

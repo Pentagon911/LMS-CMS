@@ -77,14 +77,14 @@
   text-decoration: none;
   font-size: 0.95rem;
   font-weight: 500;
-  color: #5a6778;
+  color: #dfe4ec;
   transition: all 0.2s ease;
   cursor: pointer;
 }
 
 .nav-icon {
   font-size: 1.3rem;
-  color: #7f8c9f;
+  color: #eaeef4;
 }
 
 .nav-link:hover {
@@ -149,7 +149,7 @@
   border: none;
   text-align: left;
   cursor: pointer;
-  color: #5a6778;
+  color: #e5e9ee;
   transition: all 0.2s ease;
   font-size: 0.9rem;
   text-decoration: none;
@@ -703,3 +703,81 @@ body.dark-mode .mobile-divider {
   .theme-toggle-btn { width: 36px; height: 36px; }
   .avatar { width: 32px; height: 32px; }
 }
+
+.lms-header-cont {
+  max-width: 1900px;
+  margin: 0 auto;
+  padding: 0 32px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background: linear-gradient(to right, #0b5cdf, #ac4ffe);
+}
+
+.lms-logo-text{
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #f6f7f9;
+}
+
+.lms-logo-icon{
+  width: 40px;
+  height: 40px;
+  background: white;
+  color: #1a2632;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-size: 1.3rem;
+}
+
+body.dark-mode .lms-logo-icon{
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #2c3e50, #1a2632);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-size: 1.3rem;
+}
+
+body.dark-mode .lms-header-cont{
+  max-width: 1900px;
+  margin: 0 auto;
+  padding: 0 32px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #161f28, #131b23);
+}
+
+.lms-nav-dropdown-item{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: #161b20;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.lms-nav-dropdown-item:hover{
+  background-color: #d3d9e1;
+}
+
+body.dark-mode .lms-nav-dropdown-item{
+  color: #8b95a3;
+}
+

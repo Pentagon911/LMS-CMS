@@ -304,7 +304,7 @@ const ExamResultsPage = () => {
             <div key={studentData.student.id} className="student-results-section">
               <div className="student-header">
                 <div className="student-info-header">
-                  <h3>{studentData.student.name}</h3>
+                  <h3 className = "std-name_">{studentData.student.name}</h3>
                   <p className="student-index">Index: {studentData.student.username}</p>
                 </div>
                 <div className="student-cgpa">Overall CGPA: {studentData.final_cgpa}</div>
@@ -313,7 +313,7 @@ const ExamResultsPage = () => {
               {studentData.semester_results.map((semesterData) => (
                 <div key={semesterData.semester} className="semester-section">
                   <div className="semester-header">
-                    <h4>Semester {semesterData.semester}</h4>
+                    <h4 className = "semester-number">Semester {semesterData.semester}</h4>
                     <div className="semester-stats">
                       <span className="semester-sgpa">SGPA: {semesterData.sgpa.toFixed(2)}</span>
                       <span className="semester-cgpa">CGPA: {semesterData.cgpa.toFixed(2)}</span>

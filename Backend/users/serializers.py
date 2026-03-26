@@ -61,7 +61,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 class UserDetailSerializer(serializers.ModelSerializer):
     profile = serializers.SerializerMethodField()
     
-    department_name = serializers.CharField(source='student_profile.department.name', read_only=True, allow_null=True)
+    department_name = serializers.SerializerMethodField(read_only=True, allow_null=True)
     faculty_name = serializers.CharField(source='student_profile.faculty.name', read_only=True, allow_null=True)
     batch_name = serializers.CharField(source='student_profile.batch.name', read_only=True, allow_null=True)
 
@@ -72,6 +72,18 @@ class UserDetailSerializer(serializers.ModelSerializer):
                  'date_joined', 'last_login', 'last_password_change',
                  'department_name', 'faculty_name', 'batch_name')
         read_only_fields = ('date_joined', 'last_login', 'last_password_change')
+        
+    def get_department_name(self, obj):
+        if hasattr(obj, 'student_profile') and obj.student_profile:
+            if obj.student_profile.department:
+                return obj.student_profile.department.name
+        if hasattr(obj, 'instructor_profile') and obj.instructor_profile:
+            if obj.instructor_profile.department:
+                return obj.instructor_profile.department.name
+        if hasattr(obj, 'admin_profile') and obj.admin_profile:
+            if obj.admin_profile.department:
+                return obj.admin_profile.department.name
+        return None
     
     def get_profile(self, obj):
         if obj.is_student and hasattr(obj, 'student_profile'):

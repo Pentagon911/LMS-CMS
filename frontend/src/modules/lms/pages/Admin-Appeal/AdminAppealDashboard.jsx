@@ -92,14 +92,7 @@ const AdminAppealDashboard = () => {
   };
 
   if (loading) {
-    return (
-      <div className="admin-dashboard-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p></p>
-        </div>
-      </div>
-    );
+    return;
   }
 
   return (
@@ -109,7 +102,7 @@ const AdminAppealDashboard = () => {
           <h1>Appeal Management Dashboard</h1>
           <p>Review and process student appeals</p>
         </div>
-        <button className="refresh-btn" onClick={fetchDashboardData}>
+        <button className="_refresh-btn" onClick={fetchDashboardData}>
           <MdRefresh /> Refresh
         </button>
       </div>

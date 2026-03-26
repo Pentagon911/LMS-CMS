@@ -40,6 +40,9 @@ import MedicalLeavePage from '../modules/lms/pages/Student-Appeal/MedicalLeavePa
 import ResultReevalPage from '../modules/lms/pages/Student-Appeal/ResultReevalPage';
 import MyAppealsPage from '../modules/lms/pages/Student-Appeal/MyAppealsPage';
 
+//LMS MANAGE ENROLLMENTS 
+import ManageEnrollments from "../modules/lms/pages/ManageEnrollments.jsx";
+
 //CMS Pages
 import CMSDashboard from "../modules/cms/pages/Dashboard.jsx";
 import QuizEditor from "../modules/cms/pages/QuizEditor.jsx";
@@ -137,9 +140,12 @@ function AppRoutes() {
       {/* Student My Appeals - View all submitted appeals */}
       <Route path="/lms/appeals-and-welfare/my-appeals" element={<LMSLayout><MyAppealsPage /></LMSLayout>} />
       <Route path="/lms/appeals-and-welfare/appeal/:id" element={<LMSLayout><MyAppealsPage /></LMSLayout>} />
+
+      {/* lms - admin/ instructor manae enrollments */}
+      <Route path="/lms/manage-enrollments" element={<LMSLayout><ManageEnrollments /></LMSLayout>} />
       
       {/* Catch-all */}
-      {/* <Route path="*" element={<Navigate to="/login" replace />} /> */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
