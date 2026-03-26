@@ -106,14 +106,7 @@ const AdminExamRewriteAppeals = () => {
   };
 
   if (loading) {
-    return (
-      <div className="admin-appeal-page">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Loading exam rewrite appeals...</p>
-        </div>
-      </div>
-    );
+    return;
   }
 
   return (
@@ -211,31 +204,31 @@ const AdminExamRewriteAppeals = () => {
               <div className="appeal-info">
                 <div className="info-row">
                   <label>Appeal ID:</label>
-                  <span>{selectedAppeal.appeal_id}</span>
+                  <span className = "user-examrw-data">{selectedAppeal.appeal_id}</span>
                 </div>
                 <div className="info-row">
                   <label>Student:</label>
-                  <span>{selectedAppeal.student_name}</span>
+                  <span className = "user-examrw-data">{selectedAppeal.student_name}</span>
                 </div>
                 <div className="info-row">
                   <label>Title:</label>
-                  <span>{selectedAppeal.title}</span>
+                  <span className = "user-examrw-data">{selectedAppeal.title}</span>
                 </div>
                 <div className="info-row">
                   <label>Department:</label>
-                  <span>{selectedAppeal.department_name}</span>
+                  <span className = "user-examrw-data">{selectedAppeal.department_name}</span>
                 </div>
                 <div className="info-row">
                   <label>Faculty:</label>
-                  <span>{selectedAppeal.faculty_name}</span>
+                  <span className = "user-examrw-data">{selectedAppeal.faculty_name}</span>
                 </div>
                 <div className="info-row">
                   <label>Batch:</label>
-                  <span>{selectedAppeal.batch_name || 'N/A'}</span>
+                  <span className = "user-examrw-data">{selectedAppeal.batch_name || 'N/A'}</span>
                 </div>
                 <div className="info-row">
                   <label>Academic Year:</label>
-                  <span>{selectedAppeal.academic_year}</span>
+                  <span className = "user-examrw-data">{selectedAppeal.academic_year}</span>
                 </div>
                 <div className="info-row">
                   <label>Description:</label>
@@ -247,19 +240,19 @@ const AdminExamRewriteAppeals = () => {
                 <h3>Exam Details</h3>
                 <div className="info-row">
                   <label>Course:</label>
-                  <span>{selectedAppeal.course_name || selectedAppeal.course?.name}</span>
+                  <span className = "user-examrw-data">{selectedAppeal.course_name || selectedAppeal.course?.name}</span>
                 </div>
                 <div className="info-row">
                   <label>Module:</label>
-                  <span>{selectedAppeal.module_name || selectedAppeal.module?.name}</span>
+                  <span className = "user-examrw-data">{selectedAppeal.module_name || selectedAppeal.module?.name}</span>
                 </div>
                 <div className="info-row">
                   <label>Semester:</label>
-                  <span>{selectedAppeal.semester}</span>
+                  <span className = "user-examrw-data">{selectedAppeal.semester}</span>
                 </div>
                 <div className="info-row">
                   <label>Original Exam Date:</label>
-                  <span>{formatDate(selectedAppeal.original_exam_date)}</span>
+                  <span className = "user-examrw-data">{formatDate(selectedAppeal.original_exam_date)}</span>
                 </div>
                 <div className="info-row">
                   <label>Reason Type:</label>
@@ -267,7 +260,7 @@ const AdminExamRewriteAppeals = () => {
                 </div>
                 <div className="info-row">
                   <label>Detailed Reason:</label>
-                  <p>{selectedAppeal.detailed_reason}</p>
+                  <p className = "user-examrw-data">{selectedAppeal.detailed_reason}</p>
                 </div>
                 {selectedAppeal.medical_certificate && (
                   <div className="info-row">

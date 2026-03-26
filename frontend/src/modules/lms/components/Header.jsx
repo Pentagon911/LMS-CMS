@@ -242,11 +242,11 @@ const Header = () => {
 
   return (
     <header className={`header ${isScrolled ? 'header-scrolled' : ''}`}>
-      <div className="header-container">
+      <div className="lms-header-cont">
         {/* Logo */}
         <div className="logo">
-          <span className="logo-icon"><MdLibraryBooks /></span>
-          <span className="logo-text">LMS Portal</span>
+          <span className="lms-logo-icon"><MdLibraryBooks /></span>
+          <span className="lms-logo-text">LMS Portal</span>
         </div>
 
         {/* Desktop Navigation */}
@@ -262,7 +262,7 @@ const Header = () => {
                 className={`nav-link ${isActive(item.href) ? 'active' : ''} ${openDropdown === item.name ? 'dropdown-open' : ''}`}
                 onClick={(e) => handleNavClick(item, e)}
               >
-                <span className="nav-icon">{item.icon}</span>
+                <span className="lms-nav-icon">{item.icon}</span>
                 <span className="nav-text">{item.name}</span>
                 {item.hasDropdown && (
                   <span className={`nav-dropdown-arrow ${openDropdown === item.name ? 'rotate' : ''}`}>
@@ -277,7 +277,7 @@ const Header = () => {
                   {getDropdownItems(item.name).map((dropdownItem) => (
                     <button
                       key={dropdownItem.path}
-                      className={`nav-dropdown-item ${isDropdownItemActive(dropdownItem.path) ? 'active' : ''}`}
+                      className={`lms-nav-dropdown-item ${isDropdownItemActive(dropdownItem.path) ? 'active' : ''}`}
                       onClick={() => handleDropdownItemClick(dropdownItem.path)}
                     >
                       <span className="nav-dropdown-icon">{dropdownItem.icon}</span>

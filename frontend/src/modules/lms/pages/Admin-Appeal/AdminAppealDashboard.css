@@ -49,18 +49,19 @@ body.dark-mode .header-title p {
   background: rgb(60, 150, 228);
   border: none;
   border-radius: 8px;
-  color: #171d25;
+  color: #e1e4ea;
   cursor: pointer;
   font-size: 14px;
   transition: all 0.2s ease;
 }
 
+
 body.dark-mode ._refresh-btn{
-  color: #d0d5dd;
+  color: #e1e4ea;
 }
 
 ._refresh-btn:hover {
-  background: rgb(117, 177, 228);
+  background: #2c3e50;
   border-color: #d0d5dd;
 }
 
