@@ -59,12 +59,7 @@ const Dashboard = () => {
   };
 
   if (loading) {
-    return (
-      <div className="lms-loading">
-        <div className="lms-spinner"></div>
-        <p>Loading your dashboard...</p>
-      </div>
-    );
+    return;
   }
 
   if (!userData) {

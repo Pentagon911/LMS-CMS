@@ -1,13 +1,16 @@
+// UserManagement.jsx (updated with stats)
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MdAdd, MdEdit, MdDelete, MdClose, MdPerson, MdEmail, MdPhone, MdSchool, MdBadge } from 'react-icons/md';
+import { MdAdd, MdEdit, MdDelete, MdClose, MdPerson, MdEmail, MdPhone, MdSchool, MdBadge, MdPeople, MdTrendingUp, MdTrendingDown, MdAdminPanelSettings, MdSchool as MdInstructor, MdAccountCircle } from 'react-icons/md';
 import request from '../../../utils/requestMethods.jsx';
 import './UserManagement.css';
 
 const UserManagement = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loadingStats, setLoadingStats] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({
@@ -26,65 +29,32 @@ const UserManagement = () => {
   const departments = ['Computer Science', 'Information Technology', 'Software Engineering', 'Data Science'];
   const roles = ['student', 'instructor', 'admin'];
 
-  // Fetch users on component mount
   useEffect(() => {
     fetchUsers();
+    fetchStats();
   }, []);
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // In real app: const data = await request.GET('/users/');
-      const mockData = [
-        {
-          id: 16,
-          username: 'john_doe',
-          email: 'john.doe@student.com',
-          first_name: 'John',
-          last_name: 'Doe',
-          role: 'student',
-          phone_number: '+1234567890',
-          profile: {
-            student_id: 'STU0000016',
-            department: 'Computer Science',
-            program: 'BSc Computer Science',
-            current_semester: 1
-          },
-          date_joined: '2026-03-13T10:20:14.6073362'
-        },
-        {
-          id: 17,
-          username: 'jane_smith',
-          email: 'jane.smith@student.com',
-          first_name: 'Jane',
-          last_name: 'Smith',
-          role: 'student',
-          phone_number: '+1234567891',
-          profile: {
-            student_id: 'STU0000017',
-            department: 'Information Technology',
-            program: 'BSc IT',
-            current_semester: 2
-          },
-          date_joined: '2026-03-14T09:15:22.123456'
-        },
-        {
-          id: 18,
-          username: 'prof_wilson',
-          email: 'wilson@university.com',
-          first_name: 'Robert',
-          last_name: 'Wilson',
-          role: 'instructor',
-          phone_number: '+1234567892',
-          profile: null,
-          date_joined: '2026-03-10T11:30:45.789012'
-        }
-      ];
-      setUsers(mockData);
+      const data = await request.GET('/users/');
+      setUsers(data);
     } catch (err) {
-      console.error("Failed to fetch users", err);
+      console.error('Failed to fetch users', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    setLoadingStats(true);
+    try {
+      const data = await request.GET('/users/stats/');
+      setStats(data);
+    } catch (err) {
+      console.error('Failed to fetch stats', err);
+    } finally {
+      setLoadingStats(false);
     }
   };
 
@@ -115,8 +85,8 @@ const UserManagement = () => {
       last_name: user.last_name,
       role: user.role,
       phone_number: user.phone_number || '',
-      department: user.profile?.department || '',
-      program: user.profile?.program || '',
+      department: user.department_name || (user.profile?.department ? String(user.profile.department) : ''),
+      program: user.profile?.program ? String(user.profile.program) : '',
       current_semester: user.profile?.current_semester || 1
     });
     setShowModal(true);
@@ -125,10 +95,12 @@ const UserManagement = () => {
   const handleDeleteUser = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        // In real app: await request.DELETE(`/users/${userId}/`);
+        await request.DELETE(`users/profile/${userId}/`);
         setUsers(prev => prev.filter(user => user.id !== userId));
+        // Refresh stats after deletion
+        fetchStats();
       } catch (err) {
-        console.error("Failed to delete user", err);
+        console.error('Failed to delete user', err);
       }
     }
   };
@@ -136,46 +108,41 @@ const UserManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
+    const payload = {
+      username: formData.username,
+      email: formData.email,
+      first_name: formData.first_name,
+      last_name: formData.last_name,
+      role: formData.role,
+      phone_number: formData.phone_number,
+    };
+
+    if (!editingUser) {
+      payload.password = formData.password;
+    }
+
+    if (formData.role === 'student') {
+      payload.profile = {
+        department: formData.department,
+        program: formData.program,
+        current_semester: formData.current_semester,
+      };
+    }
+
     try {
       if (editingUser) {
-        // Update existing user
-        // In real app: await request.PUT(`/users/${editingUser.id}/`, formData);
-        const updatedUser = {
-          ...editingUser,
-          ...formData,
-          profile: editingUser.role === 'student' ? {
-            ...editingUser.profile,
-            department: formData.department,
-            program: formData.program,
-            current_semester: formData.current_semester
-          } : null
-        };
-        setUsers(prev => prev.map(user => user.id === editingUser.id ? updatedUser : user));
+        const updated = await request.PUT(`/users/${editingUser.id}/`, payload);
+        setUsers(prev => prev.map(user => user.id === editingUser.id ? updated : user));
       } else {
-        // Create new user
-        // In real app: const data = await request.POST('/users/register/', formData);
-        const newUser = {
-          id: Date.now(),
-          username: formData.username,
-          email: formData.email,
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          role: formData.role,
-          phone_number: formData.phone_number,
-          profile: formData.role === 'student' ? {
-            student_id: `STU${Date.now()}`,
-            department: formData.department,
-            program: formData.program,
-            current_semester: formData.current_semester
-          } : null,
-          date_joined: new Date().toISOString()
-        };
-        setUsers(prev => [...prev, newUser]);
+        const created = await request.POST('/users/register/', payload);
+        setUsers(prev => [...prev, created]);
       }
       setShowModal(false);
+      // Refresh stats after create/update
+      fetchStats();
     } catch (err) {
-      console.error("Failed to save user", err);
+      console.error('Failed to save user', err);
     } finally {
       setLoading(false);
     }
@@ -201,6 +168,60 @@ const UserManagement = () => {
         <button className="add-user-btn" onClick={handleAddUser}>
           <MdAdd /> Add New User
         </button>
+      </div>
+
+      {/* Stats Dashboard */}
+      <div className="stats-dashboard">
+        {loadingStats ? (
+          <div className="stats-loading">Loading stats...</div>
+        ) : stats ? (
+          <>
+            <div className="stat-card">
+              <div className="stat-icon"><MdPeople /></div>
+              <div className="stat-info">
+                <h3>Total Users</h3>
+                <p className="stat-number">{stats.total_users}</p>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon"><MdTrendingUp /></div>
+              <div className="stat-info">
+                <h3>Active</h3>
+                <p className="stat-number">{stats.active_users}</p>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon"><MdTrendingDown /></div>
+              <div className="stat-info">
+                <h3>Inactive</h3>
+                <p className="stat-number">{stats.inactive_users}</p>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon"><MdAccountCircle /></div>
+              <div className="stat-info">
+                <h3>Students</h3>
+                <p className="stat-number">{stats.by_role?.students || 0}</p>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon"><MdInstructor /></div>
+              <div className="stat-info">
+                <h3>Instructors</h3>
+                <p className="stat-number">{stats.by_role?.instructors || 0}</p>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon"><MdAdminPanelSettings /></div>
+              <div className="stat-info">
+                <h3>Admins</h3>
+                <p className="stat-number">{stats.by_role?.admins || 0}</p>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="stats-error">Failed to load statistics</div>
+        )}
       </div>
 
       <div className="user-table-container">
@@ -242,7 +263,7 @@ const UserManagement = () => {
                       {user.role}
                     </span>
                   </td>
-                  <td>{user.profile?.department || '-'}</td>
+                  <td>{user.department_name || user.profile?.department || '-'}</td>
                   <td>{formatDate(user.date_joined)}</td>
                   <td className="actions-cell">
                     <button className="edit-btn" onClick={() => handleEditUser(user)}>
@@ -259,7 +280,7 @@ const UserManagement = () => {
         )}
       </div>
 
-      {/* Add/Edit Modal */}
+      {/* Add/Edit Modal (unchanged) */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="user-modal" onClick={e => e.stopPropagation()}>
