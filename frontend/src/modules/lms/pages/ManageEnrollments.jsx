@@ -5,10 +5,12 @@ import './ManageEnrollments.css';
 const ManageEnrollments = () => {
   const [enrollments, setEnrollments] = useState([]);
   const [courses, setCourses] = useState([]);
+  const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({ course: '', student: '' });
   const [role, setRole] = useState(null);
+  const [debugOpen, setDebugOpen] = useState(false);
 
   // Fetch current user role from localStorage
   useEffect(() => {
@@ -40,7 +42,7 @@ const ManageEnrollments = () => {
     }
   };
 
-  // Fetch courses for filter
+  // Fetch courses for filter and for mapping
   const fetchCourses = async () => {
     try {
       const response = await request.GET('/lms/courses/');
@@ -50,53 +52,65 @@ const ManageEnrollments = () => {
     }
   };
 
+  // Fetch all students (users with role 'student') to get username mapping
+  const fetchStudents = async () => {
+    try {
+      // Adjust endpoint to get all students (e.g., /api/users/?role=student)
+      const response = await request.GET('/lms/users/?role=student');
+      setStudents(response.results || response);
+    } catch (err) {
+      console.error('Failed to fetch students:', err);
+    }
+  };
+
   useEffect(() => {
     fetchEnrollments();
     fetchCourses();
+    fetchStudents();
   }, []);
 
-  // ---------- Safe getters ----------
+  // Build maps for quick lookup
+  const courseMap = courses.reduce((map, course) => {
+    map[course.id] = course.name;
+    return map;
+  }, {});
+
+  const studentMap = students.reduce((map, student) => {
+    map[student.id] = student.username; // assuming student object has username field
+    return map;
+  }, {});
+
+  // ---------- Getters using maps ----------
   const getStudentName = (enrollment) => {
     if (!enrollment) return '—';
     if (enrollment.student_name) return enrollment.student_name;
-    if (enrollment.student) {
-      if (enrollment.student.first_name) {
-        return `${enrollment.student.first_name} ${enrollment.student.last_name || ''}`.trim();
-      }
-      if (enrollment.student.full_name) return enrollment.student.full_name;
-      if (enrollment.student.name) return enrollment.student.name;
-    }
     return '—';
   };
 
-  const getStudentId = (enrollment) => {
+  const getStudentUsername = (enrollment) => {
     if (!enrollment) return '—';
-    if (enrollment.student_id) return enrollment.student_id;
-    if (enrollment.student?.username) return enrollment.student.username;
-    if (enrollment.student?.id) return enrollment.student.id;
+    // if we have the student ID, look up in map
+    const studentId = enrollment.student;
+    if (studentId && studentMap[studentId]) return studentMap[studentId];
     return '—';
   };
 
   const getCourseCode = (enrollment) => {
     if (!enrollment) return '—';
     if (enrollment.course_code) return enrollment.course_code;
-    if (enrollment.course?.code) return enrollment.course.code;
     return '—';
   };
 
   const getCourseTitle = (enrollment) => {
     if (!enrollment) return '—';
-    if (enrollment.course_title) return enrollment.course_title;
-    if (enrollment.course?.name) return enrollment.course.name;
-    if (enrollment.course?.title) return enrollment.course.title;
+    const courseId = enrollment.course;
+    if (courseId && courseMap[courseId]) return courseMap[courseId];
     return '—';
   };
 
   const getCourseId = (enrollment) => {
     if (!enrollment) return null;
-    if (enrollment.course_id) return enrollment.course_id;
-    if (enrollment.course?.id) return enrollment.course.id;
-    return null;
+    return enrollment.course;
   };
 
   // Filter enrollments
@@ -105,8 +119,8 @@ const ManageEnrollments = () => {
     if (filters.course && courseId !== parseInt(filters.course)) return false;
 
     const studentName = getStudentName(enrollment);
-    const studentId = getStudentId(enrollment);
-    const searchString = `${studentName} ${studentId}`.toLowerCase();
+    const studentUsername = getStudentUsername(enrollment);
+    const searchString = `${studentName} ${studentUsername}`.toLowerCase();
     if (filters.student && !searchString.includes(filters.student.toLowerCase())) return false;
 
     return true;
@@ -130,8 +144,8 @@ const ManageEnrollments = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
-  // Determine colspan for empty row
   const emptyRowColspan = role === 'admin' ? 7 : 6;
+  const firstEnrollment = enrollments.length > 0 ? enrollments[0] : null;
 
   if (loading) {
     return (
@@ -154,7 +168,7 @@ const ManageEnrollments = () => {
   return (
     <div className="manage-enrollments-container">
       <div className="manage-enrollments-header">
-        <h1>Manage Enrollments</h1>
+        <h1>Manage Enrollments 👥</h1>
         <p>
           {role === 'admin'
             ? 'View and manage all student enrollments.'
@@ -191,14 +205,14 @@ const ManageEnrollments = () => {
           <thead>
             <tr>
               <th>Student Name</th>
-              <th>Student ID</th>
+              <th>Student ID (Username)</th>
               <th>Course Code</th>
               <th>Course Title</th>
               <th>Enrollment Date</th>
               <th>Status</th>
               {role === 'admin' && <th>Actions</th>}
-            </tr>
-          </thead>
+            </tr>  
+            </thead>
           <tbody>
             {filteredEnrollments.length === 0 ? (
               <tr>
@@ -210,7 +224,7 @@ const ManageEnrollments = () => {
               filteredEnrollments.map(enrollment => (
                 <tr key={enrollment.id}>
                   <td>{getStudentName(enrollment)}</td>
-                  <td>{getStudentId(enrollment)}</td>
+                  <td>{getStudentUsername(enrollment)}</td>
                   <td>{getCourseCode(enrollment)}</td>
                   <td>{getCourseTitle(enrollment)}</td>
                   <td>{formatDate(enrollment.enrollment_date)}</td>
@@ -235,6 +249,20 @@ const ManageEnrollments = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Debug Panel - shows raw structure of first enrollment */}
+      {/* {firstEnrollment && (
+        <div className="debug-panel" style={{ marginTop: '2rem', padding: '1rem', background: '#f0f0f0', borderRadius: '8px' }}>
+          <button onClick={() => setDebugOpen(!debugOpen)} style={{ cursor: 'pointer', marginBottom: '0.5rem' }}>
+            {debugOpen ? 'Hide Debug Info' : 'Show Debug Info (Raw Data)'}
+          </button>
+          {debugOpen && (
+            <pre style={{ overflowX: 'auto', whiteSpace: 'pre-wrap', fontSize: '0.8rem', maxHeight: '300px' }}>
+              {JSON.stringify(firstEnrollment, null, 2)}
+            </pre>
+          )}
+        </div>
+      )} */}
     </div>
   );
 };
