@@ -122,9 +122,11 @@ body.dark-mode .results-table td {
   font-weight: bold;
 }
 
-.body.dark-mode .exam-results-desc {
+body.dark-mode .exam-results-desc{
   color: #e5e9f0;
 }
+
+
 
 /* Loading State */
 .loading-state {
@@ -501,4 +503,12 @@ body.dark-mode .student-header {
 
 body.dark-mode .student-cgpa {
   color: #6fbf73;
+}
+
+body.dark-mode .semester-number{
+  color: #2196f3;
+}
+
+body.dark-mode .std-name_{
+  color: #e8f5e9;
 }

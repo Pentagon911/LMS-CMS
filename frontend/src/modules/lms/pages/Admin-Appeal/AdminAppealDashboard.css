@@ -41,22 +41,26 @@ body.dark-mode .header-title p {
   color: #a0a8b7;
 }
 
-.refresh-btn {
+._refresh-btn {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  background: white;
-  border: 1px solid #eef2f6;
+  background: rgb(60, 150, 228);
+  border: none;
   border-radius: 8px;
-  color: #5a6778;
+  color: #171d25;
   cursor: pointer;
   font-size: 14px;
   transition: all 0.2s ease;
 }
 
-.refresh-btn:hover {
-  background: #f1f4f9;
+body.dark-mode ._refresh-btn{
+  color: #d0d5dd;
+}
+
+._refresh-btn:hover {
+  background: rgb(117, 177, 228);
   border-color: #d0d5dd;
 }
 
@@ -147,7 +151,7 @@ body.dark-mode .stat-number {
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: #1a2632;
+  background: rgb(60, 150, 228);
   color: white;
   border: none;
   border-radius: 8px;

@@ -24,6 +24,8 @@ const Header = () => {
     'Acadamic Managements': {
       admin: [
         { name: 'Update Exam Timetables', path: '/lms/academics/time-tables', icon: <MdEvent /> },
+        { name: 'Exam results', path: '/lms/academics/results', icon: <MdEvent /> },
+        { name: 'Manage Enrollments', path: '/lms/manage-enrollments', icon: <MdSchool /> }
       ],
       student: [
         { name: 'Enrollments', path: '/lms/academics/enrollment', icon: <MdMenuBook /> },
@@ -34,6 +36,7 @@ const Header = () => {
       instructor: [
           { name: 'Update Results', path: '/lms/update-results', icon: <MdUpload /> },
           { name: 'Exam Timetables', path: '/lms/academics/time-tables', icon: <MdEvent /> },
+          { name: 'Exam results', path: '/lms/academics/results', icon: <MdEvent /> },
       ]
     },
     // 'Appeals/Welfare': {
