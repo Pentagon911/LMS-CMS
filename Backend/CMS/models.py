@@ -37,7 +37,7 @@ class Content(models.Model):
         return self.title
     
 class Video(Content):
-    file = models.FileField(upload_to='video/')
+    file = models.FileField(upload_to='content/video/')
     @property
     def item_type(self):
         return "Video"
@@ -50,7 +50,7 @@ class Video(Content):
         return 0
 
 class Pdf(Content):
-    file = models.FileField(upload_to ='pdfs/')
+    file = models.FileField(upload_to ='content/pdfs/')
     @property
     def item_type(self):
         return "Pdf"

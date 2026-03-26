@@ -34,7 +34,7 @@ class pdfSerializer(contentSerializer):
         return value
     
     def get_fileSize(self, obj):
-        return obj.fileSize
+        return obj.fileSizemb2
     
 class videoSerializer(contentSerializer):
     """Serializer for Video content - adds file field and validation"""
@@ -698,7 +698,6 @@ class AcademicCalendarSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("File size must be under 10 MB.")
         return value
     
-
 class PracticalTimetableSerializer(serializers.ModelSerializer):
     pdf_url = serializers.SerializerMethodField()
     uploaded_by_name = serializers.CharField(source='uploaded_by.username', read_only=True)
@@ -720,3 +719,25 @@ class PracticalTimetableSerializer(serializers.ModelSerializer):
         if value.size > 10 * 1024 * 1024:
             raise serializers.ValidationError("File size must be under 10 MB.")
         return value
+
+class ContentUploadSerializer(serializers.Serializer):
+    """Handles initial validation of incoming multipart/form-data"""
+    week_order = serializers.IntegerField(required=True)
+    title = serializers.CharField(required=True)
+    content = serializers.CharField(required=True) # Maps to model's description
+    attachment = serializers.FileField(required=False, allow_null=True)
+    link = serializers.URLField(required=False, allow_blank=True, allow_null=True)
+
+    def validate(self, data):
+        attachment = data.get('attachment')
+        link = data.get('link')
+        
+        # Ensure at least one is provided
+        if not attachment and not link:
+            raise serializers.ValidationError("You must provide either an attachment or a link.")
+        
+        # Optional: Prevent providing both at the same time
+        if attachment and link:
+            raise serializers.ValidationError("Please provide either an attachment or a link, not both.")
+            
+        return data
