@@ -18,7 +18,7 @@ const CreateQuizPage = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(null);
   const [isEditingQuestion, setIsEditingQuestion] = useState(false);
   const [quizData, setQuizData] = useState({
-    id: null,  
+    id: null,
     title: '',
     course: '',
     moduleTitle: '',
@@ -26,6 +26,7 @@ const CreateQuizPage = () => {
     createdAt: new Date().toISOString(),
     questions: []
   });
+
   // Get user from localStorage
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -47,8 +48,6 @@ const CreateQuizPage = () => {
         setModules(data);
       } catch (err) {
         console.error('Failed to fetch modules', err);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -79,42 +78,43 @@ const CreateQuizPage = () => {
     }
   }, [quizId, mode]);
 
-const loadQuizForEdit = async (id) => {
-  try {
-    setLoading(true);
-    const data = await request.GET(`/cms/quizzes/${id}/`);
-    const moduleInfo = modules.find(m => m.code === data.course);
-    
-    // Transform questions to frontend format
-    const transformedQuestions = data.questions?.map(q => ({
-      id: q.id,  // Keep the original ID
-      text: q.text,
-      options: q.options.map(opt => ({
-        text: opt.text,
-        is_correct: opt.is_correct
-      })),
-      multipleAnswers: q.multipleAnswers || 'false',
-      image: q.image || null
-    })) || [];
-    
-    setQuizData({
-      id: data.id,  // Store as 'id' not 'quizId'
-      title: data.title,
-      course: data.course,
-      moduleTitle: moduleInfo?.title || '',
-      time: data.time,
-      createdAt: data.createdAt,  // Keep original createdAt
-      questions: transformedQuestions
-    });
-    setSelectedModule(data.course);
-    setSelectedQuiz(data);
-    setMode('edit');
-  } catch (err) {
-    console.error('Failed to load quiz', err);
-  } finally {
-    setLoading(false);
-  }
-};
+  const loadQuizForEdit = async (id) => {
+    try {
+      setLoading(true);
+      const data = await request.GET(`/cms/quizzes/${id}/`);
+      const moduleInfo = modules.find(m => m.code === data.course);
+      
+      // Transform questions to frontend format
+      const transformedQuestions = data.questions?.map(q => ({
+        id: q.id,
+        text: q.text,
+        options: q.options.map(opt => ({
+          text: opt.text,
+          is_correct: opt.is_correct
+        })),
+        multipleAnswers: q.multipleAnswers || 'false',
+        image: q.image || null
+      })) || [];
+      
+      setQuizData({
+        id: data.id,
+        title: data.title,
+        course: data.course,
+        moduleTitle: moduleInfo?.title || '',
+        time: data.time,
+        createdAt: data.createdAt,
+        questions: transformedQuestions
+      });
+      setSelectedModule(data.course);
+      setSelectedQuiz(data);
+      setMode('edit');
+    } catch (err) {
+      console.error('Failed to load quiz', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSelectQuiz = (quiz) => {
     setSelectedQuiz(quiz);
     loadQuizForEdit(quiz.quizId);
@@ -122,7 +122,7 @@ const loadQuizForEdit = async (id) => {
 
   const handleCreateNew = () => {
     setQuizData({
-      quizId: `quiz${Date.now()}`,
+      id: null,
       title: '',
       course: '',
       moduleTitle: '',
@@ -168,53 +168,50 @@ const loadQuizForEdit = async (id) => {
     setIsEditingQuestion(false);
   };
 
-const handleQuizEditorSubmit = (questionData) => {
-  // Format options correctly
-  const formattedOptions = questionData.options.map(opt => ({
-    text: opt.text,
-    is_correct: opt.is_correct === true || opt.is_correct === "true"
-  }));
-  
-  // Prepare the question with correct property names
-  const updatedQuestion = {
-    id: isEditingQuestion && currentQuestionIndex !== null 
-      ? quizData.questions[currentQuestionIndex].id  // Keep existing ID
-      : null,  // New questions get null
-    text: questionData.question,  // Use 'text' not 'question'
-    options: formattedOptions,
-    multipleAnswers: questionData.multipleAnswers,
-    image: questionData.image || null
+  // UPDATED: Handle question submission with image
+  const handleQuizEditorSubmit = (questionData) => {
+    // Format options correctly
+    const formattedOptions = questionData.options.map(opt => ({
+      text: opt.text,
+      is_correct: opt.is_correct === true || opt.is_correct === "true"
+    }));
+    
+    // Prepare the question with correct property names
+    const updatedQuestion = {
+      id: isEditingQuestion && currentQuestionIndex !== null 
+        ? quizData.questions[currentQuestionIndex].id
+        : null,
+      text: questionData.question,
+      options: formattedOptions,
+      multipleAnswers: questionData.multipleAnswers,
+      image: questionData.image || null  // Image URL from uploaded file
+    };
+
+    let updatedQuestions;
+    
+    if (isEditingQuestion && currentQuestionIndex !== null) {
+      // Update existing question
+      updatedQuestions = [...quizData.questions];
+      updatedQuestions[currentQuestionIndex] = updatedQuestion;
+    } else {
+      // Add new question
+      updatedQuestions = [...quizData.questions, updatedQuestion];
+    }
+
+    // Update quiz data with new questions
+    setQuizData({
+      ...quizData,
+      questions: updatedQuestions
+    });
+
+    // Reset editing state
+    setCurrentQuestionIndex(null);
+    setIsEditingQuestion(false);
   };
 
-  let updatedQuestions;
-  
-  if (isEditingQuestion && currentQuestionIndex !== null) {
-    // Update existing question
-    updatedQuestions = [...quizData.questions];
-    updatedQuestions[currentQuestionIndex] = updatedQuestion;
-  } else {
-    // Add new question
-    updatedQuestions = [...quizData.questions, updatedQuestion];
-  }
-
-  // Update quiz data with new questions
-  setQuizData({
-    ...quizData,
-    questions: updatedQuestions
-  });
-
-  // Reset editing state
-  setCurrentQuestionIndex(null);
-  setIsEditingQuestion(false);
-};
   const handleRemoveQuestion = (index) => {
     if (window.confirm('Are you sure you want to remove this question?')) {
       const updatedQuestions = quizData.questions.filter((_, i) => i !== index);
-      
-      // Re-index question IDs
-      updatedQuestions.forEach((q, idx) => {
-        q.questionId = `q${idx + 1}`;
-      });
       
       setQuizData({
         ...quizData,
@@ -244,11 +241,6 @@ const handleQuizEditorSubmit = (questionData) => {
     const updatedQuestions = [...quizData.questions];
     [updatedQuestions[index], updatedQuestions[newIndex]] = [updatedQuestions[newIndex], updatedQuestions[index]];
     
-    // Re-index question IDs
-    updatedQuestions.forEach((q, idx) => {
-      q.questionId = `q${idx + 1}`;
-    });
-
     setQuizData({
       ...quizData,
       questions: updatedQuestions
@@ -262,100 +254,101 @@ const handleQuizEditorSubmit = (questionData) => {
     }
   };
 
-const saveQuiz = async () => {
-  if (!quizData.title) {
-    alert('Please enter a quiz title');
-    return;
-  }
+  const saveQuiz = async () => {
+    if (!quizData.title) {
+      alert('Please enter a quiz title');
+      return;
+    }
 
-  if (!selectedModule) {
-    alert('Please select a module');
-    return;
-  }
+    if (!selectedModule) {
+      alert('Please select a module');
+      return;
+    }
 
-  if (quizData.questions.length === 0) {
-    alert('Please add at least one question');
-    return;
-  }
+    if (quizData.questions.length === 0) {
+      alert('Please add at least one question');
+      return;
+    }
 
-  try {
-    setLoading(true);
-    
-    // Format questions exactly as API expects
-    const formattedQuestions = quizData.questions.map((q, index) => {
-      // Format options with proper IDs (A, B, C, D, etc.)
-      const formattedOptions = q.options.map((opt, optIndex) => ({
-        id: String.fromCharCode(65 + optIndex), // A, B, C, D...
-        text: opt.text,
-        is_correct: opt.is_correct === true || opt.is_correct === "true"
-      }));
+    try {
+      setLoading(true);
+      
+      // Format questions exactly as API expects
+      const formattedQuestions = quizData.questions.map((q, index) => {
+        // Format options with proper IDs (A, B, C, D, etc.)
+        const formattedOptions = q.options.map((opt, optIndex) => ({
+          id: String.fromCharCode(65 + optIndex),
+          text: opt.text,
+          is_correct: opt.is_correct === true || opt.is_correct === "true"
+        }));
 
-      // Base question object
-      const questionObj = {
-        text: q.text,
-        options: formattedOptions
+        // Base question object
+        const questionObj = {
+          text: q.text,
+          options: formattedOptions
+        };
+        
+        // Add id ONLY if it exists (for existing questions)
+        if (q.id && q.id !== null && q.id !== undefined) {
+          questionObj.id = q.id;
+        }
+        
+        // Add multipleAnswers if it exists and is true
+        if (q.multipleAnswers && q.multipleAnswers !== 'false') {
+          questionObj.multipleAnswers = q.multipleAnswers;
+        }
+        
+        // Add image if it exists
+        if (q.image && q.image !== null && q.image !== '') {
+          questionObj.image = q.image;
+        }
+        
+        return questionObj;
+      });
+      
+      // Create the payload
+      const quizPayload = {
+        title: quizData.title,
+        course: selectedModule,
+        time: quizData.time,
+        questions: formattedQuestions
       };
       
-      // IMPORTANT: Add id ONLY if it exists (for existing questions)
-      if (q.id && q.id !== null && q.id !== undefined) {
-        questionObj.id = q.id;
+      // Add id only for updates
+      if (mode === 'edit' && quizData.id) {
+        quizPayload.id = quizData.id;
       }
       
-      // Add multipleAnswers if it exists and is true
-      if (q.multipleAnswers && q.multipleAnswers !== 'false') {
-        questionObj.multipleAnswers = q.multipleAnswers;
+      // Add createdAt only if it exists (for updates)
+      if (mode === 'edit' && quizData.createdAt) {
+        quizPayload.createdAt = quizData.createdAt;
+      } else if (mode === 'create') {
+        quizPayload.createdAt = new Date().toISOString();
       }
       
-      // Add image if it exists
-      if (q.image && q.image !== null && q.image !== '') {
-        questionObj.image = q.image;
+      console.log('Saving quiz payload:', JSON.stringify(quizPayload, null, 2));
+      
+      let response;
+      
+      if (mode === 'edit' && quizData.id) {
+        // UPDATE - PUT request
+        response = await request.PUT(`/cms/quizzes/${quizData.id}/`, quizPayload);
+        alert('Quiz updated successfully!');
+      } else {
+        // CREATE - POST request
+        response = await request.POST('/cms/quizzes/', quizPayload);
+        alert('Quiz created successfully!');
       }
       
-      return questionObj;
-    });
-    
-    // Create the payload - match the exact structure from your network tab
-    const quizPayload = {
-      title: quizData.title,
-      course: selectedModule,
-      time: quizData.time,
-      questions: formattedQuestions
-    };
-    
-    // IMPORTANT: Add id only for updates
-    if (mode === 'edit' && quizData.id) {
-      quizPayload.id = quizData.id;
+      navigate('/cms/courses');
+    } catch (err) {
+      console.error('Failed to save quiz', err);
+      alert('Failed to save quiz: ' + (err.message || 'Please try again'));
+    } finally {
+      setLoading(false);
     }
-    
-    // Add createdAt only if it exists (for updates)
-    if (mode === 'edit' && quizData.createdAt) {
-      quizPayload.createdAt = quizData.createdAt;
-    } else if (mode === 'create') {
-      quizPayload.createdAt = new Date().toISOString();
-    }
-    
-    console.log('Saving quiz payload:', JSON.stringify(quizPayload, null, 2));
-    
-    let response;
-    
-    if (mode === 'edit' && quizData.id) {
-      // UPDATE - PUT request with complete data
-      response = await request.PUT(`/cms/quizzes/`, quizPayload);
-      alert('Quiz updated successfully!');
-    } else {
-      // CREATE - POST request
-      response = await request.POST('/cms/quizzes/', quizPayload);
-      alert('Quiz created successfully!');
-    }
-    
-    navigate('/cms/courses');
-  } catch (err) {
-    console.error('Failed to save quiz', err);
-    alert('Failed to save quiz: ' + (err.message || 'Please try again'));
-  } finally {
-    setLoading(false);
-  }
-};
+  };
+
   const getModuleTitle = (code) => {
     const module = modules.find(m => m.code === code);
     return module ? module.title : code;
@@ -401,7 +394,7 @@ const saveQuiz = async () => {
                     const moduleColor = getModuleColor(quiz.course);
                     return (
                       <div 
-                        key={quiz.quizId} 
+                        key={quiz.id} 
                         className="quiz-list-item"
                         onClick={() => handleSelectQuiz(quiz)}
                         style={{ borderLeftColor: moduleColor }}
@@ -509,7 +502,8 @@ const saveQuiz = async () => {
                   <div className="question-item-header">
                     <span className="question-number">Q{index + 1}.</span>
                     <div className="question-preview">
-                      {q.text?.replace(/<[^>]*>/g, '').substring(0, 80) || 'No question text'}...
+                      {q.text?.replace(/<[^>]*>/g, '').substring(0, 80) || 'No question text'}
+                      {q.text?.length > 80 && '...'}
                     </div>
                     <div className="question-item-actions">
                       <button onClick={() => handleMoveQuestion(index, 'up')} disabled={index === 0}>
@@ -526,6 +520,15 @@ const saveQuiz = async () => {
                       </button>
                     </div>
                   </div>
+                  {q.image && (
+                    <div className="question-image-preview">
+                      <img 
+                        src={q.image} 
+                        alt="Question" 
+                        className="preview-thumbnail"
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -542,7 +545,7 @@ const saveQuiz = async () => {
             )}
           </div>
           <QuizEditor 
-            key={`${isEditingQuestion}-${currentQuestionIndex}`} // Force re-render when changing edit mode
+            key={`${isEditingQuestion}-${currentQuestionIndex}`}
             onSubmit={handleQuizEditorSubmit}
             onCancel={handleCancelEdit}
             initialData={isEditingQuestion && currentQuestionIndex !== null 
@@ -562,7 +565,7 @@ const saveQuiz = async () => {
             Cancel
           </button>
           <button className="save-btn" onClick={saveQuiz} disabled={loading}>
-            {loading ? 'Saving...' : (mode === 'edit' ? 'Update Quiz' : 'Create Quiz')}
+            {loading ? 'Saving...' : 'Save Quiz'}
           </button>
         </div>
       </div>

@@ -207,14 +207,7 @@ const CoursesPage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="courses-page-container">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading your modules...</p>
-        </div>
-      </div>
-    );
+    return 
   }
   
   if (error) {

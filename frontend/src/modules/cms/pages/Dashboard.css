@@ -193,7 +193,7 @@ body.dark-mode .profile-info h2 { color: #e5e9f0; }
 body.dark-mode .detail-item {
   background: #2a313c;
   border-color: #323b48;
-  border-left: 4px solid #2c3e50;
+  border-left: 4px solid #046FDA;
 }
 body.dark-mode .detail-item:hover { background: #323b48; }
 body.dark-mode .detail-label { color: #a0a8b7; }

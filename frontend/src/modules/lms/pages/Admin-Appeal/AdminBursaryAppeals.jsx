@@ -92,14 +92,7 @@ const AdminBursaryAppeals = () => {
   };
 
   if (loading) {
-    return (
-      <div className="admin-appeal-page">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Loading bursary appeals...</p>
-        </div>
-      </div>
-    );
+    return;
   }
 
   return (
@@ -194,31 +187,31 @@ const AdminBursaryAppeals = () => {
               <div className="appeal-info">
                 <div className="info-row">
                   <label>Appeal ID:</label>
-                  <span>{selectedAppeal.appeal_id}</span>
+                  <span className = "user-bursary-data">{selectedAppeal.appeal_id}</span>
                 </div>
                 <div className="info-row">
                   <label>Student:</label>
-                  <span>{selectedAppeal.student_name}</span>
+                  <span className = "user-bursary-data">{selectedAppeal.student_name}</span>
                 </div>
                 <div className="info-row">
                   <label>Title:</label>
-                  <span>{selectedAppeal.title}</span>
+                  <span className = "user-bursary-data">{selectedAppeal.title}</span>
                 </div>
                 <div className="info-row">
                   <label>Department:</label>
-                  <span>{selectedAppeal.department_name}</span>
+                  <span className = "user-bursary-data">{selectedAppeal.department_name}</span>
                 </div>
                 <div className="info-row">
                   <label>Faculty:</label>
-                  <span>{selectedAppeal.faculty_name}</span>
+                  <span className = "user-bursary-data">{selectedAppeal.faculty_name}</span>
                 </div>
                 <div className="info-row">
                   <label>Batch:</label>
-                  <span>{selectedAppeal.batch_name || 'N/A'}</span>
+                  <span className = "user-bursary-data">{selectedAppeal.batch_name || 'N/A'}</span>
                 </div>
                 <div className="info-row">
                   <label>Academic Year:</label>
-                  <span>{selectedAppeal.academic_year}</span>
+                  <span className = "user-bursary-data">{selectedAppeal.academic_year}</span>
                 </div>
                 <div className="info-row">
                   <label>Description:</label>
@@ -230,15 +223,15 @@ const AdminBursaryAppeals = () => {
                 <h3>Financial Details</h3>
                 <div className="info-row">
                   <label>Family Income Bracket:</label>
-                  <span className="income-bracket">{selectedAppeal.family_income_bracket}</span>
+                  <span className = "user-bursary-data">{selectedAppeal.family_income_bracket}</span>
                 </div>
                 <div className="info-row">
                   <label>Has Scholarship:</label>
-                  <span>{selectedAppeal.has_scholarship ? 'Yes' : 'No'}</span>
+                  <span className = "user-bursary-data">{selectedAppeal.has_scholarship ? 'Yes' : 'No'}</span>
                 </div>
                 <div className="info-row">
                   <label>Reason for Aid:</label>
-                  <p>{selectedAppeal.reason_for_aid}</p>
+                  <p className = "user-bursary-data">{selectedAppeal.reason_for_aid}</p>
                 </div>
                 <div className="info-row">
                   <label>Income Certificate:</label>
@@ -250,7 +243,7 @@ const AdminBursaryAppeals = () => {
                       <MdDownload /> Download
                     </button>
                   ) : (
-                    <span>No file</span>
+                    <span className = "user-bursary-data">No file</span>
                   )}
                 </div>
                 <div className="info-row">
@@ -263,7 +256,7 @@ const AdminBursaryAppeals = () => {
                       <MdDownload /> Download
                     </button>
                   ) : (
-                    <span>No file</span>
+                    <span className = "user-bursary-data">No file</span>
                   )}
                 </div>
                 <div className="info-row">

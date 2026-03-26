@@ -1,5 +1,7 @@
-e
-nv/
+venv/
 db.sqlite3
 *.pyc
 Backend/__pycache__/
+test_api.py
+quiz_get.py
+media

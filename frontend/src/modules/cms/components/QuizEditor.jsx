@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import TextEditor from "./TextEditor";
+import request from '../../../utils/requestMethods.jsx';
 import { 
   MdClose, MdAdd, MdRemove, MdPreview, 
   MdCheckCircle, MdRadioButtonChecked,
   MdCheckBox, MdCheckBoxOutlineBlank, 
-  MdQuiz, MdImage, MdDelete
+  MdQuiz, MdImage, MdDelete, MdUpload
 } from 'react-icons/md';
 import "./QuizEditor.css";
 
@@ -12,6 +13,9 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
   const [question, setQuestion] = useState("");
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
+  const [imageUrl, setImageUrl] = useState(null); // Store the actual URL from server
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadError, setUploadError] = useState("");
   const [options, setOptions] = useState([
     { text: "", isCorrect: false },
     { text: "", isCorrect: false }
@@ -27,13 +31,15 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
       
       setQuestion(initialData.question || "");
       
-      // Handle image
-      if (initialData.image) {
+      // Handle image - if it's a URL from server
+      if (initialData.image && initialData.image !== null && initialData.image !== "") {
         setImagePreview(initialData.image);
+        setImageUrl(initialData.image);
         setImage(null);
       } else {
         setImage(null);
         setImagePreview("");
+        setImageUrl(null);
       }
       
       // Handle options
@@ -67,22 +73,69 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
     setQuestion("");
     setImage(null);
     setImagePreview("");
+    setImageUrl(null);
+    setUploadError("");
     setMultipleAnswers(false);
   };
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result);
-      reader.readAsDataURL(file);
+    if (!file) return;
+    
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setUploadError('Please upload a valid image file (JPEG, PNG, GIF, WEBP)');
+      return;
+    }
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('Image size should be less than 5MB');
+      return;
+    }
+    
+    setUploadError("");
+    setUploadingImage(true);
+    
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+    setImage(file);
+    
+    try {
+      // Create FormData for upload
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('type', 'question_image');
+      
+      const response = await request.UPLOAD('/cms/media/question_images/', formData);
+      
+      // Store the image URL from server response
+      const uploadedUrl = response.url || response.image_url || response.path;
+      setImageUrl(uploadedUrl);
+      
+      console.log('Image uploaded successfully:', response);
+    } catch (error) {
+      console.error('Image upload failed:', error);
+      setUploadError('Failed to upload image. Please try again.');
+      // Remove preview if upload fails
+      setImagePreview("");
+      setImage(null);
+      setImageUrl(null);
+    } finally {
+      setUploadingImage(false);
     }
   };
 
   const removeImage = () => {
     setImage(null);
     setImagePreview("");
+    setImageUrl(null);
+    setUploadError("");
   };
 
   const addOption = () => {
@@ -171,7 +224,8 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
 
       const questionData = {
         question: question,
-        image: imagePreview || null,
+        // Use the server URL if available, otherwise use the preview (for new questions without upload)
+        image: imageUrl || (imagePreview && !image ? imagePreview : null),
         multipleAnswers: multipleAnswers ? "true" : "false",
         options: formattedOptions
       };
@@ -248,21 +302,45 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
             <div className="upload-area">
               <input 
                 type="file" 
-                id="image" 
-                accept="image/*" 
+                id="question-image" 
+                accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
                 onChange={handleImageUpload} 
+                disabled={uploadingImage}
                 hidden 
               />
-              <label htmlFor="image" className="upload-label">
-                Click to upload image
+              <label htmlFor="question-image" className="upload-label">
+                {uploadingImage ? (
+                  <>
+                    <span className="spinner"></span>
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <MdUpload /> Click to upload image
+                  </>
+                )}
               </label>
+              <p className="upload-hint">Supported: JPEG, PNG, GIF, WEBP (Max 5MB)</p>
+              {uploadError && <p className="upload-error">{uploadError}</p>}
             </div>
           ) : (
             <div className="preview-area">
-              <img src={imagePreview} alt="Preview" />
-              <button onClick={removeImage} className="remove-image-btn">
-                <MdDelete /> Remove
-              </button>
+              <img src={imagePreview} alt="Question preview" />
+              <div className="preview-actions">
+                {uploadingImage && (
+                  <div className="uploading-overlay">
+                    <span className="spinner"></span>
+                    <span>Uploading to server...</span>
+                  </div>
+                )}
+                <button 
+                  onClick={removeImage} 
+                  className="remove-image-btn"
+                  disabled={uploadingImage}
+                >
+                  <MdDelete /> Remove
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -343,7 +421,7 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
         <div className="action-buttons">
           <button 
             onClick={handleSubmit} 
-            disabled={isSubmitting} 
+            disabled={isSubmitting || uploadingImage} 
             className="submit-btn"
           >
             {isSubmitting ? 'Saving...' : (initialData ? 'Update Question' : 'Add Question')}

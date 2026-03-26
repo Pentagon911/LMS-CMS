@@ -1,23 +1,23 @@
 /* CourseContentPage.css - Professional with dark/light mode */
 
-.course-content-container {
+.ccp-container {
   padding: 2rem;
   min-height: calc(100vh - 70px);
   transition: all 0.3s ease;
 }
 
 /* Light mode background */
-.course-content-container {
+.ccp-container {
   background: linear-gradient(135deg, #f5f7fa 0%, #e9ecf2 100%);
 }
 
 /* Dark mode background */
-body.dark-mode .course-content-container {
+body.dark-mode .ccp-container {
   background: linear-gradient(135deg, #1a1e24 0%, #0f1217 100%);
 }
 
 /* Course Header */
-.course-header {
+.ccp-header {
   max-width: 1400px;
   margin: 0 auto 2rem;
   display: flex;
@@ -25,7 +25,7 @@ body.dark-mode .course-content-container {
   align-items: flex-start;
 }
 
-.back-btn {
+.ccp-back-btn {
   width: 44px;
   height: 44px;
   border-radius: 12px;
@@ -41,28 +41,28 @@ body.dark-mode .course-content-container {
   flex-shrink: 0;
 }
 
-.back-btn:hover {
+.ccp-back-btn:hover {
   background: #1a2632;
   color: white;
   transform: translateX(-3px);
 }
 
-body.dark-mode .back-btn {
+body.dark-mode .ccp-back-btn {
   background: #2a313c;
   border-color: #323b48;
   color: #e5e9f0;
 }
 
-body.dark-mode .back-btn:hover {
+body.dark-mode .ccp-back-btn:hover {
   background: #2c3e50;
   color: white;
 }
 
-.course-info {
+.ccp-info {
   flex: 1;
 }
 
-.course-title {
+.ccp-title {
   font-size: 2.2rem;
   font-weight: 700;
   margin: 0 0 1rem;
@@ -70,26 +70,26 @@ body.dark-mode .back-btn:hover {
   color: #1a2632;
 }
 
-.module-code {
+.ccp-module-code {
   color: #2c3e50;
   opacity: 0.8;
 }
 
-body.dark-mode .course-title {
+body.dark-mode .ccp-title {
   color: #e5e9f0;
 }
 
-body.dark-mode .module-code {
+body.dark-mode .ccp-module-code {
   color: #a0a8b7 !important;
 }
 
-.course-meta {
+.ccp-meta {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
 }
 
-.meta-badge {
+.ccp-meta-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -101,34 +101,34 @@ body.dark-mode .module-code {
   color: #5a6778;
 }
 
-.meta-icon {
+.ccp-meta-icon {
   display: flex;
   align-items: center;
   color: #2c3e50;
   font-size: 1.1rem;
 }
 
-.meta-label {
+.ccp-meta-label {
   font-weight: 500;
   color: #1a2632;
 }
 
-body.dark-mode .meta-badge {
+body.dark-mode .ccp-meta-badge {
   background: #2a313c;
   border-color: #323b48;
   color: #e5e9f0;
 }
 
-body.dark-mode .meta-icon {
+body.dark-mode .ccp-meta-icon {
   color: #a0a8b7;
 }
 
-body.dark-mode .meta-label {
+body.dark-mode .ccp-meta-label {
   color: #ffffff;
 }
 
 /* Weeks Container */
-.weeks-container {
+.ccp-weeks-container {
   max-width: 1400px;
   margin: 0 auto;
   display: flex;
@@ -137,7 +137,7 @@ body.dark-mode .meta-label {
 }
 
 /* Loading State */
-.course-content-loading {
+.ccp-loading {
   min-height: calc(100vh - 70px);
   display: flex;
   flex-direction: column;
@@ -148,32 +148,32 @@ body.dark-mode .meta-label {
   color: #1a2632;
 }
 
-body.dark-mode .course-content-loading {
+body.dark-mode .ccp-loading {
   color: #e5e9f0;
 }
 
-.loading-spinner {
+.ccp-loading-spinner {
   width: 50px;
   height: 50px;
   border: 4px solid #e9ecf2;
   border-top: 4px solid #1a2632;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: ccp-spin 1s linear infinite;
   margin-bottom: 1rem;
 }
 
-body.dark-mode .loading-spinner {
+body.dark-mode .ccp-loading-spinner {
   border: 4px solid #2a313c;
   border-top: 4px solid #e5e9f0;
 }
 
-@keyframes spin {
+@keyframes ccp-spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 
 /* Error State */
-.course-content-error {
+.ccp-error {
   min-height: calc(100vh - 70px);
   display: flex;
   flex-direction: column;
@@ -184,11 +184,11 @@ body.dark-mode .loading-spinner {
   color: #d32f2f;
 }
 
-.course-content-error p {
+.ccp-error p {
   margin-bottom: 0.5rem;
 }
 
-.course-content-error button {
+.ccp-error button {
   margin-top: 1.5rem;
   padding: 0.8rem 2rem;
   background: #1a2632;
@@ -200,116 +200,54 @@ body.dark-mode .loading-spinner {
   transition: all 0.2s ease;
 }
 
-.course-content-error button:hover {
+.ccp-error button:hover {
   background: #2c3e50;
   transform: translateY(-2px);
 }
 
-body.dark-mode .course-content-error {
+body.dark-mode .ccp-error {
   color: #ff8a80;
 }
 
-body.dark-mode .course-content-error button {
+body.dark-mode .ccp-error button {
   background: #2c3e50;
 }
 
-/* Floating Action Button */
-.fab-btn {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: #1a2632;
-  border: none;
-  color: white;
-  font-size: 2rem;
-  cursor: pointer;
+/* Empty State */
+.ccp-empty {
+  min-height: calc(100vh - 70px);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
-  z-index: 100;
+  text-align: center;
+  padding: 2rem;
+  color: #5a6778;
 }
 
-.fab-btn:hover {
+.ccp-empty button {
+  margin-top: 1rem;
+  padding: 0.8rem 2rem;
+  background: #1a2632;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ccp-empty button:hover {
   background: #2c3e50;
-  transform: scale(1.1) rotate(90deg);
+  transform: translateY(-2px);
 }
 
-body.dark-mode .fab-btn {
-  background: #2c3e50;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+body.dark-mode .ccp-empty {
+  color: #a0a8b7;
 }
 
-body.dark-mode .fab-btn:hover {
-  background: #3a4a5e;
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
-  .course-content-container {
-    padding: 1.5rem;
-  }
-  
-  .course-title {
-    font-size: 2rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .course-content-container {
-    padding: 1rem;
-  }
-  
-  .course-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-  
-  .back-btn {
-    width: 40px;
-    height: 40px;
-    font-size: 1.3rem;
-  }
-  
-  .course-title {
-    font-size: 1.5rem;
-  }
-  
-  .course-meta {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .meta-badge {
-    width: fit-content;
-  }
-  
-  .fab-btn {
-    bottom: 1rem;
-    right: 1rem;
-    width: 48px;
-    height: 48px;
-    font-size: 1.5rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .course-title {
-    font-size: 1.3rem;
-  }
-  
-  .module-code {
-    display: block;
-    margin-bottom: 0.3rem;
-  }
-}
 /* Add Week Button */
-.add-week-btn {
+.ccp-add-week-btn {
   padding: 0.6rem 1.2rem;
   background: #1a2632;
   color: white;
@@ -318,19 +256,20 @@ body.dark-mode .fab-btn:hover {
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s;
+  margin-top: 1rem;
 }
 
-.add-week-btn:hover {
+.ccp-add-week-btn:hover {
   background: #2c3e50;
   transform: translateY(-2px);
 }
 
-body.dark-mode .add-week-btn {
+body.dark-mode .ccp-add-week-btn {
   background: #2c3e50;
 }
 
 /* Modal */
-.modal-overlay {
+.ccp-modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,0.5);
@@ -340,20 +279,20 @@ body.dark-mode .add-week-btn {
   z-index: 2000;
 }
 
-.modal-content {
+.ccp-modal-content {
   max-width: 450px;
   width: 90%;
   background: #ffffff;
   border-radius: 16px;
   overflow: hidden;
-  animation: modalSlideUp 0.2s ease;
+  animation: ccp-modalSlideUp 0.2s ease;
 }
 
-body.dark-mode .modal-content {
+body.dark-mode .ccp-modal-content {
   background: #1e242c;
 }
 
-@keyframes modalSlideUp {
+@keyframes ccp-modalSlideUp {
   from {
     opacity: 0;
     transform: translateY(20px);
@@ -364,7 +303,7 @@ body.dark-mode .modal-content {
   }
 }
 
-.modal-header {
+.ccp-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -372,22 +311,22 @@ body.dark-mode .modal-content {
   border-bottom: 1px solid #eef2f6;
 }
 
-body.dark-mode .modal-header {
+body.dark-mode .ccp-modal-header {
   border-bottom-color: #2a313c;
 }
 
-.modal-header h3 {
+.ccp-modal-header h3 {
   margin: 0;
   font-size: 1.2rem;
   font-weight: 600;
   color: #1a2632;
 }
 
-body.dark-mode .modal-header h3 {
+body.dark-mode .ccp-modal-header h3 {
   color: #e5e9f0;
 }
 
-.close-btn {
+.ccp-modal-close-btn {
   width: 32px;
   height: 32px;
   border: none;
@@ -402,68 +341,74 @@ body.dark-mode .modal-header h3 {
   transition: all 0.2s;
 }
 
-.close-btn:hover {
+.ccp-modal-close-btn:hover {
   background: #fee9e7;
   color: #d32f2f;
 }
 
-body.dark-mode .close-btn {
+body.dark-mode .ccp-modal-close-btn {
   background: #2a313c;
   color: #e5e9f0;
 }
 
-body.dark-mode .close-btn:hover {
+body.dark-mode .ccp-modal-close-btn:hover {
   background: #3a2a2a;
   color: #ff8a80;
 }
 
-.modal-body {
+.ccp-modal-body {
   padding: 1.5rem;
 }
 
-.modal-body .form-group {
+.ccp-form-group {
   margin-bottom: 0;
 }
 
-.modal-body .form-group label {
+.ccp-form-group label {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
   color: #1a2632;
 }
 
-.modal-body .form-group input {
+.ccp-form-group input {
   width: 100%;
   padding: 0.8rem;
   border: 1px solid #eef2f6;
   border-radius: 8px;
   font-size: 1rem;
+  transition: all 0.2s;
 }
 
-.modal-body .form-group input:focus {
+.ccp-form-group input:focus {
   outline: none;
   border-color: #1a2632;
   box-shadow: 0 0 0 3px rgba(26, 38, 50, 0.1);
 }
 
-body.dark-mode .modal-body .form-group label {
+body.dark-mode .ccp-form-group label {
   color: #e5e9f0;
 }
 
-body.dark-mode .modal-body .form-group input {
+body.dark-mode .ccp-form-group input {
   background: #2a313c;
   border-color: #323b48;
   color: #fff;
 }
 
-.modal-actions {
+body.dark-mode .ccp-form-group input:focus {
+  border-color: #5a6e8a;
+  box-shadow: 0 0 0 3px rgba(90, 110, 138, 0.2);
+}
+
+.ccp-modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
   padding: 1rem 1.5rem 1.5rem;
 }
 
-.cancel-btn, .confirm-btn {
+.ccp-cancel-btn, .ccp-confirm-btn {
   padding: 0.6rem 1.2rem;
   border: none;
   border-radius: 8px;
@@ -472,57 +417,107 @@ body.dark-mode .modal-body .form-group input {
   transition: all 0.2s;
 }
 
-.cancel-btn {
+.ccp-cancel-btn {
   background: #f8fafd;
   border: 1px solid #eef2f6;
   color: #5a6778;
 }
 
-.cancel-btn:hover {
+.ccp-cancel-btn:hover {
   background: #f1f4f9;
 }
 
-.confirm-btn {
+.ccp-confirm-btn {
   background: #1a2632;
   color: white;
 }
 
-.confirm-btn:hover:not(:disabled) {
+.ccp-confirm-btn:hover:not(:disabled) {
   background: #2c3e50;
   transform: translateY(-2px);
 }
 
-.confirm-btn:disabled {
+.ccp-confirm-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-body.dark-mode .cancel-btn {
+body.dark-mode .ccp-cancel-btn {
   background: #2a313c;
   border-color: #323b48;
   color: #e5e9f0;
 }
 
-body.dark-mode .confirm-btn {
+body.dark-mode .ccp-confirm-btn {
   background: #2c3e50;
 }
 
-body.dark-mode .confirm-btn:hover:not(:disabled) {
+body.dark-mode .ccp-confirm-btn:hover:not(:disabled) {
   background: #3a4a5e;
 }
 
 /* Responsive */
+@media (max-width: 1024px) {
+  .ccp-container {
+    padding: 1.5rem;
+  }
+  
+  .ccp-title {
+    font-size: 2rem;
+  }
+}
+
 @media (max-width: 768px) {
-  .modal-content {
+  .ccp-container {
+    padding: 1rem;
+  }
+  
+  .ccp-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .ccp-back-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 1.3rem;
+  }
+  
+  .ccp-title {
+    font-size: 1.5rem;
+  }
+  
+  .ccp-meta {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .ccp-meta-badge {
+    width: fit-content;
+  }
+  
+  .ccp-modal-content {
     width: 95%;
   }
   
-  .modal-actions {
+  .ccp-modal-actions {
     flex-direction: column;
   }
   
-  .cancel-btn, .confirm-btn {
+  .ccp-cancel-btn, .ccp-confirm-btn {
     width: 100%;
     text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .ccp-title {
+    font-size: 1.3rem;
+  }
+  
+  .ccp-module-code {
+    display: block;
+    margin-bottom: 0.3rem;
   }
 }

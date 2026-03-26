@@ -10,7 +10,7 @@
 
 /* Light mode background */
 .lms-dashboard {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: linear-gradient(135deg, #aac1d7 0%, #f1f5f9 100%);
 }
 
 /* Dark mode background */
@@ -583,5 +583,6 @@ body.dark-mode .lms-card:hover {
     background-position: 0% 50%;
   }
 }
+
 
 

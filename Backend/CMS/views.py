@@ -1,5 +1,5 @@
 from django.shortcuts import render,get_object_or_404
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser,JSONParser
 from users.permissions import *
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -11,7 +11,7 @@ from datetime import datetime
 from lms.models import *
 from .models import *
 from .serializers import *
-
+import json
 # Create your views here.
 class CourseViewSet(viewsets.ModelViewSet):
     """ViewSet for courses
@@ -40,7 +40,9 @@ class CourseViewSet(viewsets.ModelViewSet):
                 enrollments__student=user,  # Note: enrollments__student (singular)
                 enrollments__status='enrolled'
             ).distinct()
-
+        elif user.role == 'admin':
+            return Course.objects.all()
+            
         return Course.objects.none()
     
     def list(self,request,*args,**kwargs):
@@ -94,7 +96,7 @@ class CourseViewSet(viewsets.ModelViewSet):
             announcements.sort(key=lambda x: x['created_at'], reverse=True)
         return announcements[:3]
     
-    @action(detail = True, methods = ['get'],url_path='dashboard')
+    @action(detail = True, methods =['get'],url_path='dashboard')
     def dashboard(self,request,pk = None):
         """
         Returns complete course dashboard with weeks, content, quizzes, and announcements
@@ -113,7 +115,61 @@ class CourseViewSet(viewsets.ModelViewSet):
                 return Response({'error': 'Not your Course'},status=403)
 
         serializer = self.get_serializer(course,context = {'request':request})
-        return Response(serializer.data)            
+        return Response(serializer.data)  
+
+    @action(detail = True, methods = ['post'],url_path='dashboard')
+    def add_week(self, request, pk=None):
+        course = self.get_object()
+        
+        # Check permissions (only instructors can add weeks)
+        if request.user.role != 'instructor':
+            return Response(
+                {'error': 'Only instructors can add weeks to a course'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        if request.user != course.instructor:
+            return Response(
+                {'error': 'You are not the instructor of this course'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Validate input
+        topic = request.data.get('topic')
+        if not topic:
+            return Response(
+                {'error': 'Topic is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Calculate next order number
+        # Get the highest order number for this course
+        max_order = Week.objects.filter(course=course).aggregate(
+            max_order=models.Max('order')
+        )['max_order']
+        
+        # If no weeks exist yet, start at 1, otherwise increment by 1
+        next_order = (max_order or 0) + 1
+        
+        # Create the week with transaction to ensure data integrity
+        with transaction.atomic():
+            week = Week.objects.create(
+                course=course,
+                order=next_order,
+                topic=topic,
+                description=request.data.get('description', '')  # Optional description
+            )
+        
+        # Return success response with week details
+        return Response({
+            'success': True,
+            'message': f'Week "{topic}" created successfully',
+            'week_id': week.id,
+            'topic': week.topic,
+            'order': week.order,
+            'course_id': course.id,
+            'course_title': course.name
+        }, status=status.HTTP_201_CREATED)        
 
 class QuizViewSet(viewsets.ModelViewSet):
     """
@@ -122,71 +178,102 @@ class QuizViewSet(viewsets.ModelViewSet):
     """
     queryset = Quiz.objects.all()
     
+    # 1. ADD THIS: Tell the ViewSet it can accept both normal JSON and FormData
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+    
     def get_serializer_class(self):
         if self.action == 'create':
             return QuizCreateSerializer
-        
         elif self.action in ['update','partial_update']:
             return QuizCreateSerializer
-
         elif self.action in ['retrieve']:
             user = self.request.user
-            if user.role == 'student':
-                return StudentQuizSerializer
-            elif user.role == 'instructor':
-                return InstructorQuizSerializer
-            
+            # Note: Ensure you handle cases where request.user is AnonymousUser if using AllowAny
+            if hasattr(user, 'role'):
+                if user.role == 'student':
+                    return StudentQuizSerializer
+                elif user.role in ['instructor', 'admin']:
+                    return InstructorQuizSerializer
+            return StudentQuizSerializer
         return StudentQuizSerializer
     
     def get_permissions(self):
-        """
-        Assign different permissions based on the action.
-        This is where we use the permissions from Users app.
-        """
-
-        # Write operations (create, update, delete) - Only instructors/admins
+        # Write operations (create, update, delete)
         if self.action in ['create', 'update', 'partial_update', 'destroy',]:
-            # permission_classes = [IsAuthenticated,IsInstructorUser]
             permission_classes = [permissions.AllowAny]
         elif self.action in ['submit']:
-            # permission_classes = [IsAuthenticated,IsStudentUser]
             permission_classes = [permissions.AllowAny]
         else:
-            # permission_classes = [IsAuthenticated]
             permission_classes = [permissions.AllowAny]
-
         return [permission() for permission in permission_classes]
 
     def retrieve(self,request,*args,**kwargs):
         quiz = self.get_object()
         serializer = self.get_serializer(quiz)
-        
         return Response(serializer.data)
     
-    def create(self,request,*args,**kwargs):
-        """Create quiz - validation happens in serializer"""
-        serializer = self.get_serializer(data = request.data)
-        serializer.is_valid(raise_exception = True)
+    # 2. UPDATE THIS: Handle the FormData mapping for Creation
+    def create(self, request, *args, **kwargs):
+        """Create quiz - handles stringified JSON + Images from FormData"""
+        
+        # Check if the data is coming in as FormData ('quiz_data' string)
+        if 'quiz_data' in request.data:
+            try:
+                quiz_data = json.loads(request.data.get('quiz_data'))
+            except json.JSONDecodeError:
+                return Response({"error": "Invalid JSON format in quiz_data"}, status=status.HTTP_400_BAD_REQUEST)
 
+            # Map the files to the correct questions
+            questions = quiz_data.get('questions', [])
+            for index, question in enumerate(questions):
+                image_key = f'image_{index}'
+                if image_key in request.FILES:
+                    question['image'] = request.FILES[image_key]
+        else:
+            # Fallback just in case standard JSON is sent without images
+            quiz_data = request.data
+
+        # Pass context so absolute Image URLs are generated
+        serializer = self.get_serializer(data=quiz_data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
         quiz = serializer.save()
+        
         return Response({
             'id': quiz.id,
             'quizId': quiz.quizId,
-            'message': 'Quiz created successfully'}, 
-            status=status.HTTP_201_CREATED)
+            'message': 'Quiz created successfully'
+        }, status=status.HTTP_201_CREATED)
     
-
-    def update(self,request,pk=None,*args,**kwargs):
+    # 3. UPDATE THIS: Handle the FormData mapping for Updates
+    def update(self, request, pk=None, *args, **kwargs):
+        """Update quiz - handles stringified JSON + Images from FormData"""
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+
+        # Same logic as create: unpack FormData if it exists
+        if 'quiz_data' in request.data:
+            try:
+                quiz_data = json.loads(request.data.get('quiz_data'))
+            except json.JSONDecodeError:
+                return Response({"error": "Invalid JSON format in quiz_data"}, status=status.HTTP_400_BAD_REQUEST)
+
+            questions = quiz_data.get('questions', [])
+            for index, question in enumerate(questions):
+                image_key = f'image_{index}'
+                if image_key in request.FILES:
+                    question['image'] = request.FILES[image_key]
+        else:
+            quiz_data = request.data
+
+        serializer = self.get_serializer(instance, data=quiz_data, partial=partial, context={'request': request})
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
+        
         return Response({
             'id': instance.id,
             'quizId': instance.quizId,
-            'message': 'Quiz updated successfully'}, 
-            status=status.HTTP_200_OK)
+            'message': 'Quiz updated successfully'
+        }, status=status.HTTP_200_OK)
     
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
@@ -350,12 +437,12 @@ class QuestionViewSet(viewsets.ModelViewSet):
         """Simple permission control"""
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
             # Only instructors can modify questions
-            # permission_classes = [IsAuthenticated, IsInstructorUser]
-            permission_classes = [permissions.AllowAny]
+            permission_classes = [IsAuthenticated, IsInstructorUser]
+            # permission_classes = [permissions.AllowAny]
         else:
             # Anyone authenticated can view
-            # permission_classes = [IsAuthenticated]
-            permission_classes = [permissions.AllowAny]
+            permission_classes = [IsAuthenticated]
+            # permission_classes = [permissions.AllowAny]
         
         return [permission() for permission in permission_classes]
     
@@ -507,139 +594,209 @@ class WeekViewSet(viewsets.ModelViewSet):
     def add_content(self, request, pk=None):
         """
         POST /cms/courses/{course_id}/dashboard/add_content/
-        Add content to a specific week - auto-detects content type
+        Add content to an existing week - auto-detects content type
+        Frontend sends week_number (must be existing week)
         """
         course = self.get_object()
         
         # 1. Check if user is instructor
         if getattr(request.user, 'role', None) != 'instructor' or request.user != course.instructor:
-            return Response({'error': 'Only the course instructor can add content'}, status=status.HTTP_403_FORBIDDEN)
-                
-        # 2. Get common text fields
+            return Response(
+                {'error': 'Only the course instructor can add content'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # 2. Get fields from frontend
         week_number = request.data.get('week_number')
         title = request.data.get('title')
         description = request.data.get('description', '')
         
-        # 3. CRITICAL: Separate physical files from text links
+        # 3. Separate physical files from text links
         file_obj = request.FILES.get('attachment')
         link_str = request.data.get('attachment')
         
         # 4. Validate required fields
-        if not week_number or not title:
-            return Response({'error': 'week_number and title are required'}, status=status.HTTP_400_BAD_REQUEST)
+        if not week_number:
+            return Response(
+                {'error': 'week_number is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if not title:
+            return Response(
+                {'error': 'title is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         if not file_obj and not link_str:
-            return Response({'error': 'attachment is required'}, status=status.HTTP_400_BAD_REQUEST)
-                
-        # 5. Find or create the week cleanly
-        week, created = Week.objects.get_or_create(
-            course=course, 
-            order=week_number,
-            defaults={
-                'topic': f'Week {week_number}',
-                'description': f'Week {week_number} content'
-            }
-        )
-                
-        # 6. Auto-detect content type and prepare Serializer data
+            return Response(
+                {'error': 'attachment is required (file or URL)'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 5. VERIFY WEEK EXISTS - DO NOT CREATE
+        try:
+            week = Week.objects.get(course=course, order=week_number)
+        except Week.DoesNotExist:
+            # Return error if week doesn't exist
+            return Response(
+                {
+                    'error': f'Week {week_number} does not exist in this course. Please create the week first.',
+                    'available_weeks': list(Week.objects.filter(course=course).values_list('order', flat=True))
+                }, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # 6. Auto-detect content type and create content
         if file_obj:
             filename = file_obj.name.lower()
+            
+            # Video content
             if filename.endswith(('.mp4', '.mov', '.avi', '.mkv', '.webm')):
-                serializer_class = videoSerializer  
-                content_type = 'video'
+                serializer = videoSerializer(data={
+                    'title': title,
+                    'description': description,
+                    'file': file_obj
+                })
+                
+                if serializer.is_valid():
+                    video = serializer.save(week=week)
+                    return Response({
+                        'id': video.id,
+                        'type': 'video',
+                        'title': video.title,
+                        'description': video.description,
+                        'url': video.file.url,
+                        'fileSize': video.fileSize,
+                        'course': course.code,
+                        'week': week_number,
+                        'week_topic': week.topic,
+                        'created_at': video.created_at,
+                        'message': f'Video added successfully to Week {week_number}: {week.topic}'
+                    }, status=status.HTTP_201_CREATED)
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+            # PDF content
             elif filename.endswith('.pdf'):
-                serializer_class = pdfSerializer    
-                content_type = 'pdf'
-            else:
-                return Response({'error': 'Unsupported file type. Please upload a PDF or Video.'}, status=status.HTTP_400_BAD_REQUEST)
+                serializer = pdfSerializer(data={
+                    'title': title,
+                    'description': description,
+                    'file': file_obj
+                })
                 
-            # Map frontend 'attachment' file to backend 'file' field
-            data = {'title': title, 'description': description, 'file': file_obj}
-
+                if serializer.is_valid():
+                    pdf = serializer.save(week=week)
+                    return Response({
+                        'id': pdf.id,
+                        'type': 'pdf',
+                        'title': pdf.title,
+                        'description': pdf.description,
+                        'url': pdf.file.url,
+                        'fileSize': pdf.fileSize,
+                        'course': course.code,
+                        'week': week_number,
+                        'week_topic': week.topic,
+                        'created_at': pdf.created_at,
+                        'message': f'PDF added successfully to Week {week_number}: {week.topic}'
+                    }, status=status.HTTP_201_CREATED)
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+            else:
+                return Response(
+                    {'error': 'Unsupported file type. Please upload a PDF or video file (MP4, MOV, AVI, MKV, WEBM).'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        # Link content
         elif isinstance(link_str, str):
-            serializer_class = LinkSerializer
-            content_type = 'link'
+            # Validate URL format
+            if not link_str.startswith(('http://', 'https://')):
+                return Response(
+                    {'error': 'URL must start with http:// or https://'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             
-            # Map frontend 'attachment' string to backend 'link_url' field
-            data = {'title': title, 'description': description, 'link_url': link_str}
-
-        # 7. Validate and Save
-        serializer = serializer_class(data=data)
-        
-        if serializer.is_valid():
-            instance = serializer.save(week=week)
+            serializer = LinkSerializer(data={
+                'title': title,
+                'description': description,
+                'link_url': link_str
+            })
             
-            response_data = {
-                'id': instance.id,
-                'type': content_type,
-                'title': instance.title,
-                'description': instance.description,
-                'course': course.code, # Assuming course model has a 'code' field. Use course.id if not.
-                'week': week_number,
-                
-                #  SUCCESS MESSAGE
-                'message': f'Successfully added {content_type} to Week {week_number} of {course.title}.'
-            }
-            
-            # Add type-specific URLs and Sizes safely
-            if content_type in ['video', 'pdf']:
-                response_data['url'] = instance.file.url
-                response_data['fileSize'] = instance.fileSize 
+            if serializer.is_valid():
+                link = serializer.save(week=week)
+                return Response({
+                    'id': link.id,
+                    'type': 'link',
+                    'title': link.title,
+                    'description': link.description,
+                    'url': link.link_url,
+                    'course': course.code,
+                    'week': week_number,
+                    'week_topic': week.topic,
+                    'created_at': link.created_at,
+                    'message': f'Link added successfully to Week {week_number}: {week.topic}'
+                }, status=status.HTTP_201_CREATED)
             else:
-                response_data['url'] = instance.link_url
-                
-            return Response(response_data, status=status.HTTP_201_CREATED)
-            
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        @action(detail=True, methods=['delete'])
-        def delete_content(self, request, pk=None):
-            """Delete content from week"""
-            week = self.get_object()
-            content_type = request.data.get('content_type')
-            content_id = request.data.get('content_id')
-            
-            if content_type == 'video':
-                try:
-                    video = Video.objects.get(id=content_id, week=week)
-                    video.delete()
-                    return Response({'message': 'Video deleted successfully'}, status=status.HTTP_200_OK)
-                except Video.DoesNotExist:
-                    return Response({'error': 'Video not found'}, status=status.HTTP_404_NOT_FOUND)
-            
-            elif content_type == 'pdf':
-                try:
-                    pdf = Pdf.objects.get(id=content_id, week=week)
-                    pdf.delete()
-                    return Response({'message': 'PDF deleted successfully'}, status=status.HTTP_200_OK)
-                except Pdf.DoesNotExist:
-                    return Response({'error': 'PDF not found'}, status=status.HTTP_404_NOT_FOUND)
-            
-            elif content_type == 'link':
-                try:
-                    link = Link.objects.get(id=content_id, week=week)
-                    link.delete()
-                    return Response({'message': 'Link deleted successfully'}, status=status.HTTP_200_OK)
-                except Link.DoesNotExist:
-                    return Response({'error': 'Link not found'}, status=status.HTTP_404_NOT_FOUND)
-            
-            return Response({'error': 'Invalid content_type. Use video, pdf, or link'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        @action(detail=True, methods=['get'])
-        def content(self, request, pk=None):
-            """Get all content for a week"""
-            week = self.get_object()
-            
-            return Response({
-                'week': {
-                    'id': week.id,
-                    'order': week.order,
-                    'topic': week.topic,
-                    'description': week.description
-                },
-                'videos': videoSerializer(week.video_set.all(), many=True).data,
-                'pdfs': pdfSerializer(week.pdf_set.all(), many=True).data,
-                'links': LinkSerializer(week.link_set.all(), many=True).data
-            }) 
+        else:
+            return Response(
+                {'error': 'Invalid attachment format'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+
+    @action(detail=True, methods=['delete'])
+    def delete_content(self, request, pk=None):
+        """Delete content from week"""
+        week = self.get_object()
+        content_type = request.data.get('content_type')
+        content_id = request.data.get('content_id')
+        
+        if content_type == 'video':
+            try:
+                video = Video.objects.get(id=content_id, week=week)
+                video.delete()
+                return Response({'message': 'Video deleted successfully'}, status=status.HTTP_200_OK)
+            except Video.DoesNotExist:
+                return Response({'error': 'Video not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        elif content_type == 'pdf':
+            try:
+                pdf = Pdf.objects.get(id=content_id, week=week)
+                pdf.delete()
+                return Response({'message': 'PDF deleted successfully'}, status=status.HTTP_200_OK)
+            except Pdf.DoesNotExist:
+                return Response({'error': 'PDF not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        elif content_type == 'link':
+            try:
+                link = Link.objects.get(id=content_id, week=week)
+                link.delete()
+                return Response({'message': 'Link deleted successfully'}, status=status.HTTP_200_OK)
+            except Link.DoesNotExist:
+                return Response({'error': 'Link not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        return Response({'error': 'Invalid content_type. Use video, pdf, or link'}, status=status.HTTP_400_BAD_REQUEST)
+        
+    @action(detail=True, methods=['get'])
+    def content(self, request, pk=None):
+        """Get all content for a week"""
+        week = self.get_object()
+        
+        return Response({
+            'week': {
+                'id': week.id,
+                'order': week.order,
+                'topic': week.topic,
+                'description': week.description
+            },
+            'videos': videoSerializer(week.video_set.all(), many=True).data,
+            'pdfs': pdfSerializer(week.pdf_set.all(), many=True).data,
+            'links': LinkSerializer(week.link_set.all(), many=True).data
+        }) 
 
 class AnnouncementViewSet(viewsets.ModelViewSet):
     """
@@ -802,6 +959,7 @@ class AcademicCalendarViewSet(viewsets.ModelViewSet):
     queryset = AcademicCalendar.objects.all()
     serializer_class = AcademicCalendarSerializer
     permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:

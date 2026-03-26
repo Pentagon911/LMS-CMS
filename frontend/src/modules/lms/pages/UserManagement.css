@@ -38,7 +38,7 @@ body.dark-mode .user-management-header p {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: #1a2632;
+  background: #0f4bce;
   color: white;
   border: none;
   border-radius: 8px;
@@ -48,17 +48,8 @@ body.dark-mode .user-management-header p {
   transition: all 0.2s ease;
 }
 
-.add-user-btn:hover {
-  background: #2c3e50;
-  transform: translateY(-2px);
-}
-
-body.dark-mode .add-user-btn {
-  background: #2c3e50;
-}
-
-body.dark-mode .add-user-btn:hover {
-  background: #3a4a5e;
+.add-user-btn:hover{
+  background-color: #0b70d4;
 }
 
 /* Table Container */
@@ -488,3 +479,108 @@ body.dark-mode .save-btn:hover:not(:disabled) {
     gap: 0.25rem;
   }
 }
+
+/* Stats Dashboard */
+.stats-dashboard {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #eef2f6;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1 1 140px;
+  min-width: 130px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+body.dark-mode .stat-card {
+  background: #1e242c;
+  border-color: #2a313c;
+}
+
+.stat-icon {
+  font-size: 1.6rem;
+  color: #0f4bce;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.dark-mode .stat-icon {
+  color: #5a9cff;
+}
+
+.stat-info h3 {
+  font-size: 0.7rem;
+  font-weight: 500;
+  margin: 0 0 0.2rem 0;
+  color: #5a6778;
+  letter-spacing: 0.3px;
+}
+
+body.dark-mode .stat-info h3 {
+  color: #a0a8b7;
+}
+
+.stat-number {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0;
+  color: #1a2632;
+  line-height: 1.2;
+}
+
+body.dark-mode .stat-number {
+  color: #e5e9f0;
+}
+
+.stats-loading,
+.stats-error {
+  text-align: center;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #eef2f6;
+  width: 100%;
+  color: #5a6778;
+  font-size: 0.85rem;
+}
+
+body.dark-mode .stats-loading,
+body.dark-mode .stats-error {
+  background: #1e242c;
+  border-color: #2a313c;
+  color: #a0a8b7;
+}
+
+/* Responsive adjustments for compact stats */
+@media (max-width: 768px) {
+  .stats-dashboard {
+    gap: 0.5rem;
+  }
+  .stat-card {
+    flex: 1 1 calc(33.33% - 0.5rem);
+    min-width: auto;
+    padding: 0.6rem 0.8rem;
+    gap: 0.5rem;
+  }
+  .stat-icon {
+    font-size: 1.3rem;
+  }
+  .stat-number {
+    font-size: 1rem;
+  }
+  .stat-info h3 {
+    font-size: 0.65rem;
+  }
+}
+

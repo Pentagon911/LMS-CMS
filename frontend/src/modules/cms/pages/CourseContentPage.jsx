@@ -175,8 +175,8 @@ const handleAddContent = async (weekIndex, newItem) => {
 
   if (loading) {
     return (
-      <div className="course-content-loading">
-        <div className="loading-spinner"></div>
+      <div className="ccp-loading">
+        <div className="ccp-loading-spinner"></div>
         <p>Loading course content...</p>
       </div>
     );
@@ -184,7 +184,7 @@ const handleAddContent = async (weekIndex, newItem) => {
 
   if (error) {
     return (
-      <div className="course-content-error">
+      <div className="ccp-error">
         <p>Error: {error}</p>
         <p>Module ID: {moduleId}</p>
         <button onClick={() => navigate('/cms/courses')}>
@@ -196,10 +196,10 @@ const handleAddContent = async (weekIndex, newItem) => {
 
   if (!courseData || courseData.length === 0) {
     return (
-      <div className="course-content-empty">
+      <div className="ccp-empty">
         <p>No content available for this module.</p>
         {isLecturer && (
-          <button className="add-week-btn" onClick={() => setShowAddWeekModal(true)}>
+          <button className="ccp-add-week-btn" onClick={() => setShowAddWeekModal(true)}>
             + Add First Week
           </button>
         )}
@@ -211,28 +211,28 @@ const handleAddContent = async (weekIndex, newItem) => {
   }
 
   return (
-    <div className="course-content-container">
+    <div className="ccp-container">
       {/* Course Header */}
-      <div className="course-header">
-        <button className="back-btn" onClick={() => navigate('/cms/courses')}>
+      <div className="ccp-header">
+        <button className="ccp-back-btn" onClick={() => navigate('/cms/courses')}>
           ←
         </button>
         
-        <div className="course-info">
-          <h1 className="course-title">
-            <span className="module-code">{moduleId}:</span> {courseTitle}
+        <div className="ccp-info">
+          <h1 className="ccp-title">
+            <span className="ccp-module-code">{moduleId}:</span> {courseTitle}
           </h1>
           
-          <div className="course-meta">
-            <span className="meta-badge">
-              <span className="meta-icon"><MdCalendarMonth /></span>
-              <span className="meta-label">Total Weeks:</span>
+          <div className="ccp-meta">
+            <span className="ccp-meta-badge">
+              <span className="ccp-meta-icon"><MdCalendarMonth /></span>
+              <span className="ccp-meta-label">Total Weeks:</span>
               {courseData.length}
             </span>
             
-            <span className="meta-badge">
-              <span className="meta-icon"><MdLibraryBooks /></span>
-              <span className="meta-label">Total Items:</span>
+            <span className="ccp-meta-badge">
+              <span className="ccp-meta-icon"><MdLibraryBooks /></span>
+              <span className="ccp-meta-label">Total Items:</span>
               {courseData.reduce((total, week) => total + (week.items?.length || 0), 0)}
             </span>
           </div>
@@ -240,7 +240,7 @@ const handleAddContent = async (weekIndex, newItem) => {
       </div>
 
       {/* Weeks Content */}
-      <div className="weeks-container">
+      <div className="ccp-weeks-container">
         {courseData.map((week, index) => (
           <WeekCard
             key={index}
@@ -254,21 +254,21 @@ const handleAddContent = async (weekIndex, newItem) => {
 
       {/* Add Week Button for Lecturers */}
       {isLecturer && (
-        <button className="add-week-btn" onClick={() => setShowAddWeekModal(true)}>
+        <button className="ccp-add-week-btn" onClick={() => setShowAddWeekModal(true)}>
           + Add New Week
         </button>
       )}
 
       {/* Add Week Modal */}
       {showAddWeekModal && (
-        <div className="modal-overlay" onClick={() => setShowAddWeekModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="ccp-modal-overlay" onClick={() => setShowAddWeekModal(false)}>
+          <div className="ccp-modal-content" onClick={e => e.stopPropagation()}>
+            <div className="ccp-modal-header">
               <h3>Add New Week</h3>
-              <button className="close-btn" onClick={() => setShowAddWeekModal(false)}>×</button>
+              <button className="ccp-modal-close-btn" onClick={() => setShowAddWeekModal(false)}>×</button>
             </div>
-            <div className="modal-body">
-              <div className="form-group">
+            <div className="ccp-modal-body">
+              <div className="ccp-form-group">
                 <label>Week Name</label>
                 <input
                   type="text"
@@ -279,12 +279,12 @@ const handleAddContent = async (weekIndex, newItem) => {
                 />
               </div>
             </div>
-            <div className="modal-actions">
-              <button className="cancel-btn" onClick={() => setShowAddWeekModal(false)}>
+            <div className="ccp-modal-actions">
+              <button className="ccp-cancel-btn" onClick={() => setShowAddWeekModal(false)}>
                 Cancel
               </button>
               <button 
-                className="confirm-btn" 
+                className="ccp-confirm-btn" 
                 onClick={handleAddWeek}
                 disabled={!newWeekName.trim()}
               >
