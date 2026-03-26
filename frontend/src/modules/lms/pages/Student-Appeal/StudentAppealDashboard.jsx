@@ -14,7 +14,8 @@ import {
   MdWarning,
   MdCheckCircle,
   MdCancel,
-  MdPending
+  MdPending,
+  MdVisibility
 } from 'react-icons/md';
 import './StudentAppealDashboard.css';
 
@@ -99,14 +100,7 @@ const StudentAppealDashboard = () => {
   };
 
   if (loading) {
-    return (
-      <div className="student-dashboard-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p></p>
-        </div>
-      </div>
-    );
+    return;
   }
 
   return (
@@ -129,7 +123,7 @@ const StudentAppealDashboard = () => {
       )}
 
       <div className="stats-summary">
-        <div className="stat-card">
+        <div className="stat-card pending-card">
           <div className="stat-icon pending">
             <MdPending />
           </div>
@@ -138,7 +132,16 @@ const StudentAppealDashboard = () => {
             <p className="stat-number">{dashboardData?.my_appeals?.pending || 0}</p>
           </div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card review-card">
+          <div className="stat-icon review">
+            <MdVisibility />
+          </div>
+          <div className="stat-info">
+            <h3>Under Review</h3>
+            <p className="stat-number">{dashboardData?.my_appeals?.under_review || 0}</p>
+          </div>
+        </div>
+        <div className="stat-card approved-card">
           <div className="stat-icon approved">
             <MdCheckCircle />
           </div>
@@ -147,7 +150,7 @@ const StudentAppealDashboard = () => {
             <p className="stat-number">{dashboardData?.my_appeals?.approved || 0}</p>
           </div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card rejected-card">
           <div className="stat-icon rejected">
             <MdCancel />
           </div>

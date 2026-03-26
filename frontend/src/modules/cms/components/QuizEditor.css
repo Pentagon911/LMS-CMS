@@ -1,4 +1,4 @@
-/* QuizEditor.css - Clean */
+/* QuizEditor.css - Complete with Dark/Light Mode Support */
 
 .quiz-editor-content {
   max-width: 800px;
@@ -6,6 +6,7 @@
   padding: 2rem;
 }
 
+/* Form Groups */
 .form-group {
   margin-bottom: 1.5rem;
 }
@@ -32,11 +33,17 @@
   border-radius: 8px;
   background: #f8fafd;
   cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .toggle-btn.active {
   background: #1a2632;
   color: white;
+  border-color: #1a2632;
 }
 
 /* Options header */
@@ -56,6 +63,11 @@
   border-radius: 6px;
   background: #f8fafd;
   cursor: pointer;
+  transition: all 0.3s;
+}
+
+.options-header button:hover {
+  background: #e9ecef;
 }
 
 /* Option rows */
@@ -64,6 +76,10 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 0.5rem;
+  padding: 8px;
+  background: #f8fafd;
+  border-radius: 6px;
+  transition: background 0.3s;
 }
 
 .option-num {
@@ -72,9 +88,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f8fafd;
+  background: #f1f3f5;
   border-radius: 6px;
   font-weight: 600;
+  color: #228be6;
 }
 
 .option-row input {
@@ -82,9 +99,16 @@
   padding: 0.8rem;
   border: 1px solid #eef2f6;
   border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.3s;
 }
 
-.option-row input.correct {
+.option-row input:focus {
+  outline: none;
+  border-color: #228be6;
+}
+
+.option-row input.correct-option {
   border-color: #27ae60;
   background: #f0fff4;
 }
@@ -99,12 +123,25 @@
   border-radius: 6px;
   background: #f8fafd;
   cursor: pointer;
+  transition: all 0.3s;
 }
 
-.option-row button.correct-btn.selected {
+.option-row button:hover {
+  background: #e9ecef;
+}
+
+.correct-btn {
+  font-size: 20px;
+}
+
+.correct-btn.selected {
   background: #27ae60;
   color: white;
   border-color: #27ae60;
+}
+
+.correct-btn.selected:hover {
+  background: #219653;
 }
 
 /* Correct indicator */
@@ -119,75 +156,239 @@
   gap: 8px;
 }
 
-/* Image upload */
-.upload-label {
-  display: block;
-  padding: 2rem;
-  text-align: center;
-  border: 2px dashed #eef2f6;
+/* Image Upload Area */
+.upload-area {
+  border: 2px dashed #dee2e6;
   border-radius: 8px;
-  background: #f8fafd;
-  cursor: pointer;
+  padding: 30px;
+  text-align: center;
+  background: #f8f9fa;
+  transition: all 0.3s;
 }
 
+.upload-area:hover {
+  border-color: #228be6;
+  background: #f1f3f5;
+}
+
+.upload-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #228be6;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
+}
+
+.upload-label:hover {
+  background: #1c7ed6;
+}
+
+.upload-label:active {
+  transform: scale(0.98);
+}
+
+.upload-hint {
+  font-size: 12px;
+  color: #868e96;
+  margin-top: 12px;
+}
+
+.upload-error {
+  color: #fa5252;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+/* Preview Area */
 .preview-area {
-  text-align: center;
-  margin: 1rem 0;
+  position: relative;
+  display: inline-block;
+  margin-top: 10px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 10px;
+  background: white;
 }
 
 .preview-area img {
-  max-width: 100%;
+  max-width: 200px;
   max-height: 200px;
-  border-radius: 8px;
-  margin-bottom: 0.5rem;
+  object-fit: cover;
+  border-radius: 4px;
+  display: block;
 }
 
-.preview-area button {
+.preview-actions {
+  position: relative;
+  margin-top: 10px;
+}
+
+.uploading-overlay {
+  position: absolute;
+  top: -210px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  color: white;
+  gap: 10px;
+}
+
+.remove-image-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 0.5rem 1rem;
-  background: #fee9e7;
-  border: 1px solid #fecac5;
-  border-radius: 6px;
-  color: #d32f2f;
+  gap: 5px;
+  padding: 6px 12px;
+  background: #fa5252;
+  color: white;
+  border: none;
+  border-radius: 4px;
   cursor: pointer;
+  font-size: 12px;
+  transition: background 0.3s;
 }
 
-/* Action buttons */
-.action-buttons {
+.remove-image-btn:hover:not(:disabled) {
+  background: #e03131;
+}
+
+.remove-image-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Spinner Animation */
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Editor Header */
+.editor-header {
   display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid #eef2f6;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e9ecef;
 }
 
-.action-buttons button {
+.editor-header h3 {
+  margin: 0;
+  color: #212529;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.cancel-edit-btn {
+  padding: 6px 12px;
+  background: #f1f3f5;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.3s;
+}
+
+.cancel-edit-btn:hover {
+  background: #e9ecef;
+}
+
+/* Add Option Button */
+.add-option-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0.8rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.action-buttons .submit {
-  background: #1a2632;
+  gap: 5px;
+  padding: 4px 12px;
+  background: #51cf66;
   color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.3s;
 }
 
-/* Preview modal */
+.add-option-btn:hover {
+  background: #40c057;
+}
+
+/* Remove Option Button */
+.remove-option-btn {
+  background: #fa5252;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.remove-option-btn:hover {
+  background: #e03131;
+}
+
+/* Submit Button */
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  background: #228be6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background: #1c7ed6;
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Action Buttons */
+.action-buttons {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e9ecef;
+}
+
+/* Preview Modal */
 .modal {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -222,10 +423,12 @@
   border-radius: 8px;
 }
 
-/* Dark mode */
+/* ============================================ */
+/* DARK MODE STYLES - Matches your theme */
+/* ============================================ */
+
 body.dark-mode .quiz-editor-content {
   background: #1e242c;
-  border: 1px solid #2a313c;
   border-radius: 16px;
 }
 
@@ -233,6 +436,7 @@ body.dark-mode .form-group label {
   color: #e5e9f0;
 }
 
+/* Toggle buttons dark mode */
 body.dark-mode .toggle-btn {
   background: #2a313c;
   border-color: #323b48;
@@ -241,64 +445,240 @@ body.dark-mode .toggle-btn {
 
 body.dark-mode .toggle-btn.active {
   background: #2c3e50;
+  border-color: #2c3e50;
+  color: white;
+}
+
+/* Options header dark mode */
+body.dark-mode .options-header button {
+  background: #2a313c;
+  border-color: #323b48;
+  color: #e5e9f0;
+}
+
+body.dark-mode .options-header button:hover {
+  background: #323b48;
+}
+
+/* Option rows dark mode */
+body.dark-mode .option-row {
+  background: #2a313c;
 }
 
 body.dark-mode .option-num {
-  background: #2a313c;
+  background: #323b48;
   color: #e5e9f0;
 }
 
-body.dark-mode input {
-  background: #2a313c;
-  border-color: #323b48;
-  color: #fff;
-}
-
-body.dark-mode .options-header button,
-body.dark-mode .option-row button:not(.correct-btn.selected) {
-  background: #2a313c;
+body.dark-mode .option-row input {
+  background: #1e242c;
   border-color: #323b48;
   color: #e5e9f0;
 }
 
-body.dark-mode .upload-label {
-  background: #2a313c;
-  border-color: #323b48;
+body.dark-mode .option-row input:focus {
+  border-color: #228be6;
+}
+
+body.dark-mode .option-row input.correct-option {
+  border-color: #27ae60;
+  background: #1a2a1a;
+}
+
+body.dark-mode .option-row button {
+  background: #323b48;
+  border-color: #3a4352;
   color: #e5e9f0;
 }
 
+body.dark-mode .option-row button:hover {
+  background: #3a4352;
+}
+
+body.dark-mode .correct-btn.selected {
+  background: #27ae60;
+  color: white;
+}
+
+/* Correct indicator dark mode */
 body.dark-mode .correct-indicator {
   background: #1a2a1a;
   color: #6fcf97;
 }
 
+/* Image upload dark mode */
+body.dark-mode .upload-area {
+  background: #2a313c;
+  border-color: #323b48;
+}
+
+body.dark-mode .upload-area:hover {
+  border-color: #228be6;
+  background: #323b48;
+}
+
+body.dark-mode .upload-label {
+  background: #228be6;
+}
+
+body.dark-mode .upload-label:hover {
+  background: #1c7ed6;
+}
+
+body.dark-mode .upload-hint {
+  color: #868e96;
+}
+
+body.dark-mode .upload-error {
+  color: #ff6b6b;
+}
+
+/* Preview area dark mode */
+body.dark-mode .preview-area {
+  background: #2a313c;
+  border-color: #323b48;
+}
+
+/* Editor header dark mode */
+body.dark-mode .editor-header {
+  border-bottom-color: #2a313c;
+}
+
+body.dark-mode .editor-header h3 {
+  color: #e5e9f0;
+}
+
+body.dark-mode .cancel-edit-btn {
+  background: #2a313c;
+  color: #e5e9f0;
+}
+
+body.dark-mode .cancel-edit-btn:hover {
+  background: #323b48;
+}
+
+/* Add option button dark mode */
+body.dark-mode .add-option-btn {
+  background: #2ecc71;
+}
+
+body.dark-mode .add-option-btn:hover {
+  background: #27ae60;
+}
+
+/* Remove option button dark mode */
+body.dark-mode .remove-option-btn {
+  background: #e74c3c;
+}
+
+body.dark-mode .remove-option-btn:hover {
+  background: #c0392b;
+}
+
+/* Submit button dark mode */
+body.dark-mode .submit-btn {
+  background: #3498db;
+}
+
+body.dark-mode .submit-btn:hover:not(:disabled) {
+  background: #2980b9;
+}
+
+/* Action buttons dark mode */
+body.dark-mode .action-buttons {
+  border-top-color: #2a313c;
+}
+
+/* Modal dark mode */
 body.dark-mode .modal-content {
   background: #1e242c;
 }
 
 body.dark-mode .modal-header {
   border-bottom-color: #2a313c;
-}
-.quiz-editor-content .editor-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #e9ecef;
-}
-
-.quiz-editor-content .editor-header h3 {
-  margin: 0;
-  color: #212529;
-  font-weight: 600;
-}
-
-/* Dark mode version */
-body.dark-mode .quiz-editor-content .editor-header {
-  border-bottom-color: #2a313c;
-}
-
-body.dark-mode .quiz-editor-content .editor-header h3 {
   color: #e5e9f0;
+}
+
+body.dark-mode .modal-body {
+  color: #e5e9f0;
+}
+
+/* Remove image button dark mode */
+body.dark-mode .remove-image-btn {
+  background: #e74c3c;
+}
+
+body.dark-mode .remove-image-btn:hover:not(:disabled) {
+  background: #c0392b;
+}
+
+/* Additional dark mode fixes */
+body.dark-mode .quiz-editor-content {
+  border: 1px solid #2a313c;
+}
+
+body.dark-mode .option-row input::placeholder {
+  color: #868e96;
+}
+
+body.dark-mode .correct-btn:not(.selected) {
+  color: #868e96;
+}
+
+body.dark-mode .correct-btn:not(.selected):hover {
+  color: #27ae60;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .quiz-editor-content {
+    padding: 1rem;
+  }
+  
+  .toggle-group {
+    flex-direction: column;
+  }
+  
+  .option-row {
+    flex-wrap: wrap;
+  }
+  
+  .option-num {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+  
+  .option-row input {
+    flex: 1;
+    min-width: 150px;
+  }
+  
+  .preview-area img {
+    max-width: 150px;
+    max-height: 150px;
+  }
+  
+  .upload-area {
+    padding: 20px;
+  }
+  
+  .upload-label {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+}
+
+/* Smooth transitions for theme switching */
+.quiz-editor-content,
+.form-group label,
+.toggle-btn,
+.option-row,
+.option-row input,
+.option-row button,
+.upload-area,
+.preview-area,
+.editor-header,
+.modal-content {
+  transition: all 0.3s ease;
 }

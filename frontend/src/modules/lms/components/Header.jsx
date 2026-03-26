@@ -24,6 +24,8 @@ const Header = () => {
     'Acadamic Managements': {
       admin: [
         { name: 'Update Exam Timetables', path: '/lms/academics/time-tables', icon: <MdEvent /> },
+        { name: 'Exam results', path: '/lms/academics/results', icon: <MdEvent /> },
+        { name: 'Manage Enrollments', path: '/lms/manage-enrollments', icon: <MdSchool /> }
       ],
       student: [
         { name: 'Enrollments', path: '/lms/academics/enrollment', icon: <MdMenuBook /> },
@@ -34,6 +36,7 @@ const Header = () => {
       instructor: [
           { name: 'Update Results', path: '/lms/update-results', icon: <MdUpload /> },
           { name: 'Exam Timetables', path: '/lms/academics/time-tables', icon: <MdEvent /> },
+          { name: 'Exam results', path: '/lms/academics/results', icon: <MdEvent /> },
       ]
     },
     // 'Appeals/Welfare': {
@@ -239,11 +242,11 @@ const Header = () => {
 
   return (
     <header className={`header ${isScrolled ? 'header-scrolled' : ''}`}>
-      <div className="header-container">
+      <div className="lms-header-cont">
         {/* Logo */}
         <div className="logo">
-          <span className="logo-icon"><MdLibraryBooks /></span>
-          <span className="logo-text">LMS Portal</span>
+          <span className="lms-logo-icon"><MdLibraryBooks /></span>
+          <span className="lms-logo-text">LMS Portal</span>
         </div>
 
         {/* Desktop Navigation */}
@@ -259,7 +262,7 @@ const Header = () => {
                 className={`nav-link ${isActive(item.href) ? 'active' : ''} ${openDropdown === item.name ? 'dropdown-open' : ''}`}
                 onClick={(e) => handleNavClick(item, e)}
               >
-                <span className="nav-icon">{item.icon}</span>
+                <span className="lms-nav-icon">{item.icon}</span>
                 <span className="nav-text">{item.name}</span>
                 {item.hasDropdown && (
                   <span className={`nav-dropdown-arrow ${openDropdown === item.name ? 'rotate' : ''}`}>
@@ -274,7 +277,7 @@ const Header = () => {
                   {getDropdownItems(item.name).map((dropdownItem) => (
                     <button
                       key={dropdownItem.path}
-                      className={`nav-dropdown-item ${isDropdownItemActive(dropdownItem.path) ? 'active' : ''}`}
+                      className={`lms-nav-dropdown-item ${isDropdownItemActive(dropdownItem.path) ? 'active' : ''}`}
                       onClick={() => handleDropdownItemClick(dropdownItem.path)}
                     >
                       <span className="nav-dropdown-icon">{dropdownItem.icon}</span>

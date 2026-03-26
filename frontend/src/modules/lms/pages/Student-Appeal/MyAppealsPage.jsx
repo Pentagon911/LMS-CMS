@@ -1,4 +1,4 @@
-// src/modules/lms/pages/MyAppealsPage.jsx
+// src/modules/lms/pages/Student-Appeal/MyAppealsPage.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import request from '../../../../utils/requestMethods';
@@ -11,7 +11,9 @@ import {
   MdLocalHospital,
   MdAssessment,
   MdVisibility,
-  MdDownload
+  MdDownload,
+  MdAttachFile,
+  MdClose
 } from 'react-icons/md';
 import './MyAppealsPage.css';
 
@@ -56,13 +58,18 @@ const MyAppealsPage = () => {
     });
   };
 
-  const getStatusBadgeClass = (status) => {
+  const getStatusInfo = (status) => {
     switch (status) {
-      case 'PENDING': return 'status-pending';
-      case 'UNDER_REVIEW': return 'status-review';
-      case 'APPROVED': return 'status-approved';
-      case 'REJECTED': return 'status-rejected';
-      default: return '';
+      case 'PENDING':
+        return { class: 'ma-status-pending', label: 'Pending', icon: '⏳' };
+      case 'UNDER_REVIEW':
+        return { class: 'ma-status-review', label: 'Under Review', icon: '👁️' };
+      case 'APPROVED':
+        return { class: 'ma-status-approved', label: 'Approved', icon: '✓' };
+      case 'REJECTED':
+        return { class: 'ma-status-rejected', label: 'Rejected', icon: '✗' };
+      default:
+        return { class: '', label: status, icon: '📋' };
     }
   };
 
@@ -88,6 +95,41 @@ const MyAppealsPage = () => {
     }
   };
 
+  const getAppealColor = (type) => {
+    switch (type) {
+      case 'bursary': return '#4caf50';
+      case 'hostel': return '#2196f3';
+      case 'exam_rewrite': return '#ff9800';
+      case 'medical_leave': return '#f44336';
+      case 'result_reevaluation': return '#9c27b0';
+      default: return '#6c5ce7';
+    }
+  };
+
+  const getAppealDocuments = (appeal) => {
+    const documents = [];
+    
+    if (appeal.supporting_documents) {
+      documents.push({ name: 'Supporting Document', url: appeal.supporting_documents });
+    }
+    
+    if (appeal.appeal_type === 'bursary') {
+      if (appeal.income_certificate) documents.push({ name: 'Income Certificate', url: appeal.income_certificate });
+      if (appeal.bank_statements) documents.push({ name: 'Bank Statements', url: appeal.bank_statements });
+    }
+    
+    if ((appeal.appeal_type === 'hostel' || appeal.appeal_type === 'exam_rewrite') && appeal.medical_certificate) {
+      documents.push({ name: 'Medical Certificate', url: appeal.medical_certificate });
+    }
+    
+    if (appeal.appeal_type === 'medical_leave') {
+      if (appeal.medical_report) documents.push({ name: 'Medical Report', url: appeal.medical_report });
+      if (appeal.hospital_letter) documents.push({ name: 'Hospital Letter', url: appeal.hospital_letter });
+    }
+    
+    return documents;
+  };
+
   const handleViewDetails = (appeal, type) => {
     setSelectedAppeal({ ...appeal, type });
     setModalOpen(true);
@@ -95,16 +137,18 @@ const MyAppealsPage = () => {
 
   const handleDownload = (fileUrl, fileName) => {
     if (fileUrl) {
-      window.open(fileUrl, '_blank');
+      const baseUrl = request.getBaseUrl();
+      const newfileUrl = `${baseUrl}${fileUrl}`
+      window.open(newfileUrl, '_blank');
     }
   };
 
   if (loading) {
     return (
-      <div className="my-appeals-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p></p>
+      <div className="ma-container">
+        <div className="ma-loading">
+          <div className="ma-spinner"></div>
+          <p>Loading your appeals...</p>
         </div>
       </div>
     );
@@ -119,282 +163,374 @@ const MyAppealsPage = () => {
   ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   return (
-    <div className="my-appeals-container">
-      <div className="page-header">
-        <div>
+    <div className="ma-container">
+      <div className="ma-header">
+        <div className="ma-header-title">
           <h1>My Appeals</h1>
           <p>Track and manage all your submitted appeals</p>
         </div>
-        <button className="refresh-btn" onClick={fetchAllAppeals}>
+        <button className="ma-refresh-btn" onClick={fetchAllAppeals}>
           <MdRefresh /> Refresh
         </button>
       </div>
 
       {error && (
-        <div className="error-alert">
+        <div className="ma-error">
           <MdWarning />
           <span>{error}</span>
         </div>
       )}
 
       {allAppeals.length === 0 ? (
-        <div className="empty-state">
+        <div className="ma-empty">
           <p>You haven't submitted any appeals yet.</p>
-          <button 
-            className="new-appeal-btn"
-            onClick={() => navigate('/lms/student/appeals')}
-          >
+          <button className="ma-empty-btn" onClick={() => navigate('/lms/student/appeals')}>
             Submit New Appeal
           </button>
         </div>
       ) : (
-        <div className="appeals-list">
-          {allAppeals.map((appeal) => (
-            <div key={appeal.id} className="appeal-card">
-              <div className="appeal-header">
-                <div className="appeal-type-icon">
-                  {getAppealIcon(appeal.appeal_type)}
+        <div className="ma-grid">
+          {allAppeals.map((appeal) => {
+            const statusInfo = getStatusInfo(appeal.status);
+            const appealColor = getAppealColor(appeal.appeal_type);
+            const documents = getAppealDocuments(appeal);
+            const hasDocs = documents.length > 0;
+
+            return (
+              <div key={appeal.id} className="ma-card">
+                <div className="ma-card-header" style={{ borderLeftColor: appealColor }}>
+                  <div className="ma-card-icon" style={{ backgroundColor: `${appealColor}15`, color: appealColor }}>
+                    {getAppealIcon(appeal.appeal_type)}
+                  </div>
+                  <div className="ma-card-info">
+                    <h3>{getAppealTitle(appeal.appeal_type)}</h3>
+                    <p className="ma-card-title">{appeal.title}</p>
+                  </div>
+                  <div className={`ma-status ${statusInfo.class}`}>
+                    <span className="ma-status-icon">{statusInfo.icon}</span>
+                    <span>{statusInfo.label}</span>
+                  </div>
                 </div>
-                <div className="appeal-info">
-                  <h3>{getAppealTitle(appeal.appeal_type)}</h3>
-                  <p className="appeal-title">{appeal.title}</p>
+
+                <div className="ma-card-details">
+                  <div className="ma-detail-item">
+                    <span className="ma-detail-label">Appeal ID</span>
+                    <span className="ma-detail-value">{appeal.appeal_id?.slice(0, 8)}...</span>
+                  </div>
+                  <div className="ma-detail-item">
+                    <span className="ma-detail-label">Submitted</span>
+                    <span className="ma-detail-value">{formatDate(appeal.created_at)}</span>
+                  </div>
+                  <div className="ma-detail-item">
+                    <span className="ma-detail-label">Department</span>
+                    <span className="ma-detail-value">{appeal.department_name}</span>
+                  </div>
+                  
+                  {appeal.appeal_type === 'exam_rewrite' && appeal.course_name && (
+                    <div className="ma-detail-item">
+                      <span className="ma-detail-label">Course</span>
+                      <span className="ma-detail-value">{appeal.course_name}</span>
+                    </div>
+                  )}
+                  
+                  {appeal.appeal_type === 'hostel' && appeal.preferred_check_in && (
+                    <div className="ma-detail-item">
+                      <span className="ma-detail-label">Check-in</span>
+                      <span className="ma-detail-value">{formatDate(appeal.preferred_check_in)}</span>
+                    </div>
+                  )}
+                  
+                  {appeal.appeal_type === 'bursary' && appeal.family_income_bracket && (
+                    <div className="ma-detail-item">
+                      <span className="ma-detail-label">Income</span>
+                      <span className="ma-detail-value">{appeal.family_income_bracket}</span>
+                    </div>
+                  )}
                 </div>
-                <div className="appeal-status">
-                  <span className={`status-badge ${getStatusBadgeClass(appeal.status)}`}>
-                    {appeal.status}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="appeal-details">
-                <div className="detail-row">
-                  <span className="detail-label">Appeal ID:</span>
-                  <span className="detail-value">{appeal.appeal_id?.slice(0, 8)}...</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Submitted:</span>
-                  <span className="detail-value">{formatDate(appeal.created_at)}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Department:</span>
-                  <span className="detail-value">{appeal.department_name}</span>
-                </div>
-                {appeal.review_notes && (
-                  <div className="detail-row">
-                    <span className="detail-label">Review Notes:</span>
-                    <span className="detail-value">{appeal.review_notes}</span>
+
+                {hasDocs && (
+                  <div className="ma-documents">
+                    <div className="ma-docs-header">
+                      <MdAttachFile className="ma-docs-icon" />
+                      <span>Attachments ({documents.length})</span>
+                    </div>
+                    <div className="ma-docs-list">
+                      {documents.map((doc, index) => (
+                        <button
+                          key={index}
+                          className="ma-doc-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownload(doc.url, doc.name);
+                          }}
+                        >
+                          <MdDownload /> {doc.name}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
-              </div>
 
-              <div className="appeal-actions">
-                <button 
-                  className="view-btn"
-                  onClick={() => handleViewDetails(appeal, appeal.appeal_type)}
-                >
-                  <MdVisibility /> View Details
-                </button>
-                {appeal.supporting_documents && (
+                <div className="ma-card-actions">
                   <button 
-                    className="download-btn"
-                    onClick={() => handleDownload(appeal.supporting_documents, 'document')}
+                    className="ma-view-btn"
+                    onClick={() => handleViewDetails(appeal, appeal.appeal_type)}
                   >
-                    <MdDownload /> Documents
+                    <MdVisibility /> View Details
                   </button>
-                )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* Modal for viewing appeal details */}
+      {/* Modal */}
       {modalOpen && selectedAppeal && (
-        <div className="modal-overlay" onClick={() => setModalOpen(false)}>
-          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{getAppealTitle(selectedAppeal.type)} Details</h2>
-              <button className="close-btn" onClick={() => setModalOpen(false)}>×</button>
+        <div className="ma-modal-overlay" onClick={() => setModalOpen(false)}>
+          <div className="ma-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="ma-modal-header">
+              <div className="ma-modal-title">
+                <div className="ma-modal-icon" style={{ color: getAppealColor(selectedAppeal.type) }}>
+                  {getAppealIcon(selectedAppeal.type)}
+                </div>
+                <h2>{getAppealTitle(selectedAppeal.type)} Details</h2>
+              </div>
+              <button className="ma-modal-close" onClick={() => setModalOpen(false)}>
+                <MdClose />
+              </button>
             </div>
-            <div className="modal-content">
-              <div className="detail-section">
+            
+            <div className="ma-modal-body">
+              <div className="ma-modal-section">
                 <h3>Appeal Information</h3>
-                <div className="detail-row">
-                  <label>Appeal ID:</label>
-                  <span>{selectedAppeal.appeal_id}</span>
-                </div>
-                <div className="detail-row">
-                  <label>Title:</label>
-                  <span>{selectedAppeal.title}</span>
-                </div>
-                <div className="detail-row">
-                  <label>Status:</label>
-                  <span className={`status-badge ${getStatusBadgeClass(selectedAppeal.status)}`}>
-                    {selectedAppeal.status}
-                  </span>
-                </div>
-                <div className="detail-row">
-                  <label>Submitted:</label>
-                  <span>{formatDate(selectedAppeal.created_at)}</span>
-                </div>
-                <div className="detail-row">
-                  <label>Last Updated:</label>
-                  <span>{formatDate(selectedAppeal.updated_at)}</span>
-                </div>
-                <div className="detail-row">
-                  <label>Description:</label>
-                  <p>{selectedAppeal.description}</p>
+                <div className="ma-modal-grid">
+                  <div className="ma-modal-field">
+                    <label>Appeal ID</label>
+                    <span>{selectedAppeal.appeal_id}</span>
+                  </div>
+                  <div className="ma-modal-field">
+                    <label>Title</label>
+                    <span>{selectedAppeal.title}</span>
+                  </div>
+                  <div className="ma-modal-field">
+                    <label>Status</label>
+                    <span className={`ma-status ${getStatusInfo(selectedAppeal.status).class}`}>
+                      {getStatusInfo(selectedAppeal.status).label}
+                    </span>
+                  </div>
+                  <div className="ma-modal-field">
+                    <label>Submitted</label>
+                    <span>{formatDate(selectedAppeal.created_at)}</span>
+                  </div>
+                  <div className="ma-modal-field">
+                    <label>Last Updated</label>
+                    <span>{formatDate(selectedAppeal.updated_at)}</span>
+                  </div>
+                  <div className="ma-modal-field ma-full-width">
+                    <label>Description</label>
+                    <p>{selectedAppeal.description}</p>
+                  </div>
                 </div>
               </div>
 
-              {selectedAppeal.review_notes && (
-                <div className="detail-section">
-                  <h3>Review Information</h3>
-                  <div className="detail-row">
-                    <label>Review Notes:</label>
-                    <p>{selectedAppeal.review_notes}</p>
-                  </div>
-                  {selectedAppeal.reviewed_at && (
-                    <div className="detail-row">
-                      <label>Reviewed On:</label>
-                      <span>{formatDate(selectedAppeal.reviewed_at)}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
               {/* Type-specific details */}
               {selectedAppeal.type === 'bursary' && (
-                <div className="detail-section">
+                <div className="ma-modal-section">
                   <h3>Financial Details</h3>
-                  <div className="detail-row">
-                    <label>Income Bracket:</label>
-                    <span>{selectedAppeal.family_income_bracket}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Has Scholarship:</label>
-                    <span>{selectedAppeal.has_scholarship ? 'Yes' : 'No'}</span>
-                  </div>
-                  {selectedAppeal.approved_amount && (
-                    <div className="detail-row">
-                      <label>Approved Amount:</label>
-                      <span>LKR {selectedAppeal.approved_amount}</span>
+                  <div className="ma-modal-grid">
+                    <div className="ma-modal-field">
+                      <label>Income Bracket</label>
+                      <span>{selectedAppeal.family_income_bracket}</span>
                     </div>
-                  )}
+                    <div className="ma-modal-field">
+                      <label>Has Scholarship</label>
+                      <span>{selectedAppeal.has_scholarship ? 'Yes' : 'No'}</span>
+                    </div>
+                    <div className="ma-modal-field ma-full-width">
+                      <label>Reason for Aid</label>
+                      <span>{selectedAppeal.reason_for_aid}</span>
+                    </div>
+                    {selectedAppeal.approved_amount && (
+                      <div className="ma-modal-field">
+                        <label>Approved Amount</label>
+                        <span className="ma-highlight">LKR {selectedAppeal.approved_amount}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
               {selectedAppeal.type === 'hostel' && (
-                <div className="detail-section">
+                <div className="ma-modal-section">
                   <h3>Accommodation Details</h3>
-                  <div className="detail-row">
-                    <label>Preferred Check-in:</label>
-                    <span>{formatDate(selectedAppeal.preferred_check_in)}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Duration:</label>
-                    <span>{selectedAppeal.duration_months} months</span>
-                  </div>
-                  {selectedAppeal.allocated_room_number && (
-                    <>
-                      <div className="detail-row">
-                        <label>Allocated Room:</label>
-                        <span>{selectedAppeal.allocated_room_number}</span>
+                  <div className="ma-modal-grid">
+                    <div className="ma-modal-field">
+                      <label>Preferred Check-in</label>
+                      <span>{formatDate(selectedAppeal.preferred_check_in)}</span>
+                    </div>
+                    <div className="ma-modal-field">
+                      <label>Duration</label>
+                      <span>{selectedAppeal.duration_months} months</span>
+                    </div>
+                    {selectedAppeal.special_requirements && (
+                      <div className="ma-modal-field ma-full-width">
+                        <label>Special Requirements</label>
+                        <span>{selectedAppeal.special_requirements}</span>
                       </div>
-                      <div className="detail-row">
-                        <label>Allocated Hostel:</label>
-                        <span>{selectedAppeal.allocated_hostel}</span>
-                      </div>
-                    </>
-                  )}
+                    )}
+                    {selectedAppeal.allocated_room_number && (
+                      <>
+                        <div className="ma-modal-field">
+                          <label>Allocated Room</label>
+                          <span>{selectedAppeal.allocated_room_number}</span>
+                        </div>
+                        <div className="ma-modal-field">
+                          <label>Allocated Hostel</label>
+                          <span>{selectedAppeal.allocated_hostel}</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
 
               {selectedAppeal.type === 'exam_rewrite' && (
-                <div className="detail-section">
+                <div className="ma-modal-section">
                   <h3>Exam Details</h3>
-                  <div className="detail-row">
-                    <label>Course:</label>
-                    <span>{selectedAppeal.course_name}</span>
+                  <div className="ma-modal-grid">
+                    <div className="ma-modal-field">
+                      <label>Course</label>
+                      <span>{selectedAppeal.course_name}</span>
+                    </div>
+                    <div className="ma-modal-field">
+                      <label>Semester</label>
+                      <span>{selectedAppeal.semester}</span>
+                    </div>
+                    <div className="ma-modal-field">
+                      <label>Original Exam Date</label>
+                      <span>{formatDate(selectedAppeal.original_exam_date)}</span>
+                    </div>
+                    <div className="ma-modal-field">
+                      <label>Reason Type</label>
+                      <span>{selectedAppeal.reason_type}</span>
+                    </div>
+                    <div className="ma-modal-field ma-full-width">
+                      <label>Detailed Reason</label>
+                      <span>{selectedAppeal.detailed_reason}</span>
+                    </div>
+                    {selectedAppeal.new_exam_date && (
+                      <>
+                        <div className="ma-modal-field">
+                          <label>New Exam Date</label>
+                          <span>{formatDate(selectedAppeal.new_exam_date)}</span>
+                        </div>
+                        <div className="ma-modal-field">
+                          <label>Exam Venue</label>
+                          <span>{selectedAppeal.exam_venue}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
-                  <div className="detail-row">
-                    <label>Module:</label>
-                    <span>{selectedAppeal.module_name}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Semester:</label>
-                    <span>{selectedAppeal.semester}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Original Exam Date:</label>
-                    <span>{formatDate(selectedAppeal.original_exam_date)}</span>
-                  </div>
-                  {selectedAppeal.new_exam_date && (
-                    <>
-                      <div className="detail-row">
-                        <label>New Exam Date:</label>
-                        <span>{formatDate(selectedAppeal.new_exam_date)}</span>
-                      </div>
-                      <div className="detail-row">
-                        <label>Exam Venue:</label>
-                        <span>{selectedAppeal.exam_venue}</span>
-                      </div>
-                    </>
-                  )}
                 </div>
               )}
 
               {selectedAppeal.type === 'medical_leave' && (
-                <div className="detail-section">
+                <div className="ma-modal-section">
                   <h3>Medical Leave Details</h3>
-                  <div className="detail-row">
-                    <label>Leave Period:</label>
-                    <span>{formatDate(selectedAppeal.start_date)} - {formatDate(selectedAppeal.end_date)}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Diagnosis:</label>
-                    <span>{selectedAppeal.diagnosis}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Hospital:</label>
-                    <span>{selectedAppeal.hospital_name}</span>
-                  </div>
-                  {selectedAppeal.approved_leave_days && (
-                    <div className="detail-row">
-                      <label>Approved Leave Days:</label>
-                      <span>{selectedAppeal.approved_leave_days} days</span>
+                  <div className="ma-modal-grid">
+                    <div className="ma-modal-field">
+                      <label>Leave Period</label>
+                      <span>{formatDate(selectedAppeal.start_date)} - {formatDate(selectedAppeal.end_date)}</span>
                     </div>
-                  )}
+                    <div className="ma-modal-field">
+                      <label>Diagnosis</label>
+                      <span>{selectedAppeal.diagnosis || 'Not specified'}</span>
+                    </div>
+                    <div className="ma-modal-field">
+                      <label>Hospital</label>
+                      <span>{selectedAppeal.hospital_name}</span>
+                    </div>
+                    <div className="ma-modal-field">
+                      <label>Doctor</label>
+                      <span>{selectedAppeal.doctor_name}</span>
+                    </div>
+                    {selectedAppeal.approved_leave_days && (
+                      <div className="ma-modal-field">
+                        <label>Approved Leave Days</label>
+                        <span className="ma-highlight">{selectedAppeal.approved_leave_days} days</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
               {selectedAppeal.type === 'result_reevaluation' && (
-                <div className="detail-section">
+                <div className="ma-modal-section">
                   <h3>Re-evaluation Details</h3>
-                  <div className="detail-row">
-                    <label>Exam:</label>
-                    <span>{selectedAppeal.exam_title}</span>
+                  <div className="ma-modal-grid">
+                    <div className="ma-modal-field">
+                      <label>Exam</label>
+                      <span>{selectedAppeal.exam_result_details['exam_title']}</span>
+                    </div>
+                    <div className="ma-modal-field">
+                      <label>Original Score</label>
+                      <span>{selectedAppeal.exam_result_details?.score || 'N/A'}</span>
+                    </div>
+                    <div className="ma-modal-field">
+                      <label>Original Grade</label>
+                      <span>{selectedAppeal.exam_result_details?.grade || 'N/A'}</span>
+                    </div>
+                    <div className="ma-modal-field">
+                      <label>Reason Type</label>
+                      <span>{selectedAppeal.reason_type}</span>
+                    </div>
+                    <div className="ma-modal-field ma-full-width">
+                      <label>Specific Concerns</label>
+                      <span>{selectedAppeal.specific_concerns}</span>
+                    </div>
+                    {selectedAppeal.new_grade && (
+                      <>
+                        <div className="ma-modal-field">
+                          <label>New Score</label>
+                          <span className="ma-highlight">{selectedAppeal.new_marks}</span>
+                        </div>
+                        <div className="ma-modal-field">
+                          <label>New Grade</label>
+                          <span className="ma-highlight">{selectedAppeal.new_grade}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
-                  <div className="detail-row">
-                    <label>Original Score:</label>
-                    <span>{selectedAppeal.exam_result_details?.score}</span>
+                </div>
+              )}
+
+              {getAppealDocuments(selectedAppeal).length > 0 && (
+                <div className="ma-modal-section">
+                  <h3>Documents</h3>
+                  <div className="ma-modal-docs">
+                    {getAppealDocuments(selectedAppeal).map((doc, index) => (
+                      <button
+                        key={index}
+                        className="ma-modal-doc-btn"
+                        onClick={() => handleDownload(doc.url, doc.name)}
+                      >
+                        <MdDownload /> {doc.name}
+                      </button>
+                    ))}
                   </div>
-                  <div className="detail-row">
-                    <label>Original Grade:</label>
-                    <span>{selectedAppeal.exam_result_details?.grade}</span>
+                </div>
+              )}
+
+              {selectedAppeal.review_notes && (
+                <div className="ma-modal-section">
+                  <h3>Review Information</h3>
+                  <div className="ma-review-notes">
+                    <p>{selectedAppeal.review_notes}</p>
+                    {selectedAppeal.reviewed_at && (
+                      <div className="ma-review-meta">Reviewed on {formatDate(selectedAppeal.reviewed_at)}</div>
+                    )}
                   </div>
-                  {selectedAppeal.new_grade && (
-                    <>
-                      <div className="detail-row">
-                        <label>New Score:</label>
-                        <span>{selectedAppeal.new_marks}</span>
-                      </div>
-                      <div className="detail-row">
-                        <label>New Grade:</label>
-                        <span>{selectedAppeal.new_grade}</span>
-                      </div>
-                    </>
-                  )}
                 </div>
               )}
             </div>

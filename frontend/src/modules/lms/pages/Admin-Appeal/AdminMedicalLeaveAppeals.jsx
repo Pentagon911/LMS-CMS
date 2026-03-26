@@ -102,14 +102,7 @@ const AdminMedicalLeaveAppeals = () => {
   };
 
   if (loading) {
-    return (
-      <div className="admin-appeal-page">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Loading medical leave appeals...</p>
-        </div>
-      </div>
-    );
+    return;
   }
 
   return (
@@ -202,31 +195,31 @@ const AdminMedicalLeaveAppeals = () => {
               <div className="appeal-info">
                 <div className="info-row">
                   <label>Appeal ID:</label>
-                  <span>{selectedAppeal.appeal_id}</span>
+                  <span className = "user-medical-data">{selectedAppeal.appeal_id}</span>
                 </div>
                 <div className="info-row">
                   <label>Student:</label>
-                  <span>{selectedAppeal.student_name}</span>
+                  <span className = "user-medical-data">{selectedAppeal.student_name}</span>
                 </div>
                 <div className="info-row">
                   <label>Title:</label>
-                  <span>{selectedAppeal.title}</span>
+                  <span className = "user-medical-data">{selectedAppeal.title}</span>
                 </div>
                 <div className="info-row">
                   <label>Department:</label>
-                  <span>{selectedAppeal.department_name}</span>
+                  <span className = "user-medical-data">{selectedAppeal.department_name}</span>
                 </div>
                 <div className="info-row">
                   <label>Faculty:</label>
-                  <span>{selectedAppeal.faculty_name}</span>
+                  <span className = "user-medical-data">{selectedAppeal.faculty_name}</span>
                 </div>
                 <div className="info-row">
                   <label>Batch:</label>
-                  <span>{selectedAppeal.batch_name || 'N/A'}</span>
+                  <span className = "user-medical-data">{selectedAppeal.batch_name || 'N/A'}</span>
                 </div>
                 <div className="info-row">
                   <label>Academic Year:</label>
-                  <span>{selectedAppeal.academic_year}</span>
+                  <span className = "user-medical-data">{selectedAppeal.academic_year}</span>
                 </div>
                 <div className="info-row">
                   <label>Description:</label>
@@ -238,27 +231,27 @@ const AdminMedicalLeaveAppeals = () => {
                 <h3>Medical Leave Details</h3>
                 <div className="info-row">
                   <label>Start Date:</label>
-                  <span>{formatDate(selectedAppeal.start_date)}</span>
+                  <span className = "user-medical-data">{formatDate(selectedAppeal.start_date)}</span>
                 </div>
                 <div className="info-row">
                   <label>End Date:</label>
-                  <span>{formatDate(selectedAppeal.end_date)}</span>
+                  <span className = "user-medical-data">{formatDate(selectedAppeal.end_date)}</span>
                 </div>
                 <div className="info-row">
                   <label>Days Requested:</label>
-                  <span>{calculateLeaveDays(selectedAppeal.start_date, selectedAppeal.end_date)} days</span>
+                  <span className = "user-medical-data">{calculateLeaveDays(selectedAppeal.start_date, selectedAppeal.end_date)} days</span>
                 </div>
                 <div className="info-row">
                   <label>Diagnosis:</label>
-                  <p>{selectedAppeal.diagnosis || 'N/A'}</p>
+                  <p className = "user-medical-data">{selectedAppeal.diagnosis || 'N/A'}</p>
                 </div>
                 <div className="info-row">
                   <label>Hospital Name:</label>
-                  <span>{selectedAppeal.hospital_name}</span>
+                  <span className = "user-medical-data">{selectedAppeal.hospital_name}</span>
                 </div>
                 <div className="info-row">
                   <label>Doctor Name:</label>
-                  <span>{selectedAppeal.doctor_name}</span>
+                  <span className = "user-medical-data">{selectedAppeal.doctor_name}</span>
                 </div>
                 <div className="info-row">
                   <label>Medical Report:</label>
