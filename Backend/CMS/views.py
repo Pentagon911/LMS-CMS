@@ -244,31 +244,82 @@ class QuizViewSet(viewsets.ModelViewSet):
         }, status=status.HTTP_201_CREATED)
     
     # Handle the FormData mapping for Updates
-    def update(self, request, pk=None, *args, **kwargs):
-        """Update quiz - handles stringified JSON + Images from FormData"""
-        partial = kwargs.pop('partial', False)
+    # def update(self, request, pk=None, *args, **kwargs):
+    #     """Update quiz - handles stringified JSON + Images from FormData"""
+    #     partial = kwargs.pop('partial', False)
+    #     instance = self.get_object()
+
+    #     if 'quiz_data' in request.data:
+    #         try:
+    #             quiz_data = json.loads(request.data.get('quiz_data'))
+    #         except json.JSONDecodeError:
+    #             return Response({"error": "Invalid JSON format in quiz_data"}, status=status.HTTP_400_BAD_REQUEST)
+
+    #         questions = quiz_data.get('questions', [])
+    #         for index, question in enumerate(questions):
+    #             image_key = f'image_{index}'
+    #             if image_key in request.FILES:
+    #                 question['image'] = request.FILES[image_key]
+    #     else:
+    #         quiz_data = request.data
+
+    #     serializer = self.get_serializer(instance, data=quiz_data, partial=partial, context={'request': request})
+    #     serializer.is_valid(raise_exception=True)
+    #     self.perform_update(serializer)
+        
+    #     return Response({
+    #         'id': instance.id,
+    #         'quizId': instance.quizId,
+    #         'message': 'Quiz updated successfully'
+    #     }, status=status.HTTP_200_OK)
+
+# Inside your QuizViewSet
+    def update(self, request, *args, **kwargs):
+        """
+        Intercepts the PUT/PATCH request, unpacks the FormData, 
+        maps the images, and passes it to the Serializer.
+        """
+        partial = kwargs.pop('partial', False) 
         instance = self.get_object()
 
+        # 1. Unpack the stringified JSON sent by the frontend
         if 'quiz_data' in request.data:
             try:
                 quiz_data = json.loads(request.data.get('quiz_data'))
             except json.JSONDecodeError:
-                return Response({"error": "Invalid JSON format in quiz_data"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Invalid JSON format in quiz_data"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
+            # 2. Map the uploaded images to their corresponding questions
             questions = quiz_data.get('questions', [])
             for index, question in enumerate(questions):
                 image_key = f'image_{index}'
+                
+                # If the user uploaded a NEW image for this question, attach it
                 if image_key in request.FILES:
                     question['image'] = request.FILES[image_key]
+                else:
+                    # If they didn't upload a new image, remove the 'image' key 
+                    # so the serializer doesn't accidentally wipe out the old image.
+                    question.pop('image', None)
         else:
-            quiz_data = request.data
+            # Fallback just in case you send standard JSON from Postman
+            quiz_data = request.data.copy() if hasattr(request.data, 'copy') else request.data
 
-        serializer = self.get_serializer(instance, data=quiz_data, partial=partial, context={'request': request})
+        # 3. Hand the clean data over to your QuizCreateSerializer
+        serializer = self.get_serializer(
+            instance, 
+            data=quiz_data, 
+            partial=partial, 
+            context={'request': request}
+        )
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         
+        # 4. Return success to the frontend
         return Response({
-            'id': instance.id,
             'quizId': instance.quizId,
             'message': 'Quiz updated successfully'
         }, status=status.HTTP_200_OK)
@@ -301,11 +352,8 @@ class QuizViewSet(viewsets.ModelViewSet):
 
         answerData = request.data.get('answers', [])
         
-        # Calculate total possible points (sum of all correct options)
-        total_points = 0
-        for question in quiz.questions.all():
-            total_points += question.options.filter(is_correct=True).count()
-        
+        # Calculate total possible points (each question = 1 point)
+        total_points = quiz.questions.count()
         earned_points = 0
 
         for ans in answerData:
@@ -323,23 +371,43 @@ class QuizViewSet(viewsets.ModelViewSet):
             points_earned = 0
 
             if 'selectedOptions' in ans and ans['selectedOptions']:
-                selected_options = Option.objects.filter(optionId__in=ans['selectedOptions'])
+                # Filter options that belong to this question
+                selected_options = Option.objects.filter(
+                    question=question,
+                    optionId__in=ans['selectedOptions']
+                )
                 studentAnswer.selectedOptions.set(selected_options)
 
-                # Count how many selected options are correct
-                correct_selected = selected_options.filter(is_correct=True)
-                points_earned = correct_selected.count()
-                earned_points += points_earned
+                # Get correct options for this question
+                correct_options = question.options.filter(is_correct=True)
+                total_correct = correct_options.count()
                 
-                # Check if all correct options were selected
-                total_correct = question.options.filter(is_correct=True).count()
-                if points_earned == total_correct and selected_options.count() == total_correct:
-                    studentAnswer.isCorrect = True
+                # Calculate points for this question
+                if total_correct > 0:
+                    # Count correct selections
+                    correct_selected = selected_options.filter(is_correct=True).count()
+                    
+                    # Count incorrect selections (penalty)
+                    incorrect_selected = selected_options.filter(is_correct=False).count()
+                    
+                    # Calculate score: correct selections minus incorrect selections
+                    # Minimum score is 0
+                    points_earned = max(0, correct_selected - incorrect_selected)
+                    
+                    # Normalize to per-question points (1 point per question)
+                    # Each question is worth 1 point total
+                    points_earned = points_earned / total_correct
+                    
+                    earned_points += points_earned
+                    
+                    # Mark as fully correct if all correct options selected and no incorrect
+                    if correct_selected == total_correct and incorrect_selected == 0:
+                        studentAnswer.isCorrect = True
                 
-                studentAnswer.points_earned = points_earned
+                studentAnswer.pointsEarned = points_earned
                 studentAnswer.save()
 
-        # Calculate final score
+        # Calculate final score (percentage)
         if total_points > 0:
             final_score = (earned_points / total_points) * 100
         else:
@@ -352,11 +420,11 @@ class QuizViewSet(viewsets.ModelViewSet):
         return Response({
             'message': 'Quiz submitted successfully',
             'score': round(final_score, 2),
-            'points_earned': earned_points,
+            'points_earned': round(earned_points, 2),
             'total_points': total_points,
             'percentage': f"{round(final_score, 1)}%"
         }, status=status.HTTP_200_OK)
-    
+        
     @action(detail=False, methods=['get'])
     def draft_quizzes(self, request):
         """Get all draft quizzes (not assigned to any week)"""

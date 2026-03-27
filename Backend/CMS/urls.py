@@ -5,12 +5,23 @@ from . import views
 
 router = DefaultRouter()
 router.register(r'quizzes', views.QuizViewSet, basename='quiz')
+"""
+GET cms/quizzes/draft_quizzes/
+GET cms/quizzes/quizId/
+POST cms/quizzes/31/add_to_week/
+POST cms/quizzes/{quiz_id}/submit/
+"""
 router.register(r'questions', views.QuestionViewSet, basename='question')
 router.register(r'options', views.OptionViewSet, basename='option')
 router.register(r'attempts', views.QuizAttemptViewSet, basename='attempt')
 router.register(r'answers', views.StudentAnswerViewSet, basename='answer')
 router.register(r'weeks', views.WeekViewSet, basename='week')
 router.register(r'courses', views.CourseViewSet, basename='course')
+"""
+GET cms/courses/ -> Get courses for relevent user
+GET cms/course/course_id/dashboard/ -> Get all content related to week
+
+"""
 router.register(r'announcements', views.AnnouncementViewSet, basename='announcement')
 
 router.register(r'academic-calendars', views.AcademicCalendarViewSet, basename='academic-calendar')
