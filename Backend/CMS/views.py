@@ -433,13 +433,9 @@ class QuizViewSet(viewsets.ModelViewSet):
             {'error': 'Only instructors can access quizzes'}, 
             status=status.HTTP_403_FORBIDDEN
         )
-        drafts = Quiz.objects.filter(
-            courseCode__instructor = request.user,
-            status='draft',
-            week__isnull=True  # Not assigned to any week
-        )
+        all_quizzes = Quiz.objects.filter(courseCode__instructor=request.user).order_by('-created_at')
         quizzes = []
-        for q in drafts:
+        for q in all_quizzes:
             quizzes.append({
                 'quizId': q.id,
                 'title': q.title,
