@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {MdLibraryBooks,MdWarning,MdPerson,MdLock,MdFlag,MdMenuBook,MdDescription,MdRocketLaunch,MdVisibility,MdVisibilityOff} from "react-icons/md";
 import './Login.css';
+import request from "../utils/requestMethods";
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -28,7 +29,7 @@ const Login = () => {
 
     try {
       // Make fetch request directly
-      const response = await fetch('http://localhost:8000/users/login/', {
+      const response = await fetch(`${request.getBaseUrl()}/users/login/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

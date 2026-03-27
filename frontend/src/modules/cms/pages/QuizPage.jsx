@@ -12,6 +12,8 @@ const QuizPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [quizState, setQuizState] = useState('loading');
+  const [startTime, setStartTime] = useState(null);
+  const [timeUntilStart, setTimeUntilStart] = useState(null);
   
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -21,14 +23,16 @@ const QuizPage = () => {
   const [result, setResult] = useState(null);
   
   const timerRef = useRef(null);
+  const startTimerRef = useRef(null);
 
   useEffect(() => {
     const fetchQuiz = async () => {
       try {
         setLoading(true);
-        const data = await request.GET(`/_data/quizzes/${quizId}.json`);
+        const data = await request.GET(`/cms/quizzes/${quizId}/`);
         setQuizData(data);
         
+        // Check if quiz was already attempted
         const attempted = localStorage.getItem(`quiz_${quizId}_attempted`);
         const savedResult = localStorage.getItem(`quiz_${quizId}_result`);
         
@@ -45,16 +49,21 @@ const QuizPage = () => {
           return;
         }
         
-        const now = new Date();
-        const startTime = data.startTime ? new Date(data.startTime) : null;
+        // Get start time from quiz data
+        const quizStartTime = data.startTime ? new Date(data.startTime) : null;
+        setStartTime(quizStartTime);
         
-        if (startTime && now < startTime) {
+        const now = new Date();
+        
+        if (quizStartTime && now < quizStartTime) {
+          // Quiz hasn't started yet
           setQuizState('not_started');
+          // Calculate time until start
+          const timeDiff = quizStartTime - now;
+          setTimeUntilStart(timeDiff);
         } else {
-          setQuizState('in_progress');
-          const timeString = data.time;
-          const timeInSeconds = parseInt(timeString) * 60;
-          setTimeRemaining(timeInSeconds);
+          // Quiz is available now
+          setQuizState('ready_to_start');
         }
         
       } catch (err) {
@@ -68,6 +77,25 @@ const QuizPage = () => {
     fetchQuiz();
   }, [quizId]);
 
+  // Timer for countdown to quiz start
+  useEffect(() => {
+    if (quizState !== 'not_started' || !timeUntilStart || timeUntilStart <= 0) return;
+
+    startTimerRef.current = setInterval(() => {
+      setTimeUntilStart(prev => {
+        if (prev <= 1000) {
+          clearInterval(startTimerRef.current);
+          setQuizState('ready_to_start');
+          return 0;
+        }
+        return prev - 1000;
+      });
+    }, 1000);
+
+    return () => clearInterval(startTimerRef.current);
+  }, [quizState, timeUntilStart]);
+
+  // Timer for quiz duration
   useEffect(() => {
     if (quizState !== 'in_progress' || timeRemaining === null || timeRemaining <= 0 || isSubmitted) return;
 
@@ -92,9 +120,22 @@ const QuizPage = () => {
 
   const formatTime = (seconds) => {
     if (seconds === null) return '--:--';
-    const mins = Math.floor(seconds / 60);
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
+    
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const formatTimeUntilStart = (milliseconds) => {
+    if (!milliseconds) return '--:--:--';
+    const hours = Math.floor(milliseconds / 3600000);
+    const mins = Math.floor((milliseconds % 3600000) / 60000);
+    const secs = Math.floor((milliseconds % 60000) / 1000);
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   const handleAnswerChange = (questionId, optionId, isMultiple) => {
@@ -195,15 +236,22 @@ const QuizPage = () => {
     setQuizState('in_progress');
     setAnswers({});
     setCurrentQuestionIndex(0);
+    // Parse duration from time string (e.g., "15" or "15 minutes")
     const timeString = quizData.time;
-    const timeInSeconds = parseInt(timeString) * 60;
+    let timeInSeconds;
+    if (typeof timeString === 'string') {
+      const minutes = parseInt(timeString);
+      timeInSeconds = minutes * 60;
+    } else {
+      timeInSeconds = parseInt(timeString) * 60;
+    }
     setTimeRemaining(timeInSeconds);
   };
 
   if (loading) {
     return (
-      <div className="quiz-page-loading">
-        <div className="quiz-page-spinner"></div>
+      <div className="quizsp-loading">
+        <div className="quizsp-spinner"></div>
         <p>Loading quiz...</p>
       </div>
     );
@@ -211,36 +259,92 @@ const QuizPage = () => {
 
   if (error || !quizData) {
     return (
-      <div className="quiz-page-error">
+      <div className="quizsp-error">
         <p>Error: {error || 'Quiz not found'}</p>
         <button onClick={() => navigate('/cms/courses')}>Back to Courses</button>
       </div>
     );
   }
 
-  // Not Started State
+  // Not Started State - Quiz hasn't begun yet
   if (quizState === 'not_started') {
-    const startTime = new Date(quizData.startTime);
+    const formattedStartTime = startTime ? startTime.toLocaleString() : 'Not scheduled';
     return (
-      <div className="quiz-page-not-started">
-        <div className="quiz-page-start-card">
+      <div className="quizsp-not-started">
+        <div className="quizsp-start-card">
           <h1>{quizData.title}</h1>
-          <div className="quiz-page-info-card">
-            <div className="quiz-page-info-row">
-              <MdSchedule className="quiz-page-info-icon" />
-              <span>Starts: {startTime.toLocaleString()}</span>
+          <div className="quizsp-info-card">
+            <div className="quizsp-info-row">
+              <MdSchedule className="quizsp-info-icon" />
+              <span>Starts: {formattedStartTime}</span>
             </div>
-            <div className="quiz-page-info-row">
-              <MdAccessAlarms className="quiz-page-info-icon" />
-              <span>Duration: {quizData.time}</span>
+            <div className="quizsp-info-row">
+              <MdAccessAlarms className="quizsp-info-icon" />
+              <span>Duration: {quizData.time} minutes</span>
             </div>
-            <div className="quiz-page-info-row">
-              <MdCheckCircle className="quiz-page-info-icon" />
+            <div className="quizsp-info-row">
+              <MdCheckCircle className="quizsp-info-icon" />
               <span>Questions: {quizData.questions?.length || 0}</span>
             </div>
+            {timeUntilStart > 0 && (
+              <div className="quizsp-info-row quizsp-countdown">
+                <MdAccessAlarms className="quizsp-info-icon" />
+                <span>Time until start: {formatTimeUntilStart(timeUntilStart)}</span>
+              </div>
+            )}
           </div>
-          <button className="quiz-page-start-btn" onClick={handleStartQuiz}>
-            Start Quiz
+          <button 
+            className="quizsp-start-btn" 
+            onClick={handleStartQuiz}
+            disabled={true}
+            style={{ opacity: 0.6, cursor: 'not-allowed' }}
+          >
+            Quiz Not Started Yet
+          </button>
+          <button 
+            className="quizsp-back-btn"
+            onClick={() => navigate('/cms/courses')}
+            style={{ marginTop: '1rem' }}
+          >
+            Back to Courses
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Ready to Start State - Quiz is available but not yet started
+  if (quizState === 'ready_to_start') {
+    return (
+      <div className="quizsp-ready">
+        <div className="quizsp-start-card">
+          <h1>{quizData.title}</h1>
+          <div className="quizsp-info-card">
+            <div className="quizsp-info-row">
+              <MdAccessAlarms className="quizsp-info-icon" />
+              <span>Duration: {quizData.time} minutes</span>
+            </div>
+            <div className="quizsp-info-row">
+              <MdCheckCircle className="quizsp-info-icon" />
+              <span>Questions: {quizData.questions?.length || 0}</span>
+            </div>
+            <div className="quizsp-info-row">
+              <MdWarning className="quizsp-info-icon" />
+              <span>Once started, you cannot pause the quiz</span>
+            </div>
+          </div>
+          <button 
+            className="quizsp-start-btn" 
+            onClick={handleStartQuiz}
+          >
+            Start Quiz Now
+          </button>
+          <button 
+            className="quizsp-back-btn"
+            onClick={() => navigate('/cms/courses')}
+            style={{ marginTop: '1rem' }}
+          >
+            Back to Courses
           </button>
         </div>
       </div>
@@ -250,47 +354,47 @@ const QuizPage = () => {
   // Completed State - Show Results
   if (quizState === 'completed' && result) {
     return (
-      <div className="quiz-page-results">
-        <div className="quiz-page-results-card">
+      <div className="quizsp-results">
+        <div className="quizsp-results-card">
           <h1>Quiz Results</h1>
-          <div className="quiz-page-score-summary">
-            <div className="quiz-page-score-circle">
-              <span className="quiz-page-score-percentage">{result.percentage}%</span>
-              <span className="quiz-page-score-label">Score</span>
+          <div className="quizsp-score-summary">
+            <div className="quizsp-score-circle">
+              <span className="quizsp-score-percentage">{result.percentage}%</span>
+              <span className="quizsp-score-label">Score</span>
             </div>
-            <div className="quiz-page-score-stats">
-              <div className="quiz-page-stat-item">
-                <span className="quiz-page-stat-label">Correct Answers:</span>
-                <span className="quiz-page-stat-value">{result.correctCount} / {result.totalQuestions}</span>
+            <div className="quizsp-score-stats">
+              <div className="quizsp-stat-item">
+                <span className="quizsp-stat-label">Correct Answers:</span>
+                <span className="quizsp-stat-value">{result.correctCount} / {result.totalQuestions}</span>
               </div>
-              <div className="quiz-page-stat-item">
-                <span className="quiz-page-stat-label">Points Earned:</span>
-                <span className="quiz-page-stat-value">{result.score} / {result.totalPoints}</span>
+              <div className="quizsp-stat-item">
+                <span className="quizsp-stat-label">Points Earned:</span>
+                <span className="quizsp-stat-value">{result.score} / {result.totalPoints}</span>
               </div>
-              <div className="quiz-page-stat-item">
-                <span className="quiz-page-stat-label">Submitted:</span>
-                <span className="quiz-page-stat-value">{new Date(result.submittedAt).toLocaleString()}</span>
+              <div className="quizsp-stat-item">
+                <span className="quizsp-stat-label">Submitted:</span>
+                <span className="quizsp-stat-value">{new Date(result.submittedAt).toLocaleString()}</span>
               </div>
             </div>
           </div>
 
-          <div className="quiz-page-review">
+          <div className="quizsp-review">
             <h2>Review Answers</h2>
             {result.results.map((q, idx) => (
-              <div key={idx} className={`quiz-page-review-item ${q.isCorrect ? 'quiz-page-correct' : 'quiz-page-incorrect'}`}>
-                <div className="quiz-page-review-header">
-                  <span className="quiz-page-review-number">Question {idx + 1}</span>
-                  <span className={`quiz-page-review-status ${q.isCorrect ? 'quiz-page-status-correct' : 'quiz-page-status-incorrect'}`}>
+              <div key={idx} className={`quizsp-review-item ${q.isCorrect ? 'quizsp-correct' : 'quizsp-incorrect'}`}>
+                <div className="quizsp-review-header">
+                  <span className="quizsp-review-number">Question {idx + 1}</span>
+                  <span className={`quizsp-review-status ${q.isCorrect ? 'quizsp-status-correct' : 'quizsp-status-incorrect'}`}>
                     {q.isCorrect ? <MdCheckCircle /> : <MdCancel />}
                     {q.isCorrect ? ' Correct' : ' Incorrect'}
                   </span>
                 </div>
-                <div className="quiz-page-review-question" dangerouslySetInnerHTML={{ __html: q.question }} />
-                <div className="quiz-page-review-answers">
-                  <div className="quiz-page-your-answer">
+                <div className="quizsp-review-question" dangerouslySetInnerHTML={{ __html: q.question }} />
+                <div className="quizsp-review-answers">
+                  <div className="quizsp-your-answer">
                     <strong>Your Answer:</strong> {q.userAnswers.length > 0 ? q.userAnswers.join(', ') : 'Not answered'}
                   </div>
-                  <div className="quiz-page-correct-answer">
+                  <div className="quizsp-correct-answer">
                     <strong>Correct Answer:</strong> {q.correctAnswers.join(', ')}
                   </div>
                 </div>
@@ -298,7 +402,7 @@ const QuizPage = () => {
             ))}
           </div>
 
-          <button className="quiz-page-back-btn" onClick={() => navigate('/cms/courses')}>
+          <button className="quizsp-back-btn" onClick={() => navigate('/cms/courses')}>
             Back to Courses
           </button>
         </div>
@@ -314,45 +418,45 @@ const QuizPage = () => {
   const answeredCount = Object.keys(answers).length;
 
   return (
-    <div className="quiz-page-container">
-      <div className="quiz-page-header">
-        <div className="quiz-page-info">
+    <div className="quizsp-container">
+      <div className="quizsp-header">
+        <div className="quizsp-info">
           <h1>{quizData.title}</h1>
-          <p className="quiz-page-course">{quizData.course}</p>
+          <p className="quizsp-course">{quizData.course}</p>
         </div>
-        <div className={`quiz-page-timer ${timeRemaining < 60 ? 'quiz-page-timer-warning' : ''}`}>
-          <span className="quiz-page-timer-icon"><MdAccessAlarms /></span>
-          <span className="quiz-page-timer-time">{formatTime(timeRemaining)}</span>
+        <div className={`quizsp-timer ${timeRemaining < 60 ? 'quizsp-timer-warning' : ''}`}>
+          <span className="quizsp-timer-icon"><MdAccessAlarms /></span>
+          <span className="quizsp-timer-time">{formatTime(timeRemaining)}</span>
         </div>
       </div>
 
-      <div className="quiz-page-main">
-        <div className="quiz-page-question-area">
-          <div className="quiz-page-question-header">
-            <span className="quiz-page-question-number">
+      <div className="quizsp-main">
+        <div className="quizsp-question-area">
+          <div className="quizsp-question-header">
+            <span className="quizsp-question-number">
               Question {currentQuestionIndex + 1} of {totalQuestions}
             </span>
             {isMultiple && (
-              <span className="quiz-page-multiple-badge">✓ Multiple answers allowed</span>
+              <span className="quizsp-multiple-badge">✓ Multiple answers allowed</span>
             )}
           </div>
 
           <div 
-            className="quiz-page-question-text"
-            dangerouslySetInnerHTML={{ __html: currentQuestion.question }}
+            className="quizsp-question-text"
+            dangerouslySetInnerHTML={{ __html: currentQuestion.text }}
           />
 
           {currentQuestion.image && (
-            <div className="quiz-page-question-image">
+            <div className="quizsp-question-image">
               <img src={currentQuestion.image} alt="Question" />
             </div>
           )}
 
-          <div className="quiz-page-options">
+          <div className="quizsp-options">
             {currentQuestion.options.map((option) => (
               <label 
                 key={option.id} 
-                className={`quiz-page-option-item ${isMultiple ? 'quiz-page-multiple' : 'quiz-page-single'}`}
+                className={`quizsp-option-item ${isMultiple ? 'quizsp-multiple' : 'quizsp-single'}`}
               >
                 <input
                   type={isMultiple ? 'checkbox' : 'radio'}
@@ -366,27 +470,27 @@ const QuizPage = () => {
                   )}
                   disabled={isSubmitted}
                 />
-                <span className="quiz-page-option-id">{option.id}.</span>
+                <span className="quizsp-option-id">{option.id}.</span>
                 <span 
-                  className="quiz-page-option-text"
+                  className="quizsp-option-text"
                   dangerouslySetInnerHTML={{ __html: option.text }}
                 />
               </label>
             ))}
           </div>
 
-          <div className="quiz-page-question-actions">
+          <div className="quizsp-question-actions">
             <button 
-              className="quiz-page-clear-btn"
+              className="quizsp-clear-btn"
               onClick={handleClearAnswer}
               disabled={isSubmitted || currentAnswers.length === 0}
             >
               🗑️ Clear Answer
             </button>
             
-            <div className="quiz-page-nav-buttons">
+            <div className="quizsp-nav-buttons">
               <button 
-                className="quiz-page-nav-btn"
+                className="quizsp-nav-btn"
                 onClick={goToPrevious}
                 disabled={currentQuestionIndex === 0 || isSubmitted}
               >
@@ -395,7 +499,7 @@ const QuizPage = () => {
               
               {currentQuestionIndex === totalQuestions - 1 ? (
                 <button 
-                  className="quiz-page-submit-btn"
+                  className="quizsp-submit-btn"
                   onClick={() => setShowConfirmSubmit(true)}
                   disabled={isSubmitted}
                 >
@@ -403,7 +507,7 @@ const QuizPage = () => {
                 </button>
               ) : (
                 <button 
-                  className="quiz-page-nav-btn"
+                  className="quizsp-nav-btn"
                   onClick={goToNext}
                   disabled={isSubmitted}
                 >
@@ -414,19 +518,19 @@ const QuizPage = () => {
           </div>
         </div>
 
-        <div className="quiz-page-sidebar">
+        <div className="quizsp-sidebar">
           <h3>Questions</h3>
-          <div className="quiz-page-progress-info">
+          <div className="quizsp-progress-info">
             <span>Answered: {answeredCount}/{totalQuestions}</span>
-            <div className="quiz-page-progress-bar">
+            <div className="quizsp-progress-bar">
               <div 
-                className="quiz-page-progress-fill"
+                className="quizsp-progress-fill"
                 style={{ width: `${(answeredCount / totalQuestions) * 100}%` }}
               ></div>
             </div>
           </div>
 
-          <div className="quiz-page-question-grid">
+          <div className="quizsp-question-grid">
             {quizData.questions.map((q, index) => {
               const isAnswered = answers[q.questionId]?.length > 0;
               const isCurrent = index === currentQuestionIndex;
@@ -434,7 +538,7 @@ const QuizPage = () => {
               return (
                 <button
                   key={q.questionId}
-                  className={`quiz-page-badge ${isAnswered ? 'quiz-page-badge-answered' : ''} ${isCurrent ? 'quiz-page-badge-current' : ''}`}
+                  className={`quizsp-badge ${isAnswered ? 'quizsp-badge-answered' : ''} ${isCurrent ? 'quizsp-badge-current' : ''}`}
                   onClick={() => goToQuestion(index)}
                   disabled={isSubmitted}
                 >
@@ -444,23 +548,23 @@ const QuizPage = () => {
             })}
           </div>
 
-          <div className="quiz-page-legend">
-            <div className="quiz-page-legend-item">
-              <span className="quiz-page-legend-dot quiz-page-legend-current"></span>
+          <div className="quizsp-legend">
+            <div className="quizsp-legend-item">
+              <span className="quizsp-legend-dot quizsp-legend-current"></span>
               <span>Current</span>
             </div>
-            <div className="quiz-page-legend-item">
-              <span className="quiz-page-legend-dot quiz-page-legend-answered"></span>
+            <div className="quizsp-legend-item">
+              <span className="quizsp-legend-dot quizsp-legend-answered"></span>
               <span>Answered</span>
             </div>
-            <div className="quiz-page-legend-item">
-              <span className="quiz-page-legend-dot quiz-page-legend-unanswered"></span>
+            <div className="quizsp-legend-item">
+              <span className="quizsp-legend-dot quizsp-legend-unanswered"></span>
               <span>Unanswered</span>
             </div>
           </div>
 
           <button 
-            className="quiz-page-submit-quiz-btn"
+            className="quizsp-submit-quiz-btn"
             onClick={() => setShowConfirmSubmit(true)}
             disabled={isSubmitted}
           >
@@ -470,24 +574,24 @@ const QuizPage = () => {
       </div>
 
       {showConfirmSubmit && (
-        <div className="quiz-page-modal-overlay" onClick={() => setShowConfirmSubmit(false)}>
-          <div className="quiz-page-modal-content" onClick={e => e.stopPropagation()}>
+        <div className="quizsp-modal-overlay" onClick={() => setShowConfirmSubmit(false)}>
+          <div className="quizsp-modal-content" onClick={e => e.stopPropagation()}>
             <h3>Submit Quiz?</h3>
             <p>You have answered {answeredCount} out of {totalQuestions} questions.</p>
             {answeredCount < totalQuestions && (
-              <p className="quiz-page-warning-text">
+              <p className="quizsp-warning-text">
                 <MdWarning /> {totalQuestions - answeredCount} question(s) unanswered
               </p>
             )}
-            <div className="quiz-page-modal-actions">
+            <div className="quizsp-modal-actions">
               <button 
-                className="quiz-page-modal-cancel"
+                className="quizsp-modal-cancel"
                 onClick={() => setShowConfirmSubmit(false)}
               >
                 Cancel
               </button>
               <button 
-                className="quiz-page-modal-confirm"
+                className="quizsp-modal-confirm"
                 onClick={() => {
                   setShowConfirmSubmit(false);
                   calculateScore();

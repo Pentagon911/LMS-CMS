@@ -367,7 +367,7 @@ const handleSubmit = async (e) => {
                 onChange={(e) => setSemesterFilter({ ...semesterFilter, semester: e.target.value })}
               >
                 <option value="">All Semesters</option>
-                {semesters.map(s => <option key={s} value={s}>{s}</option>)}
+                {semesters.map(s => <option key={s} value={s}> Semesters {s}</option>)}
               </select>
               <select
                 value={semesterFilter.faculty}

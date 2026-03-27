@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { MdDashboard, MdPerson, MdVolunteerActivism, MdLogout, MdLibraryBooks, MdSchool, MdDarkMode, MdLightMode, MdAdminPanelSettings, MdExpandMore, MdMenuBook, MdAssignment, MdEvent, MdGrade, MdPeople, MdAttachMoney, MdHelp, MdHome, MdUpload, MdMedicalServices, MdHelpOutline
 } from 'react-icons/md';
-import '../../cms/components/Header.css';
+import './Header.css';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -19,7 +19,7 @@ const Header = () => {
   const dropdownRefs = useRef({});
   const location = useLocation();
   const navigate = useNavigate();
-
+//lms/academics/my-courses
   const dropdownData = {
     'Acadamic Managements': {
       admin: [
@@ -36,6 +36,7 @@ const Header = () => {
           { name: 'Update Results', path: '/lms/update-results', icon: <MdUpload /> },
           { name: 'Exam Timetables', path: '/lms/academics/time-tables', icon: <MdEvent /> },
           { name: 'Exam results', path: '/lms/academics/results', icon: <MdEvent /> },
+          { name: 'My Courses', path: '/lms/academics/my-courses', icon: <MdSchool /> },
       ]
     },
     // 'Appeals/Welfare': {

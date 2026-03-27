@@ -15,7 +15,7 @@ const UpdateResultsPage = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const data = await request.GET('/api/instructor/courses/');
+        const data = await request.GET('/lms/courses/');
         setCourses(data.results || [
           { id: 1, code: 'CS1012', title: 'Programming Fundamentals' },
           { id: 2, code: 'CS1040', title: 'Program Construction' },

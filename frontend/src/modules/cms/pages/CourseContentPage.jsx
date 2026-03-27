@@ -102,8 +102,12 @@ const CourseContentPage = () => {
         break;
         
       case 'quiz':
-        navigate(`/quiz/${item.quizId}`);
-        break;
+        if (user && user.role !== 'student') {
+        navigate(`/cms/quizes/${item.quizId}/instructor`);
+      } else {
+        navigate(`/cms/quizes/${item.quizId}`);
+      }
+      break;
         
       case 'announcement':
         alert(item.message || "No additional details");
@@ -114,40 +118,49 @@ const CourseContentPage = () => {
     }
   };
 
-const handleAddContent = async (weekIndex, newItem) => {
-  if (!user || user.role === 'student') return;
-  
-  try {
-    if (!['content', 'quiz', 'announcement'].includes(newItem.type)) {
-      throw new Error('Invalid item type. Only content, quiz, and announcement are allowed.');
-    }
+  const handleAddContent = async (weekIndex, newItem) => {
+    if (!user || user.role === 'student') return;
+    
+    try {
+      if (!['content', 'quiz', 'announcement'].includes(newItem.type)) {
+        throw new Error('Invalid item type. Only content, quiz, and announcement are allowed.');
+      }
 
-    console.log("Adding content:", { weekIndex, newItem });
-    
-    let response;
-    let apiUrl;
-    
-    if (newItem.type === 'quiz') {
-      // Quiz endpoint
-      apiUrl = `/cms/quizzes/${quizzId}/add_to_week/`;
-      response = await request.POST(apiUrl, newItem);
-    } else if(newItem.type === 'announcement') {
-      apiUrl = `/cms/courses/${moduleId}/weeks/${weekIndex + 1}/announcement/create/`;
-      response = await request.POST(apiUrl, newItem);
-    } else{
-        apiUrl = '/cms/weeks/${weekIndex + 1}/upload/';
+      console.log("Adding content:", { weekIndex, newItem });
+      
+      let response;
+      let apiUrl;
+      // Use weekIndex + 1 as the week_id (1-based index)
+      const weekIdNumber = weekIndex + 1;
+      
+      if (newItem.type === 'quiz') {
+        // Quiz endpoint - using weekIdNumber as week_id
+        apiUrl = `/cms/quizzes/${newItem.quizId}/add_to_week/`;
+        response = await request.POST(apiUrl, {
+          week_id: weekIdNumber,
+          start_time: newItem.startTime
+        });
+      } else if(newItem.type === 'announcement') {
+        apiUrl = `/cms/courses/${moduleId}/weeks/${weekIdNumber}/announcement/create/`;
         response = await request.POST(apiUrl, newItem);
+      } else{
+        apiUrl = `/cms/weeks/${weekIdNumber}/upload/`;
+        response = await request.POST(apiUrl, newItem);
+      }
+      
+      // Update local state with the response
+      const updatedData = [...courseData];
+      if (!updatedData[weekIndex].items) {
+        updatedData[weekIndex].items = [];
+      }
+      updatedData[weekIndex].items.push(response.data || newItem);
+      setCourseData(updatedData);
+      
+    } catch (err) {
+      console.error("Failed to add content", err);
+      alert("Failed to add content. Please try again.");
     }
-    // Update local state with the response
-    const updatedData = [...courseData];
-    updatedData[weekIndex].items.push(response.data || newItem);
-    setCourseData(updatedData);
-    
-  } catch (err) {
-    console.error("Failed to add content", err);
-    alert("Failed to add content. Please try again.");
-  }
-};
+  };
 
   const handleAddWeek = async () => {
     if (!newWeekName.trim()) return;
@@ -160,7 +173,11 @@ const handleAddContent = async (weekIndex, newItem) => {
       });
       console.log("Week added:", response);
       
-      const newWeek = response.data || { week: newWeekName, items: [] };
+      const newWeek = response.data || { 
+        week: newWeekName, 
+        items: [],
+        courseId: moduleId
+      };
       setCourseData([...courseData, newWeek]);
       setShowAddWeekModal(false);
       setNewWeekName('');
@@ -245,6 +262,8 @@ const handleAddContent = async (weekIndex, newItem) => {
           <WeekCard
             key={index}
             data={week}
+            weekNumber={week.week || `Week ${index + 1}`}
+            weekIndex={index}  // Pass the index (0-based)
             isLecturer={isLecturer}
             onContentClick={handleContentClick}
             onAddContent={(newItem) => handleAddContent(index, newItem)}
