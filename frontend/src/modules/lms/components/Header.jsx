@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { MdDashboard, MdPerson, MdVolunteerActivism, MdLogout, MdLibraryBooks, MdSchool, MdDarkMode, MdLightMode, MdAdminPanelSettings, MdExpandMore, MdMenuBook, MdAssignment, MdEvent, MdGrade, MdPeople, MdAttachMoney, MdHelp, MdHome, MdUpload, MdMedicalServices, MdHelpOutline
 } from 'react-icons/md';
-import '../../cms/components/Header.css';
+import './Header.css';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
