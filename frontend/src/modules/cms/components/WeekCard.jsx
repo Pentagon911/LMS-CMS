@@ -3,7 +3,7 @@ import AddContentModal from "./AddContentModal.jsx";
 import {MdDescription,MdQuiz,MdCampaign,MdFolder,MdAttachFile,MdLink,MdAccessTime,MdAssignment,MdCalendarToday,MdClose,MdAdd,MdExpandMore,MdChevronRight} from "react-icons/md";
 import "./WeekCard.css";
 
-const WeekCard = ({ data, weekNumber, weekIndex, isLecturer, onContentClick, onAddContent }) => {
+const WeekCard = ({ data, weekNumber, weekIndex, isLecturer, onContentClick, onAddContent, courseId }) => {
   const [expanded, setExpanded] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [items, setItems] = useState(data.items || []);
@@ -187,7 +187,7 @@ const WeekCard = ({ data, weekNumber, weekIndex, isLecturer, onContentClick, onA
           onAdd={handleAddContent}
           weekId={weekIndex}  // Pass the week index (0-based) as weekId
           weekNumber={weekNumber || data.week}
-          courseId={data.courseId}
+          courseId={courseId}
         />
       )}
     </div>

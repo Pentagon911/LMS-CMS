@@ -34,7 +34,7 @@ class pdfSerializer(contentSerializer):
         return value
     
     def get_fileSize(self, obj):
-        return obj.fileSizemb2
+        return obj.fileSizemb
     
 class videoSerializer(contentSerializer):
     """Serializer for Video content - adds file field and validation"""
@@ -72,64 +72,91 @@ class LinkSerializer(contentSerializer):
     
 class AnnouncementSerializer(serializers.ModelSerializer):
     created_by_name = serializers.CharField(source='created_by.username', read_only=True)
+    # Changed from source='week.order' to PrimaryKeyRelatedField so we can write to it
+    week = serializers.PrimaryKeyRelatedField(
+        queryset=Week.objects.all(), 
+        required=False, 
+        allow_null=True
+    )
+    # We add a separate read-only field to show the "Week 1" number to the frontend
     week_number = serializers.IntegerField(source='week.order', read_only=True)
     attachments = serializers.SerializerMethodField()
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        request = self.context.get('request')
-
-        if request and hasattr(request.user, 'role') and request.user.role == 'instructor':
-            # 1. Filter Courses (Modules)
-            if 'course' in self.fields:
-                self.fields['course'].queryset = request.user.courses_taught.all()
-
-            # 2. Filter Faculty
-            if 'faculty' in self.fields:
-                # Assuming instructor has a profile linked to a faculty
-                if hasattr(request.user, 'instructor_profile'):
-                    instructor_faculty = request.user.instructor_profile.faculty
-                    # only shows their specific faculty
-                    self.fields['faculty'].queryset = Faculty.objects.filter(id=instructor_faculty.id)
-                else:
-                    # If no profile found, show nothing to prevent unauthorized posting
-                    self.fields['faculty'].queryset = Faculty.objects.none()
-                    self.fields['course'].queryset = request.user.courses_taught.all()
     class Meta:
         model = Announcement
         fields = [
             'id', 'title', 'content', 'faculty', 'batch', 'course', 
-            'image', 'pdf', 'attachments', 'created_at', 'created_by_name','week_number'
+            'week', 'week_number', 'image', 'pdf', 'attachments', 
+            'created_at', 'created_by_name'
         ]
-        read_only_fields = ['id', 'created_at', 'created_by_name']
+        read_only_fields = ['id', 'created_at', 'created_by_name', 'week_number']
         extra_kwargs = {
             'image': {'write_only': True},
             'pdf': {'write_only': True}
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request')
+        view = self.context.get('view')
+
+        # Detect if we are in the "Course Specific" route (Endpoint B)
+        # Check if 'pk' exists in the URL kwargs
+        is_course_route = view and hasattr(view, 'kwargs') and 'pk' in view.kwargs
+
+        if request and hasattr(request.user, 'role') and request.user.role == 'instructor':
+            # 1. Filter Courses
+            if 'course' in self.fields:
+                self.fields['course'].queryset = request.user.courses_taught.all()
+
+            # 2. Filter Faculty
+            if 'faculty' in self.fields:
+                if hasattr(request.user, 'instructor_profile'):
+                    instructor_faculty = request.user.instructor_profile.faculty
+                    self.fields['faculty'].queryset = Faculty.objects.filter(id=instructor_faculty.id)
+            
+            # 3. Handle Week Field Visibility
+            if 'week' in self.fields:
+                if is_course_route:
+                    # Endpoint B: Only show weeks for THIS course
+                    course_id = view.kwargs.get('pk')
+                    self.fields['week'].queryset = Week.objects.filter(course_id=course_id)
+                else:
+                    # Endpoint A: Hide the week field entirely for general posts
+                    self.fields.pop('week')
+
     def validate(self, data):
         faculty = data.get('faculty')
         batch = data.get('batch')
         course = data.get('course')
+        week = data.get('week')
         request = self.context.get('request')
+        view = self.context.get('view')
 
+        if not course and view and 'pk' in view.kwargs:
+            try:
+                course_id = view.kwargs.get('pk')
+                course = Course.objects.get(id=course_id)
+                # Add it back to the data so the rest of the logic works
+                data['course'] = course 
+            except Course.DoesNotExist:
+                raise serializers.ValidationError({"course": "Invalid course ID in URL."})
         # 1. Mandatory Target Validation
         if not any([faculty, batch, course]):
-            raise serializers.ValidationError(
-                "At least one target (Faculty, Batch, or Course) must be selected."
-            )
+            raise serializers.ValidationError("At least one target (Faculty, Batch, or Course) must be selected.")
 
-        # 2. Instructor Specific Restrictions
+        # 2. Instructor Restrictions
         if request and request.user.role == 'instructor':
-            # Faculty Check
             if faculty and hasattr(request.user, 'instructor_profile'):
                 if faculty != request.user.instructor_profile.faculty:
                     raise serializers.ValidationError({"faculty": "You can only post to your own faculty."})
             
-            # Course Check
-            if course:
-                if not request.user.courses_taught.filter(id=course.id).exists():
-                    raise serializers.ValidationError({"course": "You are not assigned to this course."})
+            if course and not request.user.courses_taught.filter(id=course.id).exists():
+                raise serializers.ValidationError({"course": "You are not assigned to this course."})
+
+        # 3. Week/Course Alignment
+        if week and course and week.course != course:
+            raise serializers.ValidationError({"week": "This week does not belong to the selected course."})
 
         return data
     
@@ -212,7 +239,7 @@ class BaseQuestionSerializer(serializers.ModelSerializer):
     """
     Base serializer for Question model. Provides common fields for all question serializers
     """
-    questionId = serializers.CharField()
+    questionId = serializers.SerializerMethodField()
     multipleAnswers = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
     totalPoints = serializers.SerializerMethodField()
@@ -220,6 +247,8 @@ class BaseQuestionSerializer(serializers.ModelSerializer):
         model = Question
         fields = ['questionId','text','image','multipleAnswers']
 
+    def get_questionId(self,obj):
+        return obj.order
     def get_multipleAnswers(self,obj):
         return "true" if obj.questionTypes == 'multiple' else "false"
 
@@ -632,21 +661,25 @@ class courseDashboardSerializer(serializers.ModelSerializer):
                 })
         
 
-        # 5. Announcements
-        # announcements = week.announcements.all()
-        # if announcements:
-        #     for announcement in announcements:
-        #         items.append({
-        #             'type': 'announcement',
-        #             'title': announcement.content[:50],
-        #             'message': announcement.content,
-        #             'date': announcement.created_at.strftime('%Y-%m-%d')
-        #         })
-        # else:
-        #     items.append({
-        #         'type': None, 'title': None, 'quizId': None, 
-        #         'duration': None, 'questionsCount': None, 'description': None
-        #     })
+        
+        announcements = week.announcements.all()
+        if announcements:
+            for announcement in announcements:
+
+                file_format = 'Text' # Default if no file
+                if announcement.pdf:
+                    file_format = 'PDF'
+                elif announcement.image:
+                    file_format = 'Image'
+                items.append({
+                    'type': 'announcement',
+                    'title': announcement.title,
+                    'content':announcement.content,
+                    'format': file_format,
+                    'file_url': announcement.pdf.url if announcement.pdf else (announcement.image.url if announcement.image else None),
+                    'date': announcement.created_at.strftime('%Y-%m-%d'),
+                    'created_by':announcement.created_by.username
+                })
 
         return items
     
@@ -756,3 +789,121 @@ class ContentUploadSerializer(serializers.Serializer):
             raise serializers.ValidationError("Please provide either an attachment or a link, not both.")
             
         return data
+    
+class FacultyBatchYearSerializer(serializers.Serializer):
+    """Serializer for faculty and batch years response"""
+    faculty_id = serializers.IntegerField()
+    faculty_name = serializers.CharField()
+    faculty_code = serializers.CharField()
+    batch_years = serializers.ListField(child=serializers.IntegerField())
+
+class AnnouncementTargetSerializer(serializers.Serializer):
+    """Serializer for announcement target selection"""
+    target_type = serializers.ChoiceField(choices=GlobalAnnouncement.TARGET_TYPE_CHOICES)
+    faculty_ids = serializers.ListField(child=serializers.IntegerField(), required=False)
+    department_ids = serializers.ListField(child=serializers.IntegerField(), required=False)
+    batch_ids = serializers.ListField(child=serializers.IntegerField(), required=False)
+    program_ids = serializers.ListField(child=serializers.IntegerField(), required=False)
+    
+    def validate(self, data):
+        target_type = data.get('target_type')
+        
+        if target_type == 'faculty' and not data.get('faculty_ids'):
+            raise serializers.ValidationError("faculty_ids are required for faculty targeting")
+        elif target_type == 'department' and not data.get('department_ids'):
+            raise serializers.ValidationError("department_ids are required for department targeting")
+        elif target_type == 'batch' and not data.get('batch_ids'):
+            raise serializers.ValidationError("batch_ids are required for batch targeting")
+        elif target_type == 'program' and not data.get('program_ids'):
+            raise serializers.ValidationError("program_ids are required for program targeting")
+        
+        return data
+
+class GlobalAnnouncementSerializer(serializers.ModelSerializer):
+    target_details = serializers.SerializerMethodField()
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    
+    class Meta:
+        model = GlobalAnnouncement
+        fields = [
+            'id', 'title', 'content', 'pdf_file',
+            'target_type', 'faculties', 'departments', 'batches', 'programs',
+            'created_by', 'created_by_name', 'created_at', 'updated_at',
+            'is_active', 'publish_from', 'publish_until', 'target_details'
+        ]
+        read_only_fields = ['created_by', 'created_at', 'updated_at']
+    
+    def get_target_details(self, obj):
+        """Get readable target details"""
+        if obj.target_type == 'faculty':
+            return {
+                'faculties': [{'id': f.id, 'name': f.name, 'code': f.code} 
+                             for f in obj.faculties.all()]
+            }
+        elif obj.target_type == 'department':
+            return {
+                'departments': [{'id': d.id, 'name': d.name, 'code': d.code} 
+                               for d in obj.departments.all()]
+            }
+        elif obj.target_type == 'batch':
+            return {
+                'batches': [{'id': b.id, 'name': b.name, 'year': b.year} 
+                           for b in obj.batches.all()]
+            }
+        elif obj.target_type == 'program':
+            return {
+                'programs': [{'id': p.id, 'name': p.name, 'code': p.code} 
+                            for p in obj.programs.all()]
+            }
+        return None
+    
+    def create(self, validated_data):
+        # Extract many-to-many fields
+        faculties = validated_data.pop('faculties', [])
+        departments = validated_data.pop('departments', [])
+        batches = validated_data.pop('batches', [])
+        programs = validated_data.pop('programs', [])
+        
+        # Set created_by from context
+        validated_data['created_by'] = self.context['request'].user
+        
+        # Create announcement
+        announcement = GlobalAnnouncement.objects.create(**validated_data)
+        
+        # Add many-to-many relationships
+        announcement.faculties.set(faculties)
+        announcement.departments.set(departments)
+        announcement.batches.set(batches)
+        announcement.programs.set(programs)
+        
+        return announcement
+    
+    def update(self, instance, validated_data):
+        # Extract many-to-many fields
+        faculties = validated_data.pop('faculties', None)
+        departments = validated_data.pop('departments', None)
+        batches = validated_data.pop('batches', None)
+        programs = validated_data.pop('programs', None)
+        
+        # Update regular fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        # Update many-to-many relationships if provided
+        if faculties is not None:
+            instance.faculties.set(faculties)
+        if departments is not None:
+            instance.departments.set(departments)
+        if batches is not None:
+            instance.batches.set(batches)
+        if programs is not None:
+            instance.programs.set(programs)
+        
+        return instance
+
+class StudentAnnouncementSerializer(serializers.ModelSerializer):
+    """Simplified serializer for student view"""
+    class Meta:
+        model = GlobalAnnouncement
+        fields = ['id', 'title', 'content', 'pdf_file', 'created_at', 'publish_from']

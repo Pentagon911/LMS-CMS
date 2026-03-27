@@ -1,6 +1,7 @@
 import random
 from datetime import date, timedelta, time
 from django.core.management.base import BaseCommand
+from django.db import OperationalError
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
@@ -29,6 +30,19 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('=' * 60))
         self.stdout.write(self.style.SUCCESS('Starting to populate mock data...'))
         self.stdout.write(self.style.SUCCESS('=' * 60))
+        
+        # Check if tables exist
+        try:
+            # Try to access the User table to see if it exists
+            User.objects.exists()
+        except OperationalError as e:
+            self.stdout.write(self.style.ERROR(f'\n❌ Database tables not found: {e}'))
+            self.stdout.write(self.style.ERROR('\n📝 Please run migrations first:'))
+            self.stdout.write(self.style.ERROR('   python manage.py makemigrations users'))
+            self.stdout.write(self.style.ERROR('   python manage.py makemigrations lms'))
+            self.stdout.write(self.style.ERROR('   python manage.py makemigrations CMS'))
+            self.stdout.write(self.style.ERROR('   python manage.py migrate'))
+            return
         
         try:
             # 1. Create faculties
@@ -85,6 +99,16 @@ class Command(BaseCommand):
             self.stdout.write('\n📢 Creating announcements...')
             self.create_announcements(users['instructors'], users['admins'], self.batches, self.faculties, self.courses)
             
+            # 13b. Create GLOBAL announcements (new)
+            self.stdout.write('\n🌍 Creating global announcements...')
+            self.create_global_announcements(
+                users['instructors'], 
+                users['admins'], 
+                self.faculties, 
+                self.departments, 
+                self.batches,
+                self.programs
+            )
             # 14. Create academic calendars
             self.stdout.write('\n📅 Creating academic calendars...')
             self.create_academic_calendars(self.faculties, users['admins'])
@@ -1102,3 +1126,225 @@ class Command(BaseCommand):
                     self.stdout.write(f"  ⚠️ Could not create review queue entry: {e}")
         
         self.stdout.write(f"  ✓ Created {queue_count} review queue entries")
+
+    def create_global_announcements(self, instructors, admins, faculties, departments, batches, programs):
+        """Create global announcements with different targeting types"""
+        announcement_count = 0
+        
+        # 1. Announcement for ALL students
+        try:
+            GlobalAnnouncement.objects.create(
+                title="Welcome to the New Academic Year",
+                content="Welcome back to all students! The new academic year has begun. Please check your course schedules and prepare for the upcoming semester.",
+                pdf_file="announcements/pdfs/welcome_2024.pdf",
+                target_type='all',
+                created_by=random.choice(admins) if admins else None,
+                is_active=True,
+                publish_from=timezone.now() - timedelta(days=5),
+                publish_until=timezone.now() + timedelta(days=60)
+            )
+            announcement_count += 1
+            self.stdout.write("  ✓ Created global announcement for ALL students")
+        except Exception as e:
+            self.stdout.write(f"  ⚠️ Could not create ALL announcement: {e}")
+        
+        # 2. Faculty-level announcements
+        faculty_announcements = [
+            {
+                'title': 'Engineering Faculty Research Symposium',
+                'content': 'The Faculty of Engineering is hosting its annual research symposium on May 15th. All engineering students are encouraged to participate.',
+                'faculties': [f for f in faculties if f.code == 'ENG']
+            },
+            {
+                'title': 'Science Faculty Laboratory Safety Guidelines',
+                'content': 'Updated laboratory safety protocols for Science faculty students. Please review the attached guidelines before entering any lab.',
+                'faculties': [f for f in faculties if f.code == 'SCI']
+            },
+            {
+                'title': 'Business Faculty Industry Connect Program',
+                'content': 'Business faculty students: Registration for the Industry Connect Program is now open. Gain valuable industry experience this semester.',
+                'faculties': [f for f in faculties if f.code == 'BUS']
+            }
+        ]
+        
+        for announcement_data in faculty_announcements:
+            try:
+                announcement = GlobalAnnouncement.objects.create(
+                    title=announcement_data['title'],
+                    content=announcement_data['content'],
+                    target_type='faculty',
+                    created_by=random.choice(instructors + admins),
+                    is_active=True,
+                    publish_from=timezone.now() - timedelta(days=random.randint(1, 10)),
+                    publish_until=timezone.now() + timedelta(days=random.randint(30, 90))
+                )
+                if announcement_data['faculties']:
+                    announcement.faculties.set(announcement_data['faculties'])
+                announcement_count += 1
+                self.stdout.write(f"  ✓ Created faculty announcement: {announcement_data['title']}")
+            except Exception as e:
+                self.stdout.write(f"  ⚠️ Could not create faculty announcement: {e}")
+        
+        # 3. Department-level announcements
+        department_announcements = []
+        for dept in departments[:6]:  # Take first 6 departments
+            department_announcements.append({
+                'title': f'{dept.name} Department - Guest Lecture Series',
+                'content': f'Join us for a special guest lecture series organized by the {dept.name} Department. Industry experts will share insights on current trends.',
+                'departments': [dept]
+            })
+            department_announcements.append({
+                'title': f'{dept.name} - Internship Opportunities',
+                'content': f'New internship opportunities available for {dept.name} students. Apply before the deadline.',
+                'departments': [dept]
+            })
+        
+        for announcement_data in department_announcements[:10]:  # Limit to 10 announcements
+            try:
+                announcement = GlobalAnnouncement.objects.create(
+                    title=announcement_data['title'],
+                    content=announcement_data['content'],
+                    target_type='department',
+                    created_by=random.choice(instructors + admins),
+                    is_active=True,
+                    publish_from=timezone.now() - timedelta(days=random.randint(0, 5)),
+                    publish_until=timezone.now() + timedelta(days=random.randint(45, 120))
+                )
+                if announcement_data['departments']:
+                    announcement.departments.set(announcement_data['departments'])
+                announcement_count += 1
+                self.stdout.write(f"  ✓ Created department announcement: {announcement_data['title']}")
+            except Exception as e:
+                self.stdout.write(f"  ⚠️ Could not create department announcement: {e}")
+        
+        # 4. Batch-level announcements
+        batch_announcements = []
+        for batch in batches[:8]:  # Take first 8 batches
+            batch_announcements.append({
+                'title': f'Important: {batch.name} - Exam Schedule Released',
+                'content': f'The exam schedule for {batch.name} has been released. Check the timetable and prepare accordingly.',
+                'batches': [batch]
+            })
+            batch_announcements.append({
+                'title': f'{batch.name} - Project Submission Deadline',
+                'content': f'Final project submissions for {batch.name} are due on March 30th. Late submissions will incur penalties.',
+                'batches': [batch]
+            })
+        
+        for announcement_data in batch_announcements[:12]:  # Limit to 12 announcements
+            try:
+                announcement = GlobalAnnouncement.objects.create(
+                    title=announcement_data['title'],
+                    content=announcement_data['content'],
+                    target_type='batch',
+                    created_by=random.choice(instructors + admins),
+                    is_active=True,
+                    publish_from=timezone.now() - timedelta(days=random.randint(0, 7)),
+                    publish_until=timezone.now() + timedelta(days=random.randint(30, 60))
+                )
+                if announcement_data['batches']:
+                    announcement.batches.set(announcement_data['batches'])
+                announcement_count += 1
+                self.stdout.write(f"  ✓ Created batch announcement: {announcement_data['title']}")
+            except Exception as e:
+                self.stdout.write(f"  ⚠️ Could not create batch announcement: {e}")
+        
+        # 5. Program-level announcements
+        program_announcements = []
+        for prog in programs[:5]:  # Take first 5 programs
+            program_announcements.append({
+                'title': f'{prog.name} Program - Curriculum Update',
+                'content': f'Important curriculum updates for the {prog.name} program. Please review the changes for the current semester.',
+                'programs': [prog]
+            })
+            program_announcements.append({
+                'title': f'{prog.name} - Scholarship Opportunities',
+                'content': f'Scholarship opportunities available for {prog.name} students with excellent academic performance.',
+                'programs': [prog]
+            })
+        
+        for announcement_data in program_announcements[:8]:  # Limit to 8 announcements
+            try:
+                announcement = GlobalAnnouncement.objects.create(
+                    title=announcement_data['title'],
+                    content=announcement_data['content'],
+                    target_type='program',
+                    created_by=random.choice(instructors + admins),
+                    is_active=True,
+                    publish_from=timezone.now() - timedelta(days=random.randint(0, 3)),
+                    publish_until=timezone.now() + timedelta(days=random.randint(60, 90))
+                )
+                if announcement_data['programs']:
+                    announcement.programs.set(announcement_data['programs'])
+                announcement_count += 1
+                self.stdout.write(f"  ✓ Created program announcement: {announcement_data['title']}")
+            except Exception as e:
+                self.stdout.write(f"  ⚠️ Could not create program announcement: {e}")
+        
+        # 6. Create some inactive announcements (expired or draft)
+        inactive_announcements = [
+            {
+                'title': 'Old Announcement - Scholarship Deadline Passed',
+                'content': 'This scholarship application deadline has passed. Stay tuned for future opportunities.',
+                'target_type': 'all',
+                'is_active': False
+            },
+            {
+                'title': 'Expired: Exam Registration',
+                'content': 'The exam registration period has ended. This announcement is no longer active.',
+                'target_type': 'all',
+                'is_active': True,
+                'publish_until': timezone.now() - timedelta(days=1)  # Already expired
+            }
+        ]
+        
+        for announcement_data in inactive_announcements:
+            try:
+                GlobalAnnouncement.objects.create(
+                    title=announcement_data['title'],
+                    content=announcement_data['content'],
+                    target_type=announcement_data['target_type'],
+                    created_by=random.choice(admins) if admins else None,
+                    is_active=announcement_data.get('is_active', False),
+                    publish_from=announcement_data.get('publish_from', timezone.now() - timedelta(days=30)),
+                    publish_until=announcement_data.get('publish_until', timezone.now() - timedelta(days=1))
+                )
+                announcement_count += 1
+                self.stdout.write(f"  ✓ Created inactive announcement: {announcement_data['title']}")
+            except Exception as e:
+                self.stdout.write(f"  ⚠️ Could not create inactive announcement: {e}")
+        
+        # 7. Create announcements with PDF attachments (mock)
+        pdf_announcements = [
+            {
+                'title': 'Academic Calendar 2024-2025',
+                'content': 'The official academic calendar for the 2024-2025 academic year is now available. Please download and review important dates.',
+                'pdf_file': 'announcements/pdfs/academic_calendar_2024_25.pdf',
+                'target_type': 'all'
+            },
+            {
+                'title': 'Exam Guidelines and Regulations',
+                'content': 'Important exam guidelines and regulations for all students. Please read carefully before your exams.',
+                'pdf_file': 'announcements/pdfs/exam_guidelines_2024.pdf',
+                'target_type': 'all'
+            }
+        ]
+        
+        for announcement_data in pdf_announcements:
+            try:
+                GlobalAnnouncement.objects.create(
+                    title=announcement_data['title'],
+                    content=announcement_data['content'],
+                    pdf_file=announcement_data['pdf_file'],
+                    target_type=announcement_data['target_type'],
+                    created_by=random.choice(admins) if admins else None,
+                    is_active=True,
+                    publish_from=timezone.now() - timedelta(days=2),
+                    publish_until=timezone.now() + timedelta(days=180)
+                )
+                announcement_count += 1
+                self.stdout.write(f"  ✓ Created PDF announcement: {announcement_data['title']}")
+            except Exception as e:
+                self.stdout.write(f"  ⚠️ Could not create PDF announcement: {e}")
+        
+        self.stdout.write(f"  ✓ Created total {announcement_count} global announcements")

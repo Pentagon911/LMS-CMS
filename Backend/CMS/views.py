@@ -1,7 +1,7 @@
 from django.shortcuts import render,get_object_or_404
 from rest_framework.parsers import MultiPartParser, FormParser,JSONParser
 from users.permissions import *
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response 
 from rest_framework.permissions import IsAuthenticated
@@ -13,6 +13,8 @@ from .models import *
 from .serializers import *
 import json
 from django.db import transaction
+from users.profiles import StudentProfile
+from rest_framework.views import APIView
 
 # Create your views here.
 class CourseViewSet(viewsets.ModelViewSet):
@@ -23,7 +25,9 @@ class CourseViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
-        if self.action == 'dashboard':
+        if self.action == 'course_announcements':
+            return AnnouncementSerializer
+        elif self.action == 'dashboard':
             return courseDashboardSerializer
         return courseListSerializer
 
@@ -154,10 +158,19 @@ class CourseViewSet(viewsets.ModelViewSet):
         if request.method == 'POST':
             serializer = AnnouncementSerializer(data=request.data, context={'request': request, 'view': self})
             if serializer.is_valid():
-                # Force the course to be the one from the URL
-                serializer.save(created_by=request.user, course=course, faculty=course.faculty)
+                # FIXED: Navigate the chain here just like in perform_create
+                target_faculty = None
+                if course.department:
+                    target_faculty = course.department.faculty
+
+                serializer.save(
+                    created_by=request.user,
+                    course=course,
+                    faculty=target_faculty,
+                    batch=course.batch  # Auto-fill from Course 10
+                )
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class QuizViewSet(viewsets.ModelViewSet):
     """
@@ -556,8 +569,32 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
     
     def perform_create(self, serializer):
-        # Automatically set the author to the logged-in instructor
-        serializer.save(created_by=self.request.user)
+    # 1. Try to get course_id from URL (e.g., /cms/courses/10/announcements/)
+        course_id = self.kwargs.get('pk')
+        
+        if course_id:
+            try:
+                # We import here to avoid circular imports
+                course = Course.objects.select_related('department__faculty', 'batch').get(id=course_id)
+                
+                # 2. Correct Chain: Course -> Department -> Faculty
+                # Your model says: Course has a 'department', Department has a 'faculty'
+                target_faculty = None
+                if course.department:
+                    target_faculty = course.department.faculty
+                
+                # 3. Save with all auto-detected data
+                serializer.save(
+                    created_by=self.request.user,
+                    course=course,
+                    faculty=target_faculty,
+                    batch=course.batch  # Auto-assign batch since Course has a batch field
+                )
+            except Course.DoesNotExist:
+                serializer.save(created_by=self.request.user)
+        else:
+            # Standard logic for general announcements (Endpoint A)
+            serializer.save(created_by=self.request.user)
 
     def get_queryset(self):
         user = self.request.user
@@ -592,153 +629,6 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
             ).distinct()
             
         return Announcement.objects.none()
-    # queryset = Announcement.objects.all()
-    # serializer_class = AnnouncementSerializer
-    # permission_classes = [IsAuthenticated]
-    
-    # def get_permissions(self):
-    #     if self.action in ['create', 'update', 'destroy']:
-    #         permission_classes = [IsAuthenticated, IsInstructorUser]
-    #     else:
-    #         permission_classes = [IsAuthenticated]
-    #     return [permission() for permission in permission_classes]
-    
-    # def get_queryset(self):
-    #     user = self.request.user
-        
-    #     if user.role == 'student':
-    #         # Get student's batch from their enrolled courses
-    #         enrolled_courses = Course.objects.filter(enrollments__student=user,enrollments__status='enrolled')
-    #         batches = enrolled_courses.values_list('batch', flat=True).distinct()
-            
-    #         # Students see:
-    #         # 1. Batch announcements for their batch
-    #         # 2. Course announcements for courses they're enrolled in
-    #         batch_q = Q(batch__in=batches, announcement_type='batch')
-    #         course_q = Q(course__in=enrolled_courses, announcement_type='course')
-            
-    #         return Announcement.objects.filter(batch_q | course_q).distinct()
-        
-    #     # Instructors see announcements from their courses and batches
-    #     taught_courses = user.courses_taught.all()
-    #     batches = taught_courses.values_list('batch', flat=True).distinct()
-        
-    #     batch_q = Q(batch__in=batches, announcement_type='batch')
-    #     course_q = Q(course__in=taught_courses, announcement_type='course')
-        
-    #     return Announcement.objects.filter(batch_q | course_q).distinct()
-    
-    # def perform_create(self, serializer):
-    #     """Create announcement based on type"""
-    #     announcement_type = self.request.data.get('announcement_type', 'course')
-        
-    #     if announcement_type == 'batch':
-    #         # Try batch_id first, then batch_name
-    #         batch_id = self.request.data.get('batch')
-            
-    #         if  batch_id:
-    #             batch = get_object_or_404(Batch, id = batch_id)
-    #         else:
-    #             raise serializers.ValidationError({"batch": "Batch ID or name required"})
-            
-    #         serializer.save(batch=batch, created_by=self.request.user)
-        
-    #     elif announcement_type == 'course':
-    #         course_id = self.request.data.get('course')
-    #         if not course_id:
-    #             raise serializers.ValidationError({"course": "Course ID required"})
-    #         course = get_object_or_404(Course, id=course_id)
-    #         serializer.save(course=course, created_by=self.request.user)
-        
-    #     elif announcement_type == 'week':
-    #         week_id = self.request.data.get('week')
-    #         if not week_id:
-    #             raise serializers.ValidationError({"week": "Week ID required"})
-    #         week = get_object_or_404(Week, id=week_id)
-    #         serializer.save(week=week, created_by=self.request.user)
-        
-    #     else:
-    #         serializer.save(created_by=self.request.user)
-    
-    # @action(detail=False, methods=['get'])
-    # def by_course(self, request):
-    #     """Get announcements for a specific course"""
-    #     course_id = request.query_params.get('course_id')
-    #     if not course_id:
-    #         return Response({'error': 'course_id required'}, status=400)
-        
-    #     course = get_object_or_404(Course, id=course_id)
-        
-    #     # Check access
-    #     if request.user.role == 'student' and request.user not in course.students.all():
-    #         return Response({'error': 'Not enrolled'}, status=403)
-        
-    #     # Get batch announcements for this course's batch
-    #     batch_announcements = Announcement.objects.filter(
-    #         batch=course.batch,
-    #         announcement_type='batch'
-    #     )
-        
-    #     # Get course announcements
-    #     course_announcements = Announcement.objects.filter(
-    #         course=course,
-    #         announcement_type='course'
-    #     )
-        
-    #     all_announcements = (batch_announcements | course_announcements).order_by('-created_at')
-    #     serializer = self.get_serializer(all_announcements, many=True)
-        
-    #     return Response({
-    #         'course': {
-    #             'id': course.id,
-    #             'code': course.code,
-    #             'name': course.name,
-    #             'batch': course.batch.name if course.batch else None
-    #         },
-    #         'announcements': serializer.data
-    #     })
-    
-    # @action(detail=False, methods=['get'], url_path='week/(?P<week_id>[^/.]+)')
-    # def by_week(self, request, week_id=None):
-    #     """Get announcements for a specific week"""
-    #     week = get_object_or_404(Week, id=week_id)
-        
-    #     if request.user.role == 'student' and request.user not in week.course.students.all():
-    #         return Response({'error': 'Not enrolled'}, status=403)
-        
-    #     announcements = Announcement.objects.filter(week=week)
-    #     serializer = self.get_serializer(announcements, many=True)
-        
-    #     return Response({
-    #         'week': {
-    #             'id': week.id,
-    #             'order': week.order,
-    #             'topic': week.topic
-    #         },
-    #         'announcements': serializer.data
-    #     })
-    # @action(detail=False, methods=['post'], url_path='courses/(?P<course_id>[^/.]+)/week/(?P<week_number>[^/.]+)/create')
-    # def create_for_week(self, request, week_number=None,course_id = None):
-    #     """Create announcement for a specific week"""
-    #     course = get_object_or_404(Course, id=course_id)
-    #     week = get_object_or_404(Week, course=course, order=week_number)
-        
-    #     if request.user.role != 'instructor':
-    #         return Response({'error': 'Only instructors can create announcements'}, status=403)
-        
-    #     if request.user != week.course.instructor:
-    #         return Response({'error': 'Not your course'}, status=403)
-        
-    #     serializer = self.get_serializer(data=request.data)
-    #     if serializer.is_valid():
-    #         announcement = serializer.save(
-    #             week=week,
-    #             created_by=request.user,
-    #             announcement_type='week'
-    #         )
-    #         return Response(serializer.data, status=201)
-        
-    #     return Response(serializer.errors, status=400)
     
 class AcademicCalendarViewSet(viewsets.ModelViewSet):
     """
@@ -833,3 +723,163 @@ class CourseContentViewSet(viewsets.ModelViewSet):
             target_serializer.save(week=week)
 
         return Response(target_serializer.data, status=status.HTTP_201_CREATED)
+
+class FacultyBatchYearsView(APIView):
+    """
+    Get all faculties with their available batch years
+    This endpoint is used to populate the announcement creation form
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        faculties = Faculty.objects.all()
+        result = []
+        
+        for faculty in faculties:
+            # Get all batches from departments in this faculty
+            batches = Batch.objects.filter(
+                department__faculty=faculty
+            ).values('year').distinct().order_by('-year')
+            
+            batch_years = [batch['year'] for batch in batches]
+            
+            result.append({
+                'faculty_id': faculty.id,
+                'faculty_name': faculty.name,
+                'faculty_code': faculty.code,
+                'batch_years': batch_years
+            })
+        
+        return Response(result)
+
+class GlobalAnnouncementListView(generics.ListCreateAPIView):
+    """
+    List and create global announcements
+    """
+    serializer_class = GlobalAnnouncementSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        queryset = GlobalAnnouncement.objects.all()
+        
+        # Filter by active status if specified
+        is_active = self.request.query_params.get('is_active')
+        if is_active is not None:
+            queryset = queryset.filter(is_active=is_active.lower() == 'true')
+        
+        # Filter by target type
+        target_type = self.request.query_params.get('target_type')
+        if target_type:
+            queryset = queryset.filter(target_type=target_type)
+        
+        return queryset
+    
+    def perform_create(self, serializer):
+        serializer.save()
+
+class GlobalAnnouncementDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Retrieve, update or delete a global announcement
+    """
+    queryset = GlobalAnnouncement.objects.all()
+    serializer_class = GlobalAnnouncementSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class StudentAnnouncementListView(generics.ListAPIView):
+    """
+    Get all announcements visible to the current student user
+    This endpoint is used by students to view their announcements
+    """
+    serializer_class = StudentAnnouncementSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        user = self.request.user
+        
+        # Check if user has a student profile
+        if not hasattr(user, 'student_profile'):
+            return GlobalAnnouncement.objects.none()
+        
+        student_profile = user.student_profile
+        queryset = GlobalAnnouncement.objects.filter(
+            is_active=True,
+            publish_from__lte=timezone.now()
+        )
+        
+        # Filter by publish_until if set
+        queryset = queryset.filter(
+            Q(publish_until__isnull=True) | Q(publish_until__gte=timezone.now())
+        )
+        
+        # Filter announcements that are visible to this student
+        visible_announcements = []
+        for announcement in queryset:
+            if announcement.is_visible_to_student(student_profile):
+                visible_announcements.append(announcement.id)
+        
+        return GlobalAnnouncement.objects.filter(id__in=visible_announcements)
+
+class BulkAnnouncementCreateView(APIView):
+    """
+    Create announcements for multiple targets at once
+    This endpoint allows sending the same announcement to multiple faculties/batches/departments
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        data = request.data
+        targets = data.get('targets', [])
+        announcement_data = {
+            'title': data.get('title'),
+            'content': data.get('content'),
+            'pdf_file': request.FILES.get('pdf_file'),
+            'created_by': request.user,
+            'is_active': data.get('is_active', True),
+            'publish_from': data.get('publish_from', timezone.now()),
+            'publish_until': data.get('publish_until'),
+        }
+        
+        created_announcements = []
+        errors = []
+        
+        for target in targets:
+            try:
+                # Validate target data
+                target_serializer = AnnouncementTargetSerializer(data=target)
+                if not target_serializer.is_valid():
+                    errors.append({
+                        'target': target,
+                        'errors': target_serializer.errors
+                    })
+                    continue
+                
+                # Create announcement for this target
+                announcement = GlobalAnnouncement.objects.create(
+                    **announcement_data,
+                    target_type=target['target_type']
+                )
+                
+                # Add relationships based on target type
+                if target['target_type'] == 'faculty':
+                    announcement.faculties.set(target.get('faculty_ids', []))
+                elif target['target_type'] == 'department':
+                    announcement.departments.set(target.get('department_ids', []))
+                elif target['target_type'] == 'batch':
+                    announcement.batches.set(target.get('batch_ids', []))
+                elif target['target_type'] == 'program':
+                    announcement.programs.set(target.get('program_ids', []))
+                
+                created_announcements.append(GlobalAnnouncementSerializer(announcement).data)
+                
+            except Exception as e:
+                errors.append({
+                    'target': target,
+                    'error': str(e)
+                })
+        
+        return Response({
+            'created_announcements': created_announcements,
+            'errors': errors,
+            'total_created': len(created_announcements),
+            'total_errors': len(errors)
+        }, status=status.HTTP_201_CREATED if created_announcements else status.HTTP_400_BAD_REQUEST)

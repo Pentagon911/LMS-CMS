@@ -29,6 +29,7 @@ const Header = () => {
       ],
       student: [
         { name: 'Enrollments', path: '/lms/academics/enrollment', icon: <MdMenuBook /> },
+        { name: 'Enrollment History', path: '/lms/academics/enrollment-history', icon: <MdSchool /> },
         { name: 'Exam Results', path: '/lms/academics/results', icon: <MdGrade /> },
         { name: 'Exam Timetables', path: '/lms/academics/time-tables', icon: <MdEvent /> },
       ],
