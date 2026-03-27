@@ -906,4 +906,4 @@ class StudentAnnouncementSerializer(serializers.ModelSerializer):
     """Simplified serializer for student view"""
     class Meta:
         model = GlobalAnnouncement
-        fields = ['id', 'title', 'content', 'pdf_file', 'created_at', 'publish_from']
+        fields = ['id', 'title', 'content', 'pdf_file', 'created_at', 'created_by', 'is_active']
