@@ -97,14 +97,7 @@ const ReviewQueue = () => {
   };
 
   if (loading) {
-    return (
-      <div className="review-queue-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p></p>
-        </div>
-      </div>
-    );
+    return;
   }
 
   return (

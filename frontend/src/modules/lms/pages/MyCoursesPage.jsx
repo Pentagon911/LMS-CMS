@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   MdAdd, MdEdit, MdDelete, MdClose, MdColorLens,
-  MdPerson, MdPlayArrow, MdSave, MdCancel
+  MdPerson, MdPlayArrow, MdSave, MdCancel, MdFilterList,
+  MdClear
 } from 'react-icons/md';
 import request from '../../../utils/requestMethods.jsx';
 import { jwtDecode } from "jwt-decode";
@@ -12,10 +13,19 @@ import './MyCoursesPage.css';
 const MyCoursesPage = () => {
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
+  const [filteredCourses, setFilteredCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
   const [roleLoading, setRoleLoading] = useState(true);
+
+  // Filter states for admin
+  const [filters, setFilters] = useState({
+    semester: '',
+    instructor: '',
+    program: ''
+  });
+  const [showFilters, setShowFilters] = useState(false);
 
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
@@ -84,6 +94,15 @@ const MyCoursesPage = () => {
     }
   }, [userRole, roleLoading]);
 
+  // Apply filters when courses or filters change
+  useEffect(() => {
+    if (userRole === 'admin' && courses.length > 0) {
+      applyFilters();
+    } else {
+      setFilteredCourses(courses);
+    }
+  }, [courses, filters, userRole]);
+
   // Fetch additional data for admin
   useEffect(() => {
     if (userRole === 'admin') {
@@ -98,9 +117,11 @@ const MyCoursesPage = () => {
       setLoading(true);
       const data = await request.GET('/lms/courses/');
       setCourses(data);
+      setFilteredCourses(data);
     } catch (err) {
       console.error('Error fetching courses:', err);
       setCourses([]);
+      setFilteredCourses([]);
     } finally {
       setLoading(false);
     }
@@ -142,6 +163,36 @@ const MyCoursesPage = () => {
     } catch (err) {
       console.error('Error fetching departments:', err);
     }
+  };
+
+  const applyFilters = () => {
+    let filtered = [...courses];
+    
+    // Filter by semester
+    if (filters.semester) {
+      filtered = filtered.filter(course => course.semester === parseInt(filters.semester));
+    }
+    
+    // Filter by instructor
+    if (filters.instructor) {
+      filtered = filtered.filter(course => course.instructor?.id === parseInt(filters.instructor) || course.instructor === parseInt(filters.instructor));
+    }
+    
+    // Filter by program
+    if (filters.program) {
+      filtered = filtered.filter(course => course.program?.id === parseInt(filters.program) || course.program === parseInt(filters.program));
+    }
+    
+    setFilteredCourses(filtered);
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      semester: '',
+      instructor: '',
+      program: ''
+    });
+    setFilteredCourses(courses);
   };
 
   const handleContinue = (courseId) => {
@@ -329,33 +380,111 @@ const MyCoursesPage = () => {
     );
   }
 
-  // Admin View
+  // Admin View with Filters
   if (userRole === 'admin') {
+    // Get unique semesters from courses for filter dropdown
+    const semesters = [...new Set(courses.map(c => c.semester))].sort((a, b) => a - b);
+    
     return (
       <div className="my-courses-container">
         <div className="my-courses-header">
-          <h1>Course Management</h1>
-          <p className="course-welcome">Manage all courses in the system</p>
-          <button className="add-course-btn" onClick={() => setShowAddModal(true)}>
-            <MdAdd /> Add New Course
-          </button>
+          <div className="header-left">
+            <h1>Course Management</h1>
+            <p className="course-welcome">Manage all courses in the system</p>
+          </div>
+          <div className="header-actions">
+            <button className="filter-toggle-btn" onClick={() => setShowFilters(!showFilters)}>
+              <MdFilterList /> {showFilters ? 'Hide Filters' : 'Show Filters'}
+            </button>
+            <button className="add-course-btn" onClick={() => setShowAddModal(true)}>
+              <MdAdd /> Add New Course
+            </button>
+          </div>
         </div>
+
+        {/* Filters Section */}
+        {showFilters && (
+          <div className="filters-section">
+            <div className="filters-header">
+              <MdFilterList /> Filter Courses
+              <button className="clear-filters-btn" onClick={clearFilters}>
+                <MdClear /> Clear All
+              </button>
+            </div>
+            <div className="filters-grid">
+              <div className="filter-group">
+                <label>Semester</label>
+                <select
+                  value={filters.semester}
+                  onChange={(e) => setFilters({ ...filters, semester: e.target.value })}
+                >
+                  <option value="">All Semesters</option>
+                  {semesters.map(sem => (
+                    <option key={sem} value={sem}>Semester {sem}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="filter-group">
+                <label>Instructor</label>
+                <select
+                  value={filters.instructor}
+                  onChange={(e) => setFilters({ ...filters, instructor: e.target.value })}
+                >
+                  <option value="">All Instructors</option>
+                  {instructors.map(instructor => (
+                    <option key={instructor.id} value={instructor.id}>
+                      {instructor.first_name} {instructor.last_name} ({instructor.username})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="filter-group">
+                <label>Program</label>
+                <select
+                  value={filters.program}
+                  onChange={(e) => setFilters({ ...filters, program: e.target.value })}
+                >
+                  <option value="">All Programs</option>
+                  {programs.map(program => (
+                    <option key={program.id} value={program.id}>
+                      {program.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="filter-results">
+              Found {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''}
+            </div>
+          </div>
+        )}
 
         <div className="courses-grid">
-          {courses.map(course => (
-            <CourseCard
-              key={course.id}
-              course={course}
-              showActions={true}
-              onEdit={openEditModal}
-              onDelete={handleDeleteCourse}
-              onContinue={handleContinue}
-              isInstructor={false}
-            />
-          ))}
+          {filteredCourses.length === 0 ? (
+            <div className="empty-state">
+              <p>No courses found matching the selected filters.</p>
+              <button className="clear-filters-btn" onClick={clearFilters}>
+                Clear Filters
+              </button>
+            </div>
+          ) : (
+            filteredCourses.map(course => (
+              <CourseCard
+                key={course.id}
+                course={course}
+                showActions={true}
+                onEdit={openEditModal}
+                onDelete={handleDeleteCourse}
+                onContinue={handleContinue}
+                isInstructor={false}
+              />
+            ))
+          )}
         </div>
 
-        {/* Add Course Modal */}
+        {/* Add Course Modal (same as before) */}
         {showAddModal && (
           <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -368,6 +497,7 @@ const MyCoursesPage = () => {
               <div className="modal-body">
                 {formError && <div className="error-message">{formError}</div>}
                 <form onSubmit={(e) => { e.preventDefault(); handleAddCourse(); }}>
+                  {/* Form fields remain the same */}
                   <div className="form-row">
                     <div className="form-group">
                       <label>Course Code *</label>
@@ -548,6 +678,7 @@ const MyCoursesPage = () => {
               <div className="modal-body">
                 {formError && <div className="error-message">{formError}</div>}
                 <form onSubmit={(e) => { e.preventDefault(); handleEditCourse(); }}>
+                  {/* Edit form fields remain the same */}
                   <div className="form-row">
                     <div className="form-group">
                       <label>Course Code</label>
@@ -723,7 +854,7 @@ const MyCoursesPage = () => {
           ))}
         </div>
 
-        {/* Edit Course Modal for Instructor - Only Color Field Editable */}
+        {/* Edit Course Modal for Instructor */}
         {showEditModal && editingCourse?.isInstructor && (
           <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -736,6 +867,7 @@ const MyCoursesPage = () => {
               <div className="modal-body">
                 {formError && <div className="error-message">{formError}</div>}
                 <form onSubmit={(e) => { e.preventDefault(); handleEditCourse(); }}>
+                  {/* Same as before - instructor edit form */}
                   <div className="form-row">
                     <div className="form-group">
                       <label>Course Code</label>
