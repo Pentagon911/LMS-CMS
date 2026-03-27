@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import TextEditor from './TextEditor';
 import request from '../../../utils/requestMethods.jsx';
-import { MdDescription, MdCampaign, MdQuiz, MdClose, MdAttachFile, MdAccessTime, MdStar, MdFileUpload, MdCheckCircle, MdRadioButtonUnchecked } from 'react-icons/md';
+import { MdDescription, MdCampaign, MdQuiz, MdClose, MdAttachFile, MdAccessTime, MdStar, MdFileUpload, MdCheckCircle, MdRadioButtonUnchecked, MdLink } from 'react-icons/md';
 import './AddContentModal.css';
 
 const AddContentModal = ({ closeModal, onAdd, weekId, weekNumber, courseId }) => {
@@ -18,6 +18,10 @@ const AddContentModal = ({ closeModal, onAdd, weekId, weekNumber, courseId }) =>
   });
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  
+  // New state for link option
+  const [contentSource, setContentSource] = useState('file'); // 'file' or 'link'
+  const [linkUrl, setLinkUrl] = useState('');
 
   useEffect(() => {
     if (contentType === 'quiz') {
@@ -48,12 +52,11 @@ const AddContentModal = ({ closeModal, onAdd, weekId, weekNumber, courseId }) =>
   };
 
   const getContentUrl = () => {
-    // weekId is now the index (0-based), so we use weekId + 1 for API calls
     const weekNumberForApi = weekId + 1;
     
     switch (contentType) {
       case 'content':
-        return `/cms/weeks/${weekNumberForApi}/upload/`;
+        return `/cms/courses/${courseId}/dashboard/add_content/`;
       case 'announcement':
         return `/cms/courses/${courseId}/weeks/${weekNumberForApi}/announcement/create/`;
       case 'quiz':
@@ -63,73 +66,169 @@ const AddContentModal = ({ closeModal, onAdd, weekId, weekNumber, courseId }) =>
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    try {
-      setSubmitting(true);
-      const url = getContentUrl();
-      const weekNumberForApi = weekId + 1;
-      
-      if (contentType === 'quiz') {
-        const quizData = {
-          week_id: weekNumberForApi,  // Send the 1-based week number
-          start_time: startTime
-        };
-        
-        const savedContent = await request.POST(url, quizData);
-        // Add the quiz ID and type to the saved content for the response
-        savedContent.quizId = selectedQuiz?.quizId;
-        savedContent.type = 'quiz';
-        savedContent.title = selectedQuiz?.title;
-        onAdd(savedContent);
-        closeModal();
-      } 
-      else {
-        const formData = new FormData();
-        
-        formData.append('type', contentType);
-        formData.append('title', title);
-        formData.append('weekId', weekNumberForApi);
-        formData.append('weekNumber', weekNumber);
-        
-        if (courseId) {
-          formData.append('courseId', courseId);
-        }
-        
-        if (contentType === 'content') {
-          const cleanedContent = content.trim() === "<p><br></p>" || content === "<p></p>" ? "" : content;
-          formData.append('content', cleanedContent);
-          formData.append('format', 'Document');
-          formData.append('createdAt', new Date().toISOString());
-          
-          attachments.forEach((file, index) => {
-            formData.append(`attachment_${index}`, file);
-          });
-        } 
-        else if (contentType === 'announcement') {
-          const cleanedContent = content.trim() === "<p><br></p>" || content === "<p></p>" ? "" : content;
-          formData.append('message', cleanedContent);
-          formData.append('postedAt', new Date().toISOString());
-          
-          attachments.forEach((file, index) => {
-            formData.append(`attachment_${index}`, file);
-          });
-        }
-        
-        const savedContent = await request.POST(url, formData, {
-          isFormData: true
-        });
-        onAdd(savedContent);
-        closeModal();
+  const validateForm = () => {
+    if (contentType === 'content') {
+      if (!title) {
+        alert('Please enter a title');
+        return false;
       }
-    } catch (err) {
-      console.error("Failed to save content", err);
-      alert("Failed to save content. Please try again.");
-    } finally {
-      setSubmitting(false);
+      if (!content) {
+        alert('Please enter content description');
+        return false;
+      }
+      if (contentSource === 'file' && attachments.length === 0) {
+        alert('Please upload at least one file');
+        return false;
+      }
+      if (contentSource === 'link' && !linkUrl) {
+        alert('Please enter a valid URL');
+        return false;
+      }
+      if (contentSource === 'link' && linkUrl && !isValidUrl(linkUrl)) {
+        alert('Please enter a valid URL (e.g., https://example.com)');
+        return false;
+      }
+    } else if (contentType === 'announcement') {
+      if (!title) {
+        alert('Please enter an announcement title');
+        return false;
+      }
+      if (!content) {
+        alert('Please enter announcement message');
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const isValidUrl = (url) => {
+    try {
+      new URL(url);
+      return true;
+    } catch (e) {
+      return false;
     }
   };
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (!validateForm()) {
+    return;
+  }
+  
+  try {
+    setSubmitting(true);
+    const url = getContentUrl();
+    const weekNumberForApi = weekId + 1;
+    
+    if (contentType === 'quiz') {
+      const quizData = {
+        week_id: weekNumberForApi,
+        start_time: startTime
+      };
+      
+      const response = await request.POST(url, quizData);
+      
+      // Map the response to the expected format
+      const savedContent = {
+        ...response,
+        quizId: selectedQuiz?.quizId,
+        type: 'quiz',
+        title: selectedQuiz?.title,
+        duration: selectedQuiz?.time || '15 min',
+        questionsCount: selectedQuiz?.questionsCount || 0
+      };
+      
+      onAdd(savedContent);
+      closeModal();
+    } 
+    else {
+      const formData = new FormData();
+      
+      // Basic fields
+      formData.append('week_order', weekNumberForApi);
+      formData.append('title', title);
+      formData.append('type', contentType);
+      
+      if (courseId) {
+        formData.append('courseId', courseId);
+      }
+      
+      if (contentType === 'content') {
+        const cleanedContent = content.trim() === "<p><br></p>" || content === "<p></p>" ? "" : content;
+        formData.append('content', cleanedContent);
+        
+        if (contentSource === 'file') {
+          attachments.forEach((file) => {
+            formData.append('attachment', file);
+          });
+        } else if (contentSource === 'link') {
+          formData.append('link', linkUrl);
+        }
+      } 
+      else if (contentType === 'announcement') {
+        const cleanedContent = content.trim() === "<p><br></p>" || content === "<p></p>" ? "" : content;
+        formData.append('message', cleanedContent);
+        formData.append('postedAt', new Date().toISOString());
+        
+        attachments.forEach((file) => {
+          formData.append('attachment', file);
+        });
+      }
+      
+      // Debug: Log form data
+      for (let pair of formData.entries()) {
+        console.log(pair[0] + ': ' + (pair[1] instanceof File ? pair[1].name : pair[1]));
+      }
+      
+      const response = await request.UPLOAD(url, formData, {
+        isFormData: true
+      });
+      
+      console.log("Backend response:", response);
+      
+      // Map the backend response to the format expected by WeekCard
+      let savedContent;
+      
+      if (contentType === 'content') {
+        savedContent = {
+          id: response.id,
+          type: 'content',
+          title: response.title,
+          content: response.description, // Backend sends 'description', UI expects 'content'
+          format: response.item_type, // Backend sends 'item_type', UI expects 'format'
+          fileUrl: response.file, // Backend sends 'file', UI expects 'fileUrl'
+          fileSize: response.fileSize,
+          createdAt: response.created_at,
+          // Include any other fields from response
+          ...response
+        };
+      } 
+      else if (contentType === 'announcement') {
+        savedContent = {
+          id: response.id,
+          type: 'announcement',
+          title: response.title,
+          message: response.message || content,
+          date: new Date().toLocaleDateString(),
+          postedAt: response.created_at || new Date().toISOString(),
+          ...response
+        };
+      }
+      
+      console.log("Mapped content for UI:", savedContent);
+      onAdd(savedContent);
+      closeModal();
+    }
+  } catch (err) {
+    console.error("Failed to save content", err);
+    console.error("Error details:", err.response || err);
+    alert("Failed to save content. Please try again.");
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   return (
     <div className="acm-modal-overlay" onClick={closeModal}>
@@ -151,6 +250,9 @@ const AddContentModal = ({ closeModal, onAdd, weekId, weekNumber, courseId }) =>
                 onClick={() => {
                   setContentType('content');
                   setSelectedQuiz(null);
+                  setContentSource('file');
+                  setLinkUrl('');
+                  setAttachments([]);
                 }}
               >
                 <MdDescription size={20} />
@@ -197,7 +299,7 @@ const AddContentModal = ({ closeModal, onAdd, weekId, weekNumber, courseId }) =>
 
           {(contentType === 'content' || contentType === 'announcement') && (
             <div className="acm-form-group">
-              <label>{contentType === 'content' ? 'Content' : 'Announcement Message'}</label>
+              <label>{contentType === 'content' ? 'Description' : 'Announcement Message'}</label>
               <TextEditor
                 value={content}
                 onChange={setContent}
@@ -207,7 +309,109 @@ const AddContentModal = ({ closeModal, onAdd, weekId, weekNumber, courseId }) =>
             </div>
           )}
 
-          {(contentType === 'content' || contentType === 'announcement') && (
+          {contentType === 'content' && (
+            <>
+              <div className="acm-form-group">
+                <label>Content Source</label>
+                <div className="acm-type-selector">
+                  <button
+                    type="button"
+                    className={`acm-type-btn ${contentSource === 'file' ? 'acm-active' : ''}`}
+                    onClick={() => {
+                      setContentSource('file');
+                      setLinkUrl('');
+                    }}
+                  >
+                    <MdFileUpload size={20} />
+                    <span>Upload File</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`acm-type-btn ${contentSource === 'link' ? 'acm-active' : ''}`}
+                    onClick={() => {
+                      setContentSource('link');
+                      setAttachments([]);
+                    }}
+                  >
+                    <MdLink size={20} />
+                    <span>External Link</span>
+                  </button>
+                </div>
+              </div>
+
+              {contentSource === 'file' && (
+                <div className="acm-form-group">
+                  <label>
+                    <MdAttachFile size={18} />
+                    Attachments (Required)
+                  </label>
+                  
+                  <div className="acm-file-upload-area">
+                    <input
+                      type="file"
+                      id="acm-file-upload"
+                      multiple
+                      onChange={handleFileUpload}
+                      className="acm-file-input"
+                      accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.mp4,.zip"
+                      disabled={submitting}
+                    />
+                    <label htmlFor="acm-file-upload" className="acm-file-upload-label">
+                      <span className="acm-upload-icon">+</span>
+                      <span className="acm-upload-text">
+                        {submitting ? 'Uploading...' : 'Click to upload files'}
+                      </span>
+                      <span className="acm-upload-hint">PDF (max 10MB), Videos (max 100MB)</span>
+                    </label>
+                  </div>
+
+                  {attachments.length > 0 && (
+                    <div className="acm-file-list">
+                      {attachments.map((file, index) => (
+                        <div key={index} className="acm-file-item">
+                          <span className="acm-file-icon"><MdFileUpload /></span>
+                          <span className="acm-file-name">{file.name}</span>
+                          <span className="acm-file-size">
+                            {(file.size / 1024).toFixed(1)} KB
+                          </span>
+                          <button
+                            type="button"
+                            className="acm-file-remove"
+                            onClick={() => removeAttachment(index)}
+                            title="Remove file"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {contentSource === 'link' && (
+                <div className="acm-form-group">
+                  <label>
+                    <MdLink size={18} />
+                    External Link (Required)
+                  </label>
+                  <input
+                    type="url"
+                    value={linkUrl}
+                    onChange={(e) => setLinkUrl(e.target.value)}
+                    placeholder="https://example.com/resource"
+                    className="acm-input"
+                    required
+                  />
+                  <small className="acm-hint">
+                    Enter a valid URL including http:// or https://
+                  </small>
+                </div>
+              )}
+            </>
+          )}
+
+          {(contentType === 'announcement') && (
             <div className="acm-form-group">
               <label>
                 <MdAttachFile size={18} />
@@ -229,7 +433,7 @@ const AddContentModal = ({ closeModal, onAdd, weekId, weekNumber, courseId }) =>
                   <span className="acm-upload-text">
                     {submitting ? 'Uploading...' : 'Click to upload files'}
                   </span>
-                  <span className="acm-upload-hint">PDF, DOC, PPT, Images, Videos (max 50MB each)</span>
+                  <span className="acm-upload-hint">PDF (max 10MB), Videos (max 100MB)</span>
                 </label>
               </div>
 
@@ -326,11 +530,7 @@ const AddContentModal = ({ closeModal, onAdd, weekId, weekNumber, courseId }) =>
             <button 
               type="submit" 
               className="acm-submit-btn"
-              disabled={
-                ((contentType === 'content' || contentType === 'announcement') && (!title || !content)) ||
-                (contentType === 'quiz' && (!selectedQuiz || !startTime)) ||
-                submitting
-              }
+              disabled={submitting}
             >
               {submitting ? 'Saving...' : `Add ${contentType}`}
             </button>

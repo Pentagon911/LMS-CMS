@@ -55,8 +55,7 @@ const ManageEnrollments = () => {
   // Fetch all students (users with role 'student') to get username mapping
   const fetchStudents = async () => {
     try {
-      // Adjust endpoint to get all students (e.g., /api/users/?role=student)
-      const response = await request.GET('/lms/users/?role=student');
+      const response = await request.GET('/users/students');
       setStudents(response.results || response);
     } catch (err) {
       console.error('Failed to fetch students:', err);
@@ -76,7 +75,7 @@ const ManageEnrollments = () => {
   }, {});
 
   const studentMap = students.reduce((map, student) => {
-    map[student.id] = student.username; // assuming student object has username field
+    map[student.id] = student.profile['student_id']; // assuming student object has username field
     return map;
   }, {});
 

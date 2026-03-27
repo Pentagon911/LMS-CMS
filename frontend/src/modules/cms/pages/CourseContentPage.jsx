@@ -97,12 +97,12 @@ const CourseContentPage = () => {
     switch(item.type) {
       case 'content':
         if (item.fileUrl) {
-          window.open(item.fileUrl, '_blank');
+          window.open(`${request.getBaseUrl()}${item.fileUrl}`, '_blank');
         }
         break;
         
       case 'quiz':
-        if (user && user.role !== 'student') {
+        if (user && tokenData.role !== 'student') {
         navigate(`/cms/quizes/${item.quizId}/instructor`);
       } else {
         navigate(`/cms/quizes/${item.quizId}`);
@@ -119,7 +119,7 @@ const CourseContentPage = () => {
   };
 
   const handleAddContent = async (weekIndex, newItem) => {
-    if (!user || user.role === 'student') return;
+    if (!user || tokenData.role === 'student') return;
     
     try {
       if (!['content', 'quiz', 'announcement'].includes(newItem.type)) {
@@ -144,7 +144,7 @@ const CourseContentPage = () => {
         apiUrl = `/cms/courses/${moduleId}/weeks/${weekIdNumber}/announcement/create/`;
         response = await request.POST(apiUrl, newItem);
       } else{
-        apiUrl = `/cms/weeks/${weekIdNumber}/upload/`;
+        apiUrl = `/cms/announcement/`;
         response = await request.POST(apiUrl, newItem);
       }
       
@@ -187,8 +187,8 @@ const CourseContentPage = () => {
       alert("Failed to add week. Please try again.");
     }
   };
-
-  const isLecturer = user?.role && user?.role !== 'student';
+  const tokenData = getUserFromToken();
+  const isLecturer = tokenData?.role && tokenData?.role !== 'student';
 
   if (loading) {
     return (
@@ -264,6 +264,7 @@ const CourseContentPage = () => {
             data={week}
             weekNumber={week.week || `Week ${index + 1}`}
             weekIndex={index}  // Pass the index (0-based)
+            courseId={moduleId}
             isLecturer={isLecturer}
             onContentClick={handleContentClick}
             onAddContent={(newItem) => handleAddContent(index, newItem)}

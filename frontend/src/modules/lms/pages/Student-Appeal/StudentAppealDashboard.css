@@ -5,7 +5,7 @@
   margin: 0 auto;
   padding: 24px;
   min-height: calc(100vh - 70px);
-  background: #f8fafd;
+  background: linear-gradient(135deg, #aac1d7 0%, #f1f5f9 100%);
 }
 
 body.dark-mode .student-dashboard-container {

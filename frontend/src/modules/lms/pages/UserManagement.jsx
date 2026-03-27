@@ -64,13 +64,13 @@ const UserManagement = () => {
       username: '',
       email: '',
       password: '',
+      confirm_password: '',
       first_name: '',
       last_name: '',
       role: 'student',
       phone_number: '',
       department: '',
       program: '',
-      current_semester: 1
     });
     setShowModal(true);
   };
@@ -95,7 +95,7 @@ const UserManagement = () => {
   const handleDeleteUser = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        await request.DELETE(`users/profile/${userId}/`);
+        await request.DELETE(`/users/profile/${userId}/`);
         setUsers(prev => prev.filter(user => user.id !== userId));
         // Refresh stats after deletion
         fetchStats();
@@ -392,16 +392,6 @@ const UserManagement = () => {
                     />
                   </div>
 
-                  <div className="form-group">
-                    <label>Current Semester</label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="8"
-                      value={formData.current_semester}
-                      onChange={(e) => setFormData({ ...formData, current_semester: parseInt(e.target.value) })}
-                    />
-                  </div>
                 </>
               )}
 

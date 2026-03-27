@@ -332,6 +332,9 @@ body.dark-mode .acm-file-icon {
   font-size: 0.9rem;
   font-weight: 500;
 }
+body.dark-mode .acm-file-name{
+    color: #eef2f6;
+}
 
 .acm-file-size {
   font-size: 0.8rem;

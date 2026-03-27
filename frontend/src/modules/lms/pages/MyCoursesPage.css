@@ -1,7 +1,8 @@
 .my-courses-container {
   padding: 2rem;
-  background: #f8fafd;
+  background: linear-gradient(135deg, #aac1d7 0%, #f1f5f9 100%);
   min-height: 100vh;
+  
 }
 
 body.dark-mode .my-courses-container {
@@ -187,6 +188,7 @@ body.dark-mode .progress-bar span {
   font-size: 1rem;
   vertical-align: middle;
   margin-right: 0.25rem;
+  color: #1666b6;
 }
 
 /* Badges */
@@ -844,7 +846,7 @@ body.dark-mode .empty-state {
 .instructor-info {
   margin-top: 8px;
   font-size: 0.75rem;
-  color: #7f8c9f;
+  color: #0034d1;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -1030,10 +1032,14 @@ body.dark-mode .filter-toggle-btn:hover {
 .filters-section {
   background: white;
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: 1rem 1.5rem;
   margin-bottom: 2rem;
   border: 1px solid #eef2f6;
   animation: slideDown 0.3s ease;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
 }
 
 @keyframes slideDown {
@@ -1056,10 +1062,12 @@ body.dark-mode .filters-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   font-weight: 600;
   color: #1a2632;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+  padding-bottom: 0.5rem;
+  transform: translateY(-120px);
 }
 
 body.dark-mode .filters-header {
@@ -1078,6 +1086,7 @@ body.dark-mode .filters-header {
   padding: 0.3rem 0.6rem;
   border-radius: 6px;
   transition: all 0.2s;
+  transform: translateX(15px);
 }
 
 .clear-filters-btn:hover {
@@ -1085,22 +1094,28 @@ body.dark-mode .filters-header {
 }
 
 .filters-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  display: flex;
+  flex-direction: row;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
 }
 
 .filter-group {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  flex-direction: row;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
 }
 
 .filter-group label {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 500;
   color: #5a6778;
+  margin-bottom: 0;
 }
 
 body.dark-mode .filter-group label {
@@ -1108,13 +1123,14 @@ body.dark-mode .filter-group label {
 }
 
 .filter-group select {
-  padding: 0.6rem;
+   padding: 0.5rem;
   border: 1px solid #eef2f6;
-  border-radius: 8px;
+  border-radius: 6px;
   background: white;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s;
+  width: 100%;
 }
 
 .filter-group select:hover {
@@ -1132,32 +1148,126 @@ body.dark-mode .filter-group select {
 }
 
 .filter-results {
+
   margin-top: 1rem;
   padding-top: 1rem;
+  padding-right: 14px;
   border-top: 1px solid #eef2f6;
   font-size: 0.85rem;
-  color: #7f8c9f;
+  color: #ffffff;
   text-align: right;
+  background-color: #1666b6;
+  height: 50px;
+  width: 140px;
+  border-radius: 15px;
+  
 }
 
 body.dark-mode .filter-results {
   border-top-color: #2a313c;
-  color: #a0a8b7;
+  color: #e7eaf1;
 }
 
-/* Responsive for filters */
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+body.dark-mode .modal-content {
+  background: #1e242c;
+}
+
+/* Modal Header - Make it sticky */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #eef2f6;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+  border-radius: 16px 16px 0 0;
+}
+
+body.dark-mode .modal-header {
+  background: #1e242c;
+  border-bottom-color: #2a313c;
+}
+
+/* Modal Body with proper scrolling */
+.modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Ensure form elements don't overflow */
+.modal-body form {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Fix for form rows on mobile */
 @media (max-width: 768px) {
-  .header-actions {
-    width: 100%;
-    justify-content: space-between;
+  .modal-content {
+    width: 95%;
+    max-height: 85vh;
   }
   
-  .filters-grid {
+  .modal-body {
+    padding: 1rem;
+  }
+  
+  .form-row {
     grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+}
+
+/* For very small screens */
+@media (max-width: 480px) {
+  .modal-content {
+    max-height: 80vh;
   }
   
-  .filter-toggle-btn {
-    flex: 1;
-    justify-content: center;
+  .modal-header h2 {
+    font-size: 1.1rem;
+  }
+  
+  .modal-body {
+    padding: 1rem;
   }
 }

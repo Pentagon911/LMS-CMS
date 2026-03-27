@@ -1,0 +1,589 @@
+.enrollment-history-container {
+  padding: 2rem;
+  background: #f8fafd;
+  min-height: 100vh;
+}
+
+body.dark-mode .enrollment-history-container {
+  background: #0f1217;
+}
+
+/* Header Styles */
+.history-header {
+  margin-bottom: 2rem;
+}
+
+.history-header h1 {
+  font-size: 1.8rem;
+  color: #1a2632;
+  margin-bottom: 0.25rem;
+}
+
+body.dark-mode .history-header h1 {
+  color: #e5e9f0;
+}
+
+.history-subtitle {
+  color: #7f8c9f;
+  font-size: 0.95rem;
+}
+
+body.dark-mode .history-subtitle {
+  color: #a0a8b7;
+}
+
+/* Student Info Card */
+.student-info-card {
+  background-color: rgb(102, 115, 129);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.student-avatar {
+  width: 64px;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.student-details {
+  flex: 1;
+}
+
+.student-details h2 {
+  color: white;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.3rem;
+}
+
+.student-meta {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.85rem;
+}
+
+.meta-icon {
+  font-size: 1rem;
+}
+
+.stats-summary {
+  display: flex;
+  gap: 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #ffd966;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Filter Section */
+.filter-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  background: white;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid #eef2f6;
+}
+
+body.dark-mode .filter-section {
+  background: #1e242c;
+  border-color: #2a313c;
+}
+
+.filter-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: #1a2632;
+}
+
+body.dark-mode .filter-label {
+  color: #e5e9f0;
+}
+
+.filter-icon {
+  font-size: 1.2rem;
+}
+
+.semester-select {
+  padding: 0.5rem 1rem;
+  border: 1px solid #eef2f6;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+body.dark-mode .semester-select {
+  background: #2a313c;
+  border-color: #323b48;
+  color: #e5e9f0;
+}
+
+/* Semester Card */
+.semester-card {
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 2rem;
+  overflow: hidden;
+  border: 1px solid #eef2f6;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.semester-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+}
+
+body.dark-mode .semester-card {
+  background: #1e242c;
+  border-color: #2a313c;
+}
+
+.semester-header {
+  background: #f8fafd;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #eef2f6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+body.dark-mode .semester-header {
+  background: #2a313c;
+  border-bottom-color: #323b48;
+}
+
+.semester-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.semester-title h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #1a2632;
+}
+
+body.dark-mode .semester-title h2 {
+  color: #e5e9f0;
+}
+
+.credit-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.credit-badge.high-credits {
+  background: #e8f5e9;
+  color: #27ae60;
+}
+
+.credit-badge.medium-credits {
+  background: #fff3e0;
+  color: #f39c12;
+}
+
+.credit-badge.low-credits {
+  background: #ffebee;
+  color: #e74c3c;
+}
+
+body.dark-mode .credit-badge.high-credits {
+  background: #1a3a2a;
+  color: #6fbf73;
+}
+
+body.dark-mode .credit-badge.medium-credits {
+  background: #3a2a1a;
+  color: #ffb74d;
+}
+
+body.dark-mode .credit-badge.low-credits {
+  background: #3a2a2a;
+  color: #ff8a80;
+}
+
+.semester-stats {
+  display: flex;
+  gap: 1rem;
+}
+
+.stat-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: #e3f2fd;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  color: #2196f3;
+}
+
+body.dark-mode .stat-badge {
+  background: #1a2a3a;
+  color: #64b5f6;
+}
+
+/* Courses Table */
+.courses-table-container {
+  overflow-x: auto;
+}
+
+.courses-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.courses-table th,
+.courses-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #eef2f6;
+}
+
+.courses-table th {
+  background: #fafcff;
+  font-weight: 600;
+  color: #1a2632;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+body.dark-mode .courses-table th {
+  background: #1a1f2a;
+  color: #e5e9f0;
+  border-bottom-color: #2a313c;
+}
+
+body.dark-mode .courses-table td {
+  border-bottom-color: #2a313c;
+  color: #e5e9f0;
+}
+
+.course-row:hover {
+  background: #f8fafd;
+}
+
+body.dark-mode .course-row:hover {
+  background: #2a313c;
+}
+
+.course-code {
+  font-weight: 600;
+  color: #1a2632;
+}
+
+body.dark-mode .course-code {
+  color: #e5e9f0;
+}
+
+.course-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.course-credits {
+  font-weight: 500;
+}
+
+.offering-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.offering-badge.compulsory {
+  background: #e3f2fd;
+  color: #2196f3;
+}
+
+.offering-badge.elective {
+  background: #f3e5f5;
+  color: #9c27b0;
+}
+
+body.dark-mode .offering-badge.compulsory {
+  background: #1a2a3a;
+  color: #64b5f6;
+}
+
+body.dark-mode .offering-badge.elective {
+  background: #2a1a3a;
+  color: #ce93d8;
+}
+
+.gpa-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.gpa-yes {
+  background: #e8f5e9;
+  color: #27ae60;
+}
+
+.gpa-no {
+  background: #ffebee;
+  color: #e74c3c;
+}
+
+body.dark-mode .gpa-yes {
+  background: #1a3a2a;
+  color: #6fbf73;
+}
+
+body.dark-mode .gpa-no {
+  background: #3a2a2a;
+  color: #ff8a80;
+}
+
+.course-instructor {
+  color: #7f8c9f;
+}
+
+/* Semester Total Row */
+.semester-total {
+  background: #f8fafd;
+  font-weight: 500;
+}
+
+body.dark-mode .semester-total {
+  background: #2a313c;
+}
+
+.semester-total td {
+  padding: 0.75rem 1rem;
+  border-top: 2px solid #eef2f6;
+}
+
+body.dark-mode .semester-total td {
+  border-top-color: #3a4a5e;
+}
+
+.total-label {
+  font-weight: 600;
+}
+
+.total-value {
+  font-weight: 600;
+  color: #27ae60;
+}
+
+.gpa-total {
+  text-align: right;
+  color: #2196f3;
+}
+
+/* Overall Summary */
+.overall-summary {
+  margin-top: 2rem;
+}
+
+.summary-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid #eef2f6;
+}
+
+body.dark-mode .summary-card {
+  background: #1e242c;
+  border-color: #2a313c;
+}
+
+.summary-card h3 {
+  margin: 0 0 1rem 0;
+  color: #1a2632;
+  font-size: 1.2rem;
+}
+
+body.dark-mode .summary-card h3 {
+  color: #e5e9f0;
+}
+
+.summary-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafd;
+  border-radius: 12px;
+}
+
+body.dark-mode .summary-item {
+  background: #2a313c;
+}
+
+.summary-icon {
+  font-size: 2rem;
+  color: #1a2632;
+}
+
+body.dark-mode .summary-icon {
+  color: #e5e9f0;
+}
+
+.summary-info {
+  flex: 1;
+}
+
+.summary-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #27ae60;
+}
+
+.summary-label {
+  font-size: 0.8rem;
+  color: #7f8c9f;
+}
+
+/* Loading, Error, Empty States */
+.loading-state,
+.error-state,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #eef2f6;
+  border-top-color: #1a2632;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-state p {
+  color: #e74c3c;
+  margin-bottom: 1rem;
+}
+
+.retry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #1a2632;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.retry-btn:hover {
+  background: #2c3e50;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  color: #7f8c9f;
+  margin-bottom: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .enrollment-history-container {
+    padding: 1rem;
+  }
+
+  .student-info-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .student-meta {
+    justify-content: center;
+  }
+
+  .stats-summary {
+    justify-content: center;
+  }
+
+  .semester-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .courses-table th,
+  .courses-table td {
+    padding: 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .summary-stats {
+    grid-template-columns: 1fr;
+  }
+}
