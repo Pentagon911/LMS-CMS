@@ -82,7 +82,7 @@ const ExamResultsPage = () => {
 
   const fetchStudents = async () => {
     try {
-      const data = await request.GET('/api/users/?role=student');
+      const data = await request.GET('/users/students/');
       setStudents(data);
     } catch (err) {
       console.error('Error fetching students:', err);

@@ -12,7 +12,8 @@ from .models import User
 from .serializers import (
     UserRegistrationSerializer, UserDetailSerializer, 
     UserUpdateSerializer, 
-    # StudentProfileSerializer, AdminProfileSerializer, InstructorProfileSerializer,
+    StudentProfileSerializer, 
+    # AdminProfileSerializer, InstructorProfileSerializer,
     CustomTokenObtainPairSerializer, ChangePasswordSerializer,
 )
 from .permissions import (
@@ -141,7 +142,7 @@ class UserRegistrationView(generics.CreateAPIView):
         }, status=status.HTTP_201_CREATED)
 
 
-class UserDetailView(generics.RetrieveUpdateAPIView):
+class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     Retrieve or update user details.
     Users can update their own profile, admins can update any profile.
@@ -149,6 +150,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
     - GET Specific user profile (if authorized)
     - PUT/PATCH Update current user
     - PUT/PATCH Update specific user (admin only)
+    - DELETE Admin only
     """
     queryset = User.objects.all()
     permission_classes = [permissions.IsAuthenticated, IsAdminOrSelf]
@@ -370,3 +372,29 @@ class BulkUserCreateView(APIView):
             'total_errors': len(errors)
         }, status=status.HTTP_201_CREATED if created_users else status.HTTP_400_BAD_REQUEST)
 
+class UserRegistrationView(generics.CreateAPIView):
+    """
+    Public endpoint for user registration.
+    Anyone can register, but profile is created based on role.
+    """
+    serializer_class = StudentProfileSerializer
+    permission_classes = [IsAdminOrSelf]
+    
+    @transaction.atomic
+    def perform_create(self, serializer):
+        # Serializer's create method handles profile creation
+        serializer.save()
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        # Get the created user
+        user = serializer.instance
+        
+        # Return custom response
+        return Response({
+            'message': f'{user.role.capitalize()} registered successfully',
+            'user': UserDetailSerializer(user).data
+        }, status=status.HTTP_201_CREATED)

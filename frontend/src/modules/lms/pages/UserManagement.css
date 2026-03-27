@@ -2,7 +2,7 @@
 .user-management-container {
   padding: 2rem;
   min-height: 100vh;
-  background: #f8fafd;
+  background: linear-gradient(135deg, #aac1d7 0%, #f1f5f9 100%);
 }
 
 body.dark-mode .user-management-container {

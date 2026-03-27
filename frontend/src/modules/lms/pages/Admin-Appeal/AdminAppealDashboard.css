@@ -5,7 +5,7 @@
   max-width: 1400px;
   margin: 0 auto;
   min-height: calc(100vh - 70px);
-  background: #f8fafd;
+  background: linear-gradient(135deg, #aac1d7 0%, #f1f5f9 100%);
 }
 
 body.dark-mode .admin-dashboard-container {
