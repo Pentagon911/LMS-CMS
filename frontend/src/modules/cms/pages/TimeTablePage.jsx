@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { MdDownload, MdAdd, MdEdit, MdDelete, MdClose, MdFilterList, MdSchool, MdScience } from 'react-icons/md';
 import request from '../../../utils/requestMethods.jsx';
 import './TimeTablePage.css';
+import { getUserFromToken } from "../../../utils/auth.jsx";
 
 const TimetablePage = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('semester'); // 'semester' or 'practical'
+  const [role, setRole] = useState(null);
+  const [activeTab, setActiveTab] = useState('semester');
   
   // Data states
   const [semesterTimetables, setSemesterTimetables] = useState([]);
@@ -16,7 +17,6 @@ const TimetablePage = () => {
   const [userModules, setUserModules] = useState([]);
   const [faculties, setFaculties] = useState([]);
   
-  // Filter states
   const [semesterFilter, setSemesterFilter] = useState({
     year: '',
     semester: '',
@@ -45,17 +45,9 @@ const TimetablePage = () => {
   const years = ['2024', '2025', '2026', '2027', '2028'];
   const semesters = ['1', '2','3','4','5','6','7','8'];
 
-  // Get user from localStorage
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        const userData = JSON.parse(storedUser);
-        setUser(userData);
-      } catch (err) {
-        console.error("Failed to parse user", err);
-      }
-    }
+    const tokenData = getUserFromToken();
+    setRole(tokenData.role);
   }, []);
 
   // Load faculties
@@ -74,23 +66,7 @@ const TimetablePage = () => {
   // Load modules
   useEffect(() => {
     const fetchModules = async () => {
-      try {
-        const data = await request.GET('/lms/courses/');
-        setModules(data.results || data);
-        
-        // Get user's assigned modules (for students)
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-          const userData = JSON.parse(storedUser);
-          if (userData.role === 'student') {
-            setUserModules(data.results || data);
-          } else {
-            setUserModules(data.results || data);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to load modules", err);
-      }
+    
     };
     fetchModules();
   }, []);
@@ -192,41 +168,27 @@ const handleSubmit = async (e) => {
     formDataObj.append('year', formData.year);
     formDataObj.append('semester', formData.semester);
 
-    
     if (activeTab === 'semester') {
-      if (!formData.faculty) {
-        throw new Error("Please select a faculty");
-      }
+      if (!formData.faculty) throw new Error("Please select a faculty");
       formDataObj.append('faculty', formData.faculty);
     } else {
-      if (!formData.moduleCode) {
-        throw new Error("Please select a module");
-      }
-      formDataObj.append('faculty', formData.moduleCode);
+      if (!formData.moduleCode) throw new Error("Please select a module");
+      formDataObj.append('faculty', formData.moduleCode); 
     }
-    
-    // Add title
+
     if (formData.title) {
       formDataObj.append('title', formData.title);
     }
-    
-    // Append the file if it exists
+
     if (formData.file) {
       formDataObj.append('pdf', formData.file);
     } else if (!editingItem) {
       throw new Error("Please select a PDF file");
     }
-    
-    // Debug: Log FormData contents
-    console.log("FormData contents:");
-    for (let pair of formDataObj.entries()) {
-      console.log(pair[0], pair[1]);
-    }
-    
-    // Use UPLOAD helper which already handles FormData correctly
+
     let response;
     let endpoint;
-    
+
     if (activeTab === 'semester') {
       if (editingItem) {
         endpoint = `/cms/academic-calendars/${editingItem.id}/`;
@@ -244,59 +206,43 @@ const handleSubmit = async (e) => {
         response = await request.UPLOAD(endpoint, formDataObj);
       }
     }
-    
-    console.log("API Response:", response);
-    
-    // Rest of the code remains the same...
-    const responseData = response.data || response;
-    
-    const newItem = {
-      id: responseData.id || Date.now(),
-      year: responseData.year || formData.year,
-      semester: responseData.semester || formData.semester,
-      title: responseData.title || formData.title,
-      uploadedAt: responseData.created_at || responseData.uploaded_at || new Date().toISOString(),
-      fileUrl: responseData.pdf_url || responseData.file_url || (formData.file ? URL.createObjectURL(formData.file) : '')
-    };
-    
-    if (activeTab === 'semester') {
-      newItem.faculty = responseData.faculty || formData.faculty;
-      
-      if (editingItem) {
-        setSemesterTimetables(prev => prev.map(item => item.id === editingItem.id ? newItem : item));
-      } else {
-        setSemesterTimetables(prev => [...prev, newItem]);
-      }
-    } else {
-      newItem.moduleCode = responseData.faculty || formData.moduleCode;
-      newItem.moduleTitle = responseData.module_title || modules.find(m => m.code === formData.moduleCode)?.title || '';
-      
-      if (editingItem) {
-        setPracticalTimetables(prev => prev.map(item => item.id === editingItem.id ? newItem : item));
-      } else {
-        setPracticalTimetables(prev => [...prev, newItem]);
-      }
-    }
-    
+
+const responseData = response.data || response;
+const newItem = {
+  id: responseData.id,
+  year: responseData.year,
+  semester: responseData.semester,
+  title: responseData.title || formData.title || null,
+  pdf_url: responseData.pdf_url,         
+  uploaded_at: responseData.uploaded_at,   
+};
+
+if (activeTab === 'semester') {
+  newItem.faculty = responseData.faculty;
+} else {
+  newItem.faculty = responseData.faculty;  
+  newItem.moduleCode = responseData.faculty;
+  const module = modules.find(m => (m.code || m.id) === responseData.faculty);
+  if (module) newItem.moduleTitle = module.title;
+}
+
+if (activeTab === 'semester') {
+  if (editingItem) {
+    setSemesterTimetables(prev => prev.map(item => item.id === editingItem.id ? newItem : item));
+  } else {
+    setSemesterTimetables(prev => [...prev, newItem]);
+  }
+} else {
+  if (editingItem) {
+    setPracticalTimetables(prev => prev.map(item => item.id === editingItem.id ? newItem : item));
+  } else {
+    setPracticalTimetables(prev => [...prev, newItem]);
+  }
+}
     setShowAddModal(false);
     resetForm();
-    
+
   } catch (err) {
-    console.error("Failed to save timetable:", err);
-    
-    let errorMessage = "Failed to save timetable. Please try again.";
-    if (err.response?.data) {
-      if (typeof err.response.data === 'object') {
-        const errors = Object.values(err.response.data).flat();
-        errorMessage = errors.join(', ');
-      } else if (typeof err.response.data === 'string') {
-        errorMessage = err.response.data;
-      }
-    } else if (err.message) {
-      errorMessage = err.message;
-    }
-    
-    alert(errorMessage);
   } finally {
     setLoading(false);
   }
@@ -315,31 +261,31 @@ const handleSubmit = async (e) => {
     if (practicalFilter.moduleCode && item.moduleCode !== practicalFilter.moduleCode) return false;
     
     // For students, only show their enrolled modules
-    if (user?.role === 'student' && userModules.length > 0) {
+    if (role === 'student' && userModules.length > 0) {
       return userModules.some(m => m.code === item.moduleCode);
     }
     return true;
   });
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = role === 'admin';
 
   return (
-    <div className="timetable-container">
-      <div className="timetable-header">
+    <div className="tt-main-container">
+      <div className="tt-header">
         <h1>Timetable Management</h1>
         <p>View and manage semester and practical timetables</p>
       </div>
 
       {/* Tabs */}
-      <div className="timetable-tabs">
+      <div className="tt-tabs">
         <button
-          className={`tab-btn ${activeTab === 'semester' ? 'active' : ''}`}
+          className={`tt-tab-btn ${activeTab === 'semester' ? 'active' : ''}`}
           onClick={() => setActiveTab('semester')}
         >
           <MdSchool /> Semester Timetables
         </button>
         <button
-          className={`tab-btn ${activeTab === 'practical' ? 'active' : ''}`}
+          className={`tt-tab-btn ${activeTab === 'practical' ? 'active' : ''}`}
           onClick={() => setActiveTab('practical')}
         >
           <MdScience /> Practical Timetables
@@ -348,13 +294,13 @@ const handleSubmit = async (e) => {
 
       {/* Semester Timetables */}
       {activeTab === 'semester' && (
-        <div className="timetable-content">
+        <div className="tt-content">
           {/* Filters */}
-          <div className="filters-section">
-            <div className="filters-header">
+          <div className="tt-filters-section">
+            <div className="tt-filters-header">
               <MdFilterList /> Filter Timetables
             </div>
-            <div className="filters-grid">
+            <div className="tt-filters-grid">
               <select
                 value={semesterFilter.year}
                 onChange={(e) => setSemesterFilter({ ...semesterFilter, year: e.target.value })}
@@ -376,7 +322,7 @@ const handleSubmit = async (e) => {
                 <option value="">All Faculties</option>
                 {faculties.map(f => <option key={f.id} value={f.name}>{f.name}</option>)}
               </select>
-              <button className="clear-filters" onClick={() => setSemesterFilter({ year: '', semester: '', faculty: '' })}>
+              <button className="tt-clear-filters" onClick={() => setSemesterFilter({ year: '', semester: '', faculty: '' })}>
                 Clear Filters
               </button>
             </div>
@@ -384,41 +330,41 @@ const handleSubmit = async (e) => {
 
           {/* Add Button */}
           {isAdmin && (
-            <button className="add-btn" onClick={handleAdd}>
+            <button className="tt-add-btn" onClick={handleAdd}>
               <MdAdd /> Add
             </button>
           )}
 
           {/* Timetable List */}
-          <div className="timetable-list">
+          <div className="tt-list">
             {filteredSemesterTimetables.length === 0 ? (
-              <div className="empty-state">
+              <div className="tt-empty-state">
                 <p>No semester timetables found</p>
                 {isAdmin && (
-                  <button className="add-first-btn" onClick={handleAdd}>
+                  <button className="tt-add-first-btn" onClick={handleAdd}>
                     Add your first timetable
                   </button>
                 )}
               </div>
             ) : (
               filteredSemesterTimetables.map(item => (
-                <div key={item.id} className="timetable-card">
-                  <div className="timetable-info">
-                    <h3>{item.title || `${item.faculty}  -  [ Semester ${item.semester}  ,  Year ${item.year} ]`}</h3>
-                    <div className="timetable-meta">
+                <div key={item.id} className="tt-card">
+                  <div className="tt-info">
+                    <h3>{`${item.faculty}  -  [ Semester ${item.semester}  ,  Year ${item.year} ]`}</h3>
+                    <div className="tt-meta">
                       <span>Uploaded: {new Date(item.uploaded_at).toLocaleDateString()}</span>
                     </div>
                   </div>
-                  <div className="timetable-actions">
-                    <button className="download-btn" onClick={() => handleDownload(item.pdf_url, item.title)}>
+                  <div className="tt-actions">
+                    <button className="tt-download-btn" onClick={() => handleDownload(item.pdf_url, item.title)}>
                       <MdDownload /> Download
                     </button>
                     {isAdmin && (
                       <>
-                        <button className="edit-btn" onClick={() => handleEdit(item)}>
+                        <button className="tt-edit-btn" onClick={() => handleEdit(item)}>
                           <MdEdit />
                         </button>
-                        <button className="delete-btn" onClick={() => handleDelete(item.id, 'semester')}>
+                        <button className="tt-delete-btn" onClick={() => handleDelete(item.id, 'semester')}>
                           <MdDelete />
                         </button>
                       </>
@@ -433,13 +379,13 @@ const handleSubmit = async (e) => {
 
       {/* Practical Timetables */}
       {activeTab === 'practical' && (
-        <div className="timetable-content">
+        <div className="tt-content">
           {/* Filters */}
-          <div className="filters-section">
-            <div className="filters-header">
+          <div className="tt-filters-section">
+            <div className="tt-filters-header">
               <MdFilterList /> Filter Timetables
             </div>
-            <div className="filters-grid">
+            <div className="tt-filters-grid">
               <select
                 value={practicalFilter.year}
                 onChange={(e) => setPracticalFilter({ ...practicalFilter, year: e.target.value })}
@@ -461,7 +407,7 @@ const handleSubmit = async (e) => {
                 <option value="">All Modules</option>
                 {userModules.map(m => <option key={m.code || m.id} value={m.code || m.id}>{m.code} - {m.name}</option>)}
               </select>
-              <button className="clear-filters" onClick={() => setPracticalFilter({ year: '', semester: '', moduleCode: '' })}>
+              <button className="tt-clear-filters" onClick={() => setPracticalFilter({ year: '', semester: '', moduleCode: '' })}>
                 Clear Filters
               </button>
             </div>
@@ -469,42 +415,42 @@ const handleSubmit = async (e) => {
 
           {/* Add Button */}
           {isAdmin && (
-            <button className="add-btn" onClick={handleAdd}>
+            <button className="tt-add-btn" onClick={handleAdd}>
               <MdAdd /> Add 
             </button>
           )}
 
           {/* Timetable List */}
-          <div className="timetable-list">
+          <div className="tt-list">
             {filteredPracticalTimetables.length === 0 ? (
-              <div className="empty-state">
+              <div className="tt-empty-state">
                 <p>No practical timetables found</p>
                 {isAdmin && (
-                  <button className="add-first-btn" onClick={handleAdd}>
+                  <button className="tt-add-first-btn" onClick={handleAdd}>
                     Add your first timetable
                   </button>
                 )}
               </div>
             ) : (
               filteredPracticalTimetables.map(item => (
-                <div key={item.id} className="timetable-card">
-                  <div className="timetable-info">
+                <div key={item.id} className="tt-card">
+                  <div className="tt-info">
                     <h3>{`${item.title} - [ Semester ${item.semester} , Year ${item.year} ]`}</h3>
-                    <div className="timetable-meta">
+                    <div className="tt-meta">
                       <span>Module {item.faculty}</span>
                       <span>Uploaded: {new Date(item.uploaded_at).toLocaleDateString()}</span>
                     </div>
                   </div>
-                  <div className="timetable-actions">
-                    <button className="download-btn" onClick={() => handleDownload(item.pdf_url, item.title)}>
+                  <div className="tt-actions">
+                    <button className="tt-download-btn" onClick={() => handleDownload(item.pdf_url, item.title)}>
                       <MdDownload /> Download
                     </button>
                     {isAdmin && (
                       <>
-                        <button className="edit-btn" onClick={() => handleEdit(item)}>
+                        <button className="tt-edit-btn" onClick={() => handleEdit(item)}>
                           <MdEdit />
                         </button>
-                        <button className="delete-btn" onClick={() => handleDelete(item.id, 'practical')}>
+                        <button className="tt-delete-btn" onClick={() => handleDelete(item.id, 'practical')}>
                           <MdDelete />
                         </button>
                       </>
@@ -519,16 +465,16 @@ const handleSubmit = async (e) => {
 
       {/* Add/Edit Modal */}
       {showAddModal && (
-        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="tt-modal-overlay" onClick={() => setShowAddModal(false)}>
+          <div className="tt-modal-content" onClick={e => e.stopPropagation()}>
+            <div className="tt-modal-header">
               <h3>{editingItem ? 'Edit Timetable' : 'Add New Timetable'}</h3>
-              <button className="close-btn" onClick={() => setShowAddModal(false)}>
+              <button className="tt-close-btn" onClick={() => setShowAddModal(false)}>
                 <MdClose />
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="modal-form">
-              <div className="form-group">
+            <form onSubmit={handleSubmit} className="tt-modal-form">
+              <div className="tt-form-group">
                 <label>Year *</label>
                 <select
                   value={formData.year}
@@ -540,7 +486,7 @@ const handleSubmit = async (e) => {
                 </select>
               </div>
 
-              <div className="form-group">
+              <div className="tt-form-group">
                 <label>Semester *</label>
                 <select
                   value={formData.semester}
@@ -553,7 +499,7 @@ const handleSubmit = async (e) => {
               </div>
 
               {activeTab === 'semester' ? (
-                <div className="form-group">
+                <div className="tt-form-group">
                   <label>Faculty *</label>
                   <select
                     value={formData.faculty}
@@ -565,7 +511,7 @@ const handleSubmit = async (e) => {
                   </select>
                 </div>
               ) : (
-                <div className="form-group">
+                <div className="tt-form-group">
                   <label>Module *</label>
                   <select
                     value={formData.moduleCode}
@@ -578,7 +524,7 @@ const handleSubmit = async (e) => {
                 </div>
               )}
 
-              <div className="form-group">
+          {activeTab == "practical" && <div className="tt-form-group">
                 <label>Title (Optional)</label>
                 <input
                   type="text"
@@ -586,9 +532,9 @@ const handleSubmit = async (e) => {
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="e.g., CS Semester 1 Timetable 2024"
                 />
-              </div>
+              </div>}
 
-              <div className="form-group">
+              <div className="tt-form-group">
                 <label>PDF File {!editingItem && '*'}</label>
                 <input
                   type="file"
@@ -597,15 +543,15 @@ const handleSubmit = async (e) => {
                   required={!editingItem}
                 />
                 {editingItem && !formData.file && (
-                  <p className="file-note">Leave empty to keep existing file</p>
+                  <p className="tt-file-note">Leave empty to keep existing file</p>
                 )}
               </div>
 
-              <div className="modal-actions">
-                <button type="button" className="cancel-btn" onClick={() => setShowAddModal(false)}>
+              <div className="tt-modal-actions">
+                <button type="button" className="tt-cancel-btn" onClick={() => setShowAddModal(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="save-btn" disabled={loading}>
+                <button type="submit" className="tt-save-btn" disabled={loading}>
                   {loading ? 'Saving...' : (editingItem ? 'Update' : 'Add')}
                 </button>
               </div>

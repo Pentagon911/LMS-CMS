@@ -450,7 +450,7 @@ const CreateQuizPage = () => {
 
       <div className="quiz-form">
         <div className="module-selection-section">
-          <label>Module</label>
+          <label>Module </label>
           <select 
             value={selectedModule}
             onChange={handleModuleChange}
@@ -529,7 +529,7 @@ const CreateQuizPage = () => {
                   {q.image && typeof q.image === 'string' && q.image.startsWith('http') && (
                     <div className="question-image-preview">
                       <img 
-                        src={q.image} 
+                        src={request.getBaseUrl() + q.image} 
                         alt="Question" 
                         className="preview-thumbnail"
                       />

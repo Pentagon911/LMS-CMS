@@ -645,7 +645,9 @@ class courseDashboardSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         quizzes = week.quizzes.all()
 
-        if request.user.role== 'student' or request.user.role == 'instructor':
+        if request.user.role== 'student'or request.user.role == 'instructor':
+            quizzes = quizzes.filter(status__in='active')
+        elif request.user.role == 'instructor':
             quizzes = quizzes.filter(status__in=['scheduled', 'active'])
         
         
