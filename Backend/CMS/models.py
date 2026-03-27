@@ -5,6 +5,7 @@ from django.db.models import Sum
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from lms.models import *
+from django.conf import settings
 
 User = get_user_model()
 
@@ -305,7 +306,13 @@ class Announcement(models.Model):
         ('course', 'Course Announcement'),        
         ('faculty', 'Faculty Announcement'),     
     ]
-    
+    week = models.ForeignKey(
+        'Week', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='announcements'
+    )
     title = models.CharField(max_length=200)
     content = models.TextField()
 
@@ -361,3 +368,108 @@ class PracticalTimetable(models.Model):
 
     def __str__(self):
         return f"{self.year} S{self.semester} {self.faculty} - {self.title}"
+
+class GlobalAnnouncement(models.Model):
+    """Global announcements that can be targeted to specific faculties, departments, or batches"""
+    
+    TARGET_TYPE_CHOICES = (
+        ('all', 'All Students'),
+        ('faculty', 'Specific Faculty'),
+        ('department', 'Specific Department'),
+        ('batch', 'Specific Batch'),
+        ('program', 'Specific Program'),
+    )
+    
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    pdf_file = models.FileField(
+        upload_to='announcements/pdfs/',
+        blank=True,
+        null=True,
+        help_text="PDF file attachment (optional)"
+    )
+    
+    # Target selection
+    target_type = models.CharField(max_length=20, choices=TARGET_TYPE_CHOICES, default='all')
+    
+    # These fields are used based on target_type
+    faculties = models.ManyToManyField(
+        'lms.Faculty',  
+        blank=True,
+        related_name='announcements',
+        help_text="Target specific faculties"
+    )
+    departments = models.ManyToManyField(
+        'lms.Department',  
+        blank=True,
+        related_name='announcements',
+        help_text="Target specific departments"
+    )
+    batches = models.ManyToManyField(
+        'lms.Batch',  
+        blank=True,
+        related_name='announcements',
+        help_text="Target specific batches"
+    )
+    programs = models.ManyToManyField(
+        'lms.Program',  
+        blank=True,
+        related_name='announcements',
+        help_text="Target specific programs"
+    )
+    
+    # Metadata
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='created_announcements'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+    publish_from = models.DateTimeField(default=timezone.now)
+    publish_until = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        db_table = 'global_announcements'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['target_type', 'is_active']),
+            models.Index(fields=['publish_from', 'publish_until']),
+        ]
+    
+    def __str__(self):
+        return f"{self.title} - {self.target_type}"
+    
+    def is_visible_to_student(self, student_profile):
+        """
+        Check if this announcement should be visible to a specific student
+        """
+        if not self.is_active:
+            return False
+        
+        # Check publish date range
+        now = timezone.now()
+        if now < self.publish_from:
+            return False
+        if self.publish_until and now > self.publish_until:
+            return False
+        
+        # Check targeting
+        if self.target_type == 'all':
+            return True
+        
+        elif self.target_type == 'faculty':
+            return student_profile.faculty and self.faculties.filter(id=student_profile.faculty.id).exists()
+        
+        elif self.target_type == 'department':
+            return student_profile.department and self.departments.filter(id=student_profile.department.id).exists()
+        
+        elif self.target_type == 'batch':
+            return student_profile.batch and self.batches.filter(id=student_profile.batch.id).exists()
+        
+        elif self.target_type == 'program':
+            return student_profile.program and self.programs.filter(id=student_profile.program.id).exists()
+        
+        return False
