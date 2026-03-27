@@ -37,7 +37,7 @@ const MyCoursesPage = () => {
     description: '',
     credits: 3,
     color: '#6c5ce7',
-    instructor: '',
+    instructors: [], // Store as array of integers
     semester: 1,
     program: '',
     department: 1,
@@ -157,9 +157,6 @@ const MyCoursesPage = () => {
     try {
       const data = await request.GET('/lms/departments/');
       setDepartments(data);
-      if (data && data.length > 0 && !formData.department) {
-        setFormData(prev => ({ ...prev, department: data[0].id }));
-      }
     } catch (err) {
       console.error('Error fetching departments:', err);
     }
@@ -167,22 +164,22 @@ const MyCoursesPage = () => {
 
   const applyFilters = () => {
     let filtered = [...courses];
-    
-    // Filter by semester
+
     if (filters.semester) {
       filtered = filtered.filter(course => course.semester === parseInt(filters.semester));
     }
-    
-    // Filter by instructor
+
     if (filters.instructor) {
-      filtered = filtered.filter(course => course.instructor?.id === parseInt(filters.instructor) || course.instructor === parseInt(filters.instructor));
+      filtered = filtered.filter(course =>
+        course.instructors?.some(inst => inst.id === parseInt(filters.instructor)) ||
+        course.instructors?.includes(parseInt(filters.instructor))
+      );
     }
-    
-    // Filter by program
+
     if (filters.program) {
       filtered = filtered.filter(course => course.program?.id === parseInt(filters.program) || course.program === parseInt(filters.program));
     }
-    
+
     setFilteredCourses(filtered);
   };
 
@@ -203,13 +200,16 @@ const MyCoursesPage = () => {
     setFormLoading(true);
     setFormError('');
     try {
+      // Convert instructor IDs to integers
+      const instructorIds = formData.instructors.map(id => parseInt(id));
+
       const courseData = {
         code: formData.code,
         name: formData.name,
         description: formData.description,
         credits: parseInt(formData.credits),
         color: formData.color,
-        instructor: formData.instructor ? parseInt(formData.instructor) : null,
+        instructors: instructorIds,
         semester: parseInt(formData.semester),
         program: formData.program ? parseInt(formData.program) : null,
         department: formData.department ? parseInt(formData.department) : 1,
@@ -217,6 +217,7 @@ const MyCoursesPage = () => {
         offering_type: formData.offering_type,
       };
 
+      console.log('Sending course data:', courseData); // Debug log
       await request.POST('/lms/courses/', courseData);
       setShowAddModal(false);
       resetForm();
@@ -233,13 +234,16 @@ const MyCoursesPage = () => {
     setFormLoading(true);
     setFormError('');
     try {
+      // Convert instructor IDs to integers
+      const instructorIds = formData.instructors.map(id => parseInt(id));
+
       const courseData = {
         code: formData.code,
         name: formData.name,
         description: formData.description,
         credits: parseInt(formData.credits),
         color: formData.color,
-        instructor: formData.instructor ? parseInt(formData.instructor) : null,
+        instructors: instructorIds,
         semester: parseInt(formData.semester),
         program: formData.program ? parseInt(formData.program) : null,
         department: formData.department ? parseInt(formData.department) : 1,
@@ -247,6 +251,7 @@ const MyCoursesPage = () => {
         offering_type: formData.offering_type,
       };
 
+      console.log('Updating course data:', courseData); // Debug log
       await request.PUT(`/lms/courses/${editingCourse.id}/`, courseData);
       setShowEditModal(false);
       resetForm();
@@ -272,6 +277,14 @@ const MyCoursesPage = () => {
   };
 
   const openEditModal = (course, isInstructor = false) => {
+    // Extract instructor IDs from the course object
+    let instructorIds = [];
+    if (course.instructors && Array.isArray(course.instructors)) {
+      instructorIds = course.instructors.map(inst => inst.id || inst);
+    } else if (course.instructors_ids) {
+      instructorIds = course.instructors_ids;
+    }
+
     setEditingCourse({ ...course, isInstructor });
     setFormData({
       code: course.code || '',
@@ -279,7 +292,7 @@ const MyCoursesPage = () => {
       description: course.description || '',
       credits: course.credits || 3,
       color: course.color || '#6c5ce7',
-      instructor: course.instructor?.id || course.instructor || '',
+      instructors: instructorIds,
       semester: course.semester || 1,
       program: course.program?.id || course.program || '',
       department: course.department?.id || course.department || 1,
@@ -296,7 +309,7 @@ const MyCoursesPage = () => {
       description: '',
       credits: 3,
       color: '#6c5ce7',
-      instructor: '',
+      instructors: [],
       semester: 1,
       program: '',
       department: departments.length > 0 ? departments[0].id : 1,
@@ -307,8 +320,19 @@ const MyCoursesPage = () => {
     setFormError('');
   };
 
-  // Course Card Component using ModuleCard
+  const getInstructorNames = (course) => {
+    if (course.instructors_name && course.instructors_name.length > 0) {
+      return course.instructors_name.join(', ');
+    }
+    if (course.instructors && course.instructors.length > 0) {
+      return course.instructors.map(inst => inst.name || inst.username).join(', ');
+    }
+    return 'Not Assigned';
+  };
+
   const CourseCard = ({ course, showActions = false, onEdit, onDelete, onContinue, isInstructor = false }) => {
+    const instructorNames = getInstructorNames(course);
+
     return (
       <div className="course-card-wrapper">
         <div onClick={() => !showActions && onContinue(course.id)} style={{ cursor: !showActions ? 'pointer' : 'default' }}>
@@ -344,16 +368,16 @@ const MyCoursesPage = () => {
             )}
           </div>
         )}
-        {course.instructor_name && (
+        {instructorNames && instructorNames !== 'Not Assigned' && (
           <div className="instructor-info">
-            <MdPerson className="icon-small" /> {course.instructor_name}
+            <MdPerson className="icon-small" /> {instructorNames}
           </div>
         )}
       </div>
     );
   };
 
-  // Redirect students to dashboard or show access denied
+  // Redirect students to dashboard
   if (!roleLoading && userRole === 'student') {
     return (
       <div className="my-courses-container">
@@ -382,9 +406,8 @@ const MyCoursesPage = () => {
 
   // Admin View with Filters
   if (userRole === 'admin') {
-    // Get unique semesters from courses for filter dropdown
     const semesters = [...new Set(courses.map(c => c.semester))].sort((a, b) => a - b);
-    
+
     return (
       <div className="my-courses-container">
         <div className="my-courses-header">
@@ -484,7 +507,7 @@ const MyCoursesPage = () => {
           )}
         </div>
 
-        {/* Add Course Modal (same as before) */}
+        {/* Add Course Modal */}
         {showAddModal && (
           <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -497,7 +520,6 @@ const MyCoursesPage = () => {
               <div className="modal-body">
                 {formError && <div className="error-message">{formError}</div>}
                 <form onSubmit={(e) => { e.preventDefault(); handleAddCourse(); }}>
-                  {/* Form fields remain the same */}
                   <div className="form-row">
                     <div className="form-group">
                       <label>Course Code *</label>
@@ -568,30 +590,53 @@ const MyCoursesPage = () => {
                     </div>
                   </div>
 
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Instructor</label>
-                      <select
-                        value={formData.instructor}
-                        onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
-                      >
-                        <option value="">Select Instructor</option>
-                        {loadingInstructors ? (
-                          <option disabled>Loading instructors...</option>
-                        ) : (
-                          instructors.map(instructor => (
-                            <option key={instructor.id} value={instructor.id}>
-                              {instructor.first_name} {instructor.last_name} ({instructor.username})
-                            </option>
-                          ))
-                        )}
-                      </select>
+                  {/* Instructor Checkbox Group */}
+                  <div className="form-group">
+                    <label>Instructors</label>
+                    <div className="instructors-checkbox-group">
+                      {loadingInstructors ? (
+                        <div className="loading-instructors">Loading instructors...</div>
+                      ) : (
+                        instructors.map(instructor => (
+                          <label key={instructor.id} className="instructor-checkbox-label">
+                            <input
+                              type="checkbox"
+                              value={instructor.id}
+                              checked={formData.instructors.includes(instructor.id)}
+                              onChange={(e) => {
+                                const value = parseInt(e.target.value);
+                                if (e.target.checked) {
+                                  setFormData({
+                                    ...formData,
+                                    instructors: [...formData.instructors, value]
+                                  });
+                                } else {
+                                  setFormData({
+                                    ...formData,
+                                    instructors: formData.instructors.filter(id => id !== value)
+                                  });
+                                }
+                              }}
+                            />
+                            <span className="instructor-name">{instructor.first_name} {instructor.last_name}</span>
+                            <span className="instructor-username">({instructor.username})</span>
+                          </label>
+                        ))
+                      )}
                     </div>
+                    {formData.instructors.length > 0 && (
+                      <div className="selected-instructors-info">
+                        <strong>Selected Instructors:</strong> {formData.instructors.length}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="form-row">
                     <div className="form-group">
                       <label>Program</label>
                       <select
                         value={formData.program}
-                        onChange={(e) => setFormData({ ...formData, program: e.target.value })}
+                        onChange={(e) => setFormData({ ...formData, program: parseInt(e.target.value) })}
                       >
                         <option value="">Select Program</option>
                         {loadingPrograms ? (
@@ -603,6 +648,19 @@ const MyCoursesPage = () => {
                             </option>
                           ))
                         )}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Department</label>
+                      <select
+                        value={formData.department}
+                        onChange={(e) => setFormData({ ...formData, department: parseInt(e.target.value) })}
+                      >
+                        {departments.map(dept => (
+                          <option key={dept.id} value={dept.id}>
+                            {dept.name}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -678,7 +736,6 @@ const MyCoursesPage = () => {
               <div className="modal-body">
                 {formError && <div className="error-message">{formError}</div>}
                 <form onSubmit={(e) => { e.preventDefault(); handleEditCourse(); }}>
-                  {/* Edit form fields remain the same */}
                   <div className="form-row">
                     <div className="form-group">
                       <label>Course Code</label>
@@ -740,31 +797,71 @@ const MyCoursesPage = () => {
                     </div>
                   </div>
 
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Instructor</label>
-                      <select
-                        value={formData.instructor}
-                        onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
-                      >
-                        <option value="">Select Instructor</option>
-                        {instructors.map(instructor => (
-                          <option key={instructor.id} value={instructor.id}>
-                            {instructor.first_name} {instructor.last_name} ({instructor.username})
-                          </option>
-                        ))}
-                      </select>
+                  {/* Instructor Checkbox Group for Edit */}
+                  <div className="form-group">
+                    <label>Instructors</label>
+                    <div className="instructors-checkbox-group">
+                      {loadingInstructors ? (
+                        <div className="loading-instructors">Loading instructors...</div>
+                      ) : (
+                        instructors.map(instructor => (
+                          <label key={instructor.id} className="instructor-checkbox-label">
+                            <input
+                              type="checkbox"
+                              value={instructor.id}
+                              checked={formData.instructors.includes(instructor.id)}
+                              onChange={(e) => {
+                                const value = parseInt(e.target.value);
+                                if (e.target.checked) {
+                                  setFormData({
+                                    ...formData,
+                                    instructors: [...formData.instructors, value]
+                                  });
+                                } else {
+                                  setFormData({
+                                    ...formData,
+                                    instructors: formData.instructors.filter(id => id !== value)
+                                  });
+                                }
+                              }}
+                            />
+                            <span className="instructor-name">{instructor.first_name} {instructor.last_name}</span>
+                            <span className="instructor-username">({instructor.username})</span>
+                          </label>
+                        ))
+                      )}
                     </div>
+                    {formData.instructors.length > 0 && (
+                      <div className="selected-instructors-info">
+                        <strong>Selected Instructors:</strong> {formData.instructors.length}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="form-row">
                     <div className="form-group">
                       <label>Program</label>
                       <select
                         value={formData.program}
-                        onChange={(e) => setFormData({ ...formData, program: e.target.value })}
+                        onChange={(e) => setFormData({ ...formData, program: parseInt(e.target.value) })}
                       >
                         <option value="">Select Program</option>
                         {programs.map(program => (
                           <option key={program.id} value={program.id}>
                             {program.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Department</label>
+                      <select
+                        value={formData.department}
+                        onChange={(e) => setFormData({ ...formData, department: parseInt(e.target.value) })}
+                      >
+                        {departments.map(dept => (
+                          <option key={dept.id} value={dept.id}>
+                            {dept.name}
                           </option>
                         ))}
                       </select>
@@ -831,7 +928,7 @@ const MyCoursesPage = () => {
     );
   }
 
-  // Instructor View
+  // Instructor View (simplified, same as before)
   if (userRole === 'instructor') {
     return (
       <div className="my-courses-container">
@@ -854,7 +951,7 @@ const MyCoursesPage = () => {
           ))}
         </div>
 
-        {/* Edit Course Modal for Instructor */}
+        {/* Edit Course Modal for Instructor (Simplified) */}
         {showEditModal && editingCourse?.isInstructor && (
           <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -867,7 +964,6 @@ const MyCoursesPage = () => {
               <div className="modal-body">
                 {formError && <div className="error-message">{formError}</div>}
                 <form onSubmit={(e) => { e.preventDefault(); handleEditCourse(); }}>
-                  {/* Same as before - instructor edit form */}
                   <div className="form-row">
                     <div className="form-group">
                       <label>Course Code</label>
@@ -913,23 +1009,27 @@ const MyCoursesPage = () => {
                     </div>
                   </div>
 
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Instructor</label>
-                      <input 
-                        type="text" 
-                        value={instructors.find(i => i.id === parseInt(formData.instructor))?.first_name + ' ' + instructors.find(i => i.id === parseInt(formData.instructor))?.last_name || 'Not Assigned'} 
-                        disabled 
-                      />
+                  <div className="form-group">
+                    <label>Instructors</label>
+                    <div className="instructors-list">
+                      {formData.instructors.map(instId => {
+                        const instructor = instructors.find(i => i.id === instId);
+                        return instructor ? (
+                          <div key={instId} className="instructor-tag">
+                            {instructor.first_name} {instructor.last_name}
+                          </div>
+                        ) : null;
+                      })}
                     </div>
-                    <div className="form-group">
-                      <label>Program</label>
-                      <input 
-                        type="text" 
-                        value={programs.find(p => p.id === parseInt(formData.program))?.name || 'Not Selected'} 
-                        disabled 
-                      />
-                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Program</label>
+                    <input
+                      type="text"
+                      value={programs.find(p => p.id === formData.program)?.name || 'Not Selected'}
+                      disabled
+                    />
                   </div>
 
                   <div className="form-group">

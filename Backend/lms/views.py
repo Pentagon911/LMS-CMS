@@ -51,13 +51,13 @@ class CourseViewSet(BaseModelViewSet):
 
     def get_permissions(self):
         if self.action == 'destroy':
-            return [IsAdminUser()]          # only admin can delete
-        return super().get_permissions()    
+            return [IsAdminUser()]
+        return super().get_permissions()
 
     @action(detail=True, methods=['get'], permission_classes=[IsAdminOrInstructor])
     def enrollments(self, request, pk=None):
         course = self.get_object()
-        if request.user.role == 'instructor' and course.instructor != request.user:
+        if request.user.role == 'instructor' and not course.instructors.filter(id=request.user.id).exists():
             raise PermissionDenied("You can only view enrollments for your own courses.")
         enrollments = course.enrollments.all()
         serializer = EnrollmentSerializer(enrollments, many=True)
@@ -68,15 +68,15 @@ class CourseViewSet(BaseModelViewSet):
         if user.role == 'admin':
             return Course.objects.all()
         if user.role == 'instructor':
-            return Course.objects.filter(instructor=user)
+            return Course.objects.filter(instructors=user)
         return Course.objects.filter(enrollments__student=user).distinct()
     
     def perform_update(self, serializer):
         instance = self.get_object()
-        if self.request.user.role == 'instructor' and instance.instructor != self.request.user:
+        if self.request.user.role == 'instructor' and not instance.instructors.filter(id=self.request.user.id).exists():
             raise PermissionDenied("Instructors can only update their own courses")
         serializer.save()
-    
+
 
 class EnrollmentViewSet(BaseModelViewSet):
     queryset = Enrollment.objects.all() 

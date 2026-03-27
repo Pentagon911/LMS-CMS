@@ -14,15 +14,22 @@ class ProgramSerializer(serializers.ModelSerializer):
 
 
 class CourseSerializer(serializers.ModelSerializer):
-    instructor_name = serializers.CharField(source='instructor.get_full_name', read_only=True)
+
+    instructors_name = serializers.SerializerMethodField()
     program_name = serializers.CharField(source='program.name', read_only=True)
+    
     class Meta:
         model = Course
         fields = [
             'id', 'code', 'name', 'description',
-            'credits', 'instructor', 'instructor_name',
-            'created_at', 'updated_at', 'color', 'program_name', 'gpa_applicable', 'offering_type', 'semester', 'department', 'program'
+            'credits', 'instructors', 'instructors_name',
+            'created_at', 'updated_at', 'color', 'program_name', 
+            'gpa_applicable', 'offering_type', 'semester', 'department', 'program'
         ]
+    
+    def get_instructors_name(self, obj):
+        """Return list of instructor full names"""
+        return [instructor.get_full_name() for instructor in obj.instructors.all()]
 
 class EnrollmentSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source='student.get_full_name', read_only=True)

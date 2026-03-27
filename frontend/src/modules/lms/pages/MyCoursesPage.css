@@ -1271,3 +1271,144 @@ body.dark-mode .modal-header {
     padding: 1rem;
   }
 }
+
+/* Multi-select styling */
+.multi-select {
+  min-height: 100px;
+  padding: 0.5rem;
+}
+
+.multi-select option {
+  padding: 0.5rem;
+  margin: 2px 0;
+  border-radius: 4px;
+}
+
+.multi-select option:checked {
+  background: #1a2632 linear-gradient(0deg, #1a2632 0%, #1a2632 100%);
+  color: white;
+}
+
+/* Instructor Checkbox Group */
+.instructors-checkbox-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 0.75rem;
+  border: 1px solid #eef2f6;
+  border-radius: 8px;
+  background: #fafcff;
+}
+
+body.dark-mode .instructors-checkbox-group {
+  background: #2a313c;
+  border-color: #323b48;
+}
+
+.instructor-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid #eef2f6;
+}
+
+body.dark-mode .instructor-checkbox-label {
+  background: #1e242c;
+  border-color: #2a313c;
+}
+
+.instructor-checkbox-label:hover {
+  background: #f1f4f9;
+  transform: translateX(2px);
+}
+
+body.dark-mode .instructor-checkbox-label:hover {
+  background: #2a313c;
+}
+
+.instructor-checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #1a2632;
+}
+
+.instructor-name {
+  font-weight: 500;
+  color: #1a2632;
+  flex: 1;
+}
+
+body.dark-mode .instructor-name {
+  color: #e5e9f0;
+}
+
+.instructor-username {
+  font-size: 0.75rem;
+  color: #7f8c9f;
+}
+
+body.dark-mode .instructor-username {
+  color: #a0a8b7;
+}
+
+.selected-instructors-info {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #e8f5e9;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #27ae60;
+}
+
+body.dark-mode .selected-instructors-info {
+  background: #1a3a2a;
+  color: #6fbf73;
+}
+
+.loading-instructors {
+  text-align: center;
+  padding: 1rem;
+  color: #7f8c9f;
+}
+
+.instructors-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid #eef2f6;
+  border-radius: 8px;
+  min-height: 50px;
+}
+
+.instructor-tag {
+  background: #e3f2fd;
+  color: #2196f3;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+}
+
+body.dark-mode .instructor-tag {
+  background: #1a2a3a;
+  color: #64b5f6;
+}
+
+@media (max-width: 768px) {
+  .instructors-checkbox-group {
+    grid-template-columns: 1fr;
+    max-height: 250px;
+  }
+  
+  .instructor-checkbox-label {
+    padding: 0.5rem;
+  }
+}

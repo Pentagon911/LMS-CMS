@@ -77,13 +77,14 @@ class Course(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     credits = models.PositiveSmallIntegerField()
-    instructor = models.ForeignKey(
+    
+    instructors = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        limit_choices_to={'role': 'instructor'},  # only instructors
-        related_name='courses_taught'
+        limit_choices_to={'role': 'instructor'},
+        related_name='courses_taught',
+        blank=True
     )
+    
     department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='courses')
     semester = models.IntegerField()
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='courses', null=True)
@@ -100,7 +101,6 @@ class Course(models.Model):
 
     def __str__(self):
         return f"{self.code}: {self.name}"
-
 
 class Module(models.Model):
     """Module within a course"""

@@ -3,10 +3,14 @@ from .models import *
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ('code', 'name', 'credits', 'color', 'instructor', 'created_at')
+    list_display = ('code', 'name', 'credits', 'color', 'get_instructors', 'created_at')
     search_fields = ('code', 'name')
-    list_filter = ('credits', 'instructor')
-
+    list_filter = ('credits',)
+    
+    def get_instructors(self, obj):
+        """Return comma-separated list of instructor names"""
+        return ", ".join([i.get_full_name() for i in obj.instructors.all()])
+    get_instructors.short_description = 'Instructors'
 @admin.register(Enrollment)
 class EnrollmentAdmin(admin.ModelAdmin):
     list_display = ('student', 'course', 'status', 'enrollment_date')

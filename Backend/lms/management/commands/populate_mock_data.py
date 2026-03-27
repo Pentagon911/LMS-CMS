@@ -25,6 +25,7 @@ class Command(BaseCommand):
         self.default_programs = {}
         self.courses = []
         self.modules = []
+        self.instructors_list = []  # Store all instructors for multiple assignment
 
     def handle(self, *args, **options):
         self.stdout.write(self.style.SUCCESS('=' * 60))
@@ -64,11 +65,12 @@ class Command(BaseCommand):
             # 5. Create users (students, instructors, admins)
             self.stdout.write('\n👥 Creating users...')
             users = self.create_users(self.departments, self.batches, self.programs, self.default_programs)
+            self.instructors_list = users['instructors']  # Store for later use
             
-            # 6. Create courses and modules
+            # 6. Create courses and modules with multiple instructors
             self.stdout.write('\n📖 Creating courses and modules...')
             self.courses, self.modules = self.create_courses_modules(
-                self.departments, self.batches, users['instructors'], self.programs, self.default_programs
+                self.departments, self.batches, self.instructors_list, self.programs, self.default_programs
             )
             
             # 7. Create enrollments (each student assigned 4 modules)
@@ -89,7 +91,7 @@ class Command(BaseCommand):
             
             # 11. Create quizzes (5 quizzes per instructor)
             self.stdout.write('\n📝 Creating quizzes...')
-            self.create_quizzes(weeks, self.courses, users['instructors'], self.departments, self.default_programs)
+            self.create_quizzes(weeks, self.courses, self.instructors_list, self.departments, self.default_programs)
             
             # 12. Create quiz attempts and answers
             self.stdout.write('\n✓ Creating quiz attempts...')
@@ -97,12 +99,12 @@ class Command(BaseCommand):
             
             # 13. Create announcements (for batch, faculty, course)
             self.stdout.write('\n📢 Creating announcements...')
-            self.create_announcements(users['instructors'], users['admins'], self.batches, self.faculties, self.courses)
+            self.create_announcements(self.instructors_list, users['admins'], self.batches, self.faculties, self.courses)
             
             # 13b. Create GLOBAL announcements (new)
             self.stdout.write('\n🌍 Creating global announcements...')
             self.create_global_announcements(
-                users['instructors'], 
+                self.instructors_list, 
                 users['admins'], 
                 self.faculties, 
                 self.departments, 
@@ -306,14 +308,16 @@ class Command(BaseCommand):
             users['admins'].append(user)
             self.stdout.write(f"  ✓ Created admin: {user.username}")
         
-        # Create instructors
+        # Create instructors (increase number to 15 for better distribution)
         instructor_names = [
             ('Dr. John', 'Smith'), ('Prof. Sarah', 'Johnson'), ('Dr. Michael', 'Brown'),
             ('Prof. Emily', 'Davis'), ('Dr. David', 'Wilson'), ('Prof. Lisa', 'Anderson'),
-            ('Dr. Robert', 'Taylor'), ('Prof. Maria', 'Martinez'), ('Dr. James', 'Thomas')
+            ('Dr. Robert', 'Taylor'), ('Prof. Maria', 'Martinez'), ('Dr. James', 'Thomas'),
+            ('Dr. Patricia', 'Garcia'), ('Prof. Charles', 'Rodriguez'), ('Dr. Barbara', 'Miller'),
+            ('Prof. Richard', 'Jones'), ('Dr. Susan', 'Williams'), ('Prof. Joseph', 'Clark')
         ]
         
-        for i, (first, last) in enumerate(instructor_names[:len(departments)]):
+        for i, (first, last) in enumerate(instructor_names[:15]):  # Create 15 instructors
             username = f"{first.lower().replace('dr.', '').replace('prof.', '').strip()}_{last.lower()}"
             username = username.replace('.', '').strip()
             user, created = User.objects.get_or_create(
@@ -332,12 +336,13 @@ class Command(BaseCommand):
             
             # Create instructor profile
             try:
+                department = departments[i % len(departments)]
                 InstructorProfile.objects.get_or_create(
                     user=user,
                     defaults={
                         'instructor_id': f"INS{user.id:06d}",
-                        'faculty': departments[i % len(departments)].faculty,
-                        'department': departments[i % len(departments)],
+                        'faculty': department.faculty,
+                        'department': department,
                         'contract_type': random.choice(['FULL', 'PART', 'TA'])
                     }
                 )
@@ -427,6 +432,10 @@ class Command(BaseCommand):
                 department_batches = [b for b in batches if b.department == department]
                 batch = department_batches[0] if department_batches else None
                 
+                # Select 1-3 random instructors for this course
+                num_instructors = random.randint(1, min(3, len(instructors)))
+                selected_instructors = random.sample(instructors, num_instructors)
+                
                 course, created = Course.objects.get_or_create(
                     code=course_code,
                     defaults={
@@ -436,15 +445,23 @@ class Command(BaseCommand):
                         'semester': template['semester'],
                         'batch': batch,
                         'program': program,
-                        'instructor': random.choice(instructors) if instructors else None,
                         'gpa_applicable': template['gpa'],
                         'offering_type': template['offering'],
                         'color': random.choice(['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'])
                     }
                 )
-                courses.append(course)
+                
+                # If course already exists or was just created, assign instructors
                 if created:
-                    self.stdout.write(f"  ✓ Created course: {course.code} (GPA: {course.gpa_applicable}, Type: {course.offering_type})")
+                    course.instructors.set(selected_instructors)
+                    self.stdout.write(f"  ✓ Created course: {course.code} (Instructors: {len(selected_instructors)}, GPA: {course.gpa_applicable}, Type: {course.offering_type})")
+                else:
+                    # For existing courses, add instructors if none assigned
+                    if course.instructors.count() == 0:
+                        course.instructors.set(selected_instructors)
+                        self.stdout.write(f"  → Updated course: {course.code} with {len(selected_instructors)} instructors")
+                
+                courses.append(course)
                 
                 # Create modules for each course (1 module per course)
                 module, created = Module.objects.get_or_create(
@@ -457,7 +474,7 @@ class Command(BaseCommand):
                 )
                 modules.append(module)
         
-        self.stdout.write(f"  ✓ Created {len(courses)} courses and {len(modules)} modules")
+        self.stdout.write(f"  ✓ Created {len(courses)} courses with multiple instructors and {len(modules)} modules")
         return courses, modules
     
     def create_enrollments(self, students, courses, target_modules=4):
@@ -672,8 +689,8 @@ class Command(BaseCommand):
         
         # For each instructor, create 5 draft quizzes
         for instructor in instructors:
-            # Get courses taught by this instructor
-            instructor_courses = [c for c in courses if c.instructor == instructor]
+            # Get courses taught by this instructor (from the many-to-many relationship)
+            instructor_courses = Course.objects.filter(instructors=instructor)
             if not instructor_courses:
                 self.stdout.write(f"  ⚠️ Instructor {instructor.username} has no courses assigned")
                 # Create a course for this instructor if none exists
@@ -687,7 +704,6 @@ class Command(BaseCommand):
                             'credits': 3,
                             'department': dept,
                             'semester': 1,
-                            'instructor': instructor,
                             'gpa_applicable': True,
                             'offering_type': 'compulsory',
                             'program': default_programs.get(dept.id),
@@ -695,6 +711,7 @@ class Command(BaseCommand):
                         }
                     )
                     if created:
+                        course.instructors.add(instructor)
                         courses.append(course)
                         instructor_courses = [course]
                         self.stdout.write(f"    ✓ Created course for instructor {instructor.username}: {course.code}")
@@ -734,7 +751,7 @@ class Command(BaseCommand):
             
             # Verify quizzes for this instructor
             instructor_quizzes = Quiz.objects.filter(
-                courseCode__instructor=instructor,
+                courseCode__instructors=instructor,
                 status='draft',
                 week__isnull=True  # Only count standalone drafts
             )
