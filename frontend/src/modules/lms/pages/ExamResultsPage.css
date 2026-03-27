@@ -39,7 +39,7 @@ body.dark-mode .filters select {
 }
 
 .gpa-card {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, #313f55, #33475f);
   border-radius: 12px;
   padding: 1rem;
   margin-bottom: 1.5rem;
@@ -180,7 +180,7 @@ body.dark-mode .student-info-card{
 }
 
 .student-info-card {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, #313f55, #33475f);
   border-radius: 16px;
   padding: 1.5rem;
   margin-bottom: 2rem;
