@@ -146,7 +146,7 @@ class Enrollment(models.Model):
 class ExamTimetable(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='exams')
     title = models.CharField(max_length=200)
-    semester = models.IntegerField()
+    semester = models.IntegerField(null=True, blank=True, help_text="Semester number (1-8)")
     created_at = models.DateTimeField(auto_now_add=True)
     pdf = models.FileField(upload_to='exam_timetables/', null=True, blank=True, help_text="Timetable PDF file")
 

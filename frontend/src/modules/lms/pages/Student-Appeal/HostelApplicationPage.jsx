@@ -310,12 +310,12 @@ const HostelApplicationPage = () => {
 
   if (success) {
     return (
-      <div className="appeal-form-container">
-        <div className="success-message">
-          <MdCheckCircle className="success-icon" />
+      <div className="afp-appeal-form-container">
+        <div className="afp-success-message">
+          <MdCheckCircle className="afp-success-icon" />
           <h2>Application Submitted Successfully!</h2>
           <p>Your hostel application has been submitted. You can track its status in My Appeals.</p>
-          <button onClick={() => navigate('/lms/appeals-and-welfare/my-appeals')} className="view-appeals-btn">
+          <button onClick={() => navigate('/lms/appeals-and-welfare/my-appeals')} className="afp-view-appeals-btn">
             View My Appeals
           </button>
         </div>
@@ -324,68 +324,68 @@ const HostelApplicationPage = () => {
   }
 
   return (
-    <div className="appeal-form-container">
-      <div className="form-header">
+    <div className="afp-appeal-form-container">
+      <div className="afp-form-header">
         <h1><MdHome /> Hostel Application</h1>
         <p>Request hostel accommodation</p>
       </div>
 
       {error && (
-        <div className="error-alert">
+        <div className="afp-error-alert">
           <MdWarning />
           <span>{error}</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="appeal-form">
+      <form onSubmit={handleSubmit} className="afp-appeal-form">
         {/* Student Information Section */}
-        <div className="form-section">
+        <div className="afp-form-section">
           <h3>Student Information</h3>
           
-          <div className="form-group">
+          <div className="afp-form-group">
             <label>Student Name</label>
             <input
               type="text"
               value={user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username || '' : ''}
               disabled
-              className="readonly-field"
+              className="afp-readonly-field"
             />
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
+          <div className="afp-form-row">
+            <div className="afp-form-group">
               <label>Department</label>
               <input
                 type="text"
                 value={departmentName}
                 disabled
-                className="readonly-field"
+                className="afp-readonly-field"
               />
             </div>
 
-            <div className="form-group">
+            <div className="afp-form-group">
               <label>Faculty</label>
               <input
                 type="text"
                 value={facultyName}
                 disabled
-                className="readonly-field"
+                className="afp-readonly-field"
               />
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
+          <div className="afp-form-row">
+            <div className="afp-form-group">
               <label>Batch</label>
               <input
                 type="text"
                 value={batchName}
                 disabled
-                className="readonly-field"
+                className="afp-readonly-field"
               />
             </div>
 
-            <div className="form-group">
+            <div className="afp-form-group">
               <label>Academic Year *</label>
               <input
                 type="text"
@@ -400,10 +400,10 @@ const HostelApplicationPage = () => {
         </div>
 
         {/* Application Details Section */}
-        <div className="form-section">
+        <div className="afp-form-section">
           <h3>Application Details</h3>
           
-          <div className="form-group">
+          <div className="afp-form-group">
             <label>Title *</label>
             <input
               type="text"
@@ -415,7 +415,7 @@ const HostelApplicationPage = () => {
             />
           </div>
 
-          <div className="form-group">
+          <div className="afp-form-group">
             <label>Description *</label>
             <textarea
               name="description"
@@ -429,11 +429,11 @@ const HostelApplicationPage = () => {
         </div>
 
         {/* Accommodation Details Section */}
-        <div className="form-section">
+        <div className="afp-form-section">
           <h3>Accommodation Details</h3>
 
-          <div className="form-row">
-            <div className="form-group">
+          <div className="afp-form-row">
+            <div className="afp-form-group">
               <label>Preferred Check-in Date *</label>
               <input
                 type="date"
@@ -445,7 +445,7 @@ const HostelApplicationPage = () => {
               />
             </div>
 
-            <div className="form-group">
+            <div className="afp-form-group">
               <label>Duration (months) *</label>
               <select
                 name="duration_months"
@@ -461,7 +461,7 @@ const HostelApplicationPage = () => {
             </div>
           </div>
 
-          <div className="form-group">
+          <div className="afp-form-group">
             <label>Special Requirements</label>
             <textarea
               name="special_requirements"
@@ -472,7 +472,7 @@ const HostelApplicationPage = () => {
             />
           </div>
 
-          <div className="form-group checkbox">
+          <div className="afp-form-group checkbox">
             <label>
               <input
                 type="checkbox"
@@ -486,31 +486,31 @@ const HostelApplicationPage = () => {
         </div>
 
         {/* Supporting Documents Section */}
-        <div className="form-section">
+        <div className="afp-form-section">
           <h3>Supporting Documents</h3>
           
           {/* Medical Certificate Upload (conditional) */}
           {formData.has_medical_condition && (
-            <div className="form-group">
-              <label>Medical Certificate <span className="required">*</span></label>
-              <div className="file-upload-area">
+            <div className="afp-form-group">
+              <label>Medical Certificate <span className="afp-required">*</span></label>
+              <div className="afp-file-upload-area">
                 <input
                   type="file"
                   id="medical-certificate"
                   accept=".pdf"
                   onChange={handleMedicalCertificateChange}
-                  className="file-input-hidden"
+                  className="afp-file-input-hidden"
                 />
-                <label htmlFor="medical-certificate" className="file-upload-label">
+                <label htmlFor="medical-certificate" className="afp-file-upload-label">
                   <MdCloudUpload />
                   <span>{medicalCertificate ? medicalCertificate.name : 'Click to upload medical certificate (PDF)'}</span>
                 </label>
                 {medicalCertificate && (
-                  <div className="file-info">
+                  <div className="afp-file-info">
                     <span>{medicalCertificate.name} ({(medicalCertificate.size / 1024).toFixed(2)} KB)</span>
                     <button 
                       type="button" 
-                      className="remove-file"
+                      className="afp-remove-file"
                       onClick={() => setMedicalCertificate(null)}
                     >
                       <MdDelete />
@@ -523,18 +523,18 @@ const HostelApplicationPage = () => {
           )}
 
           {/* Supporting Documents Upload */}
-          <div className="form-group">
-            <label>Supporting Documents <span className="optional">(Optional)</span></label>
-            <div className="file-upload-area">
+          <div className="afp-form-group">
+            <label>Supporting Documents <span className="afp-optional">(Optional)</span></label>
+            <div className="afp-file-upload-area">
               <input
                 type="file"
                 id="supporting-docs"
                 accept=".pdf"
                 multiple
                 onChange={handleSupportingDocsChange}
-                className="file-input-hidden"
+                className="afp-file-input-hidden"
               />
-              <label htmlFor="supporting-docs" className="file-upload-label">
+              <label htmlFor="supporting-docs" className="afp-file-upload-label">
                 <MdCloudUpload />
                 <span>Click to upload multiple supporting documents (PDF)</span>
               </label>
@@ -542,14 +542,14 @@ const HostelApplicationPage = () => {
             <small>Upload any additional supporting documents (PDF only, max 5MB each). Only the first document will be attached as supporting_documents; additional documents will be uploaded as separate attachments.</small>
             
             {supportingDocs.length > 0 && (
-              <div className="attachments-list">
+              <div className="afp-attachments-list">
                 <label>Uploaded Documents ({supportingDocs.length}):</label>
                 {supportingDocs.map((doc, index) => (
-                  <div key={index} className="attachment-item">
+                  <div key={index} className="afp-attachment-item">
                     <span>{doc.name} ({(doc.size / 1024).toFixed(2)} KB)</span>
                     <button
                       type="button"
-                      className="remove-attachment"
+                      className="afp-remove-attachment"
                       onClick={() => removeSupportingDoc(index)}
                     >
                       <MdDelete />
@@ -561,11 +561,11 @@ const HostelApplicationPage = () => {
           </div>
         </div>
 
-        <div className="form-actions">
-          <button type="button" className="cancel-btn" onClick={() => navigate('/lms/student/appeals')}>
+        <div className="afp-form-actions">
+          <button type="button" className="afp-cancel-btn" onClick={() => navigate('/lms/student/appeals')}>
             <MdCancel /> Cancel
           </button>
-          <button type="submit" className="submit-btn" disabled={loading || uploadingFile}>
+          <button type="submit" className="afp-submit-btn" disabled={loading || uploadingFile}>
             <MdSave /> {loading || uploadingFile ? 'Submitting...' : 'Submit Application'}
           </button>
         </div>

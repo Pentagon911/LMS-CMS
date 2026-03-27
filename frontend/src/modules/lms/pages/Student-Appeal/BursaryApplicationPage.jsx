@@ -325,12 +325,12 @@ const BursaryApplicationPage = () => {
 
   if (success) {
     return (
-      <div className="appeal-form-container">
-        <div className="success-message">
-          <MdCheckCircle className="success-icon" />
+      <div className="afp-appeal-form-container">
+        <div className="afp-success-message">
+          <MdCheckCircle className="afp-success-icon" />
           <h2>Application Submitted Successfully!</h2>
           <p>Your bursary application has been submitted. You can track its status in My Appeals.</p>
-          <button onClick={() => navigate('/lms/appeals-and-welfare/my-appeals')} className="view-appeals-btn">
+          <button onClick={() => navigate('/lms/appeals-and-welfare/my-appeals')} className="afp-view-appeals-btn">
             View My Appeals
           </button>
         </div>
@@ -339,68 +339,68 @@ const BursaryApplicationPage = () => {
   }
 
   return (
-    <div className="appeal-form-container">
-      <div className="form-header">
+    <div className="afp-appeal-form-container">
+      <div className="afp-form-header">
         <h1><MdAttachMoney /> Bursary Application</h1>
         <p>Apply for financial aid and scholarships</p>
       </div>
 
       {error && (
-        <div className="error-alert">
+        <div className="afp-error-alert">
           <MdWarning />
           <span>{error}</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="appeal-form">
+      <form onSubmit={handleSubmit} className="afp-appeal-form">
         {/* Student Information Section */}
-        <div className="form-section">
+        <div className="afp-form-section">
           <h3>Student Information</h3>
           
-          <div className="form-group">
+          <div className="afp-form-group">
             <label>Student Name</label>
             <input
               type="text"
               value={user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username || '' : ''}
               disabled
-              className="readonly-field"
+              className="afp-readonly-field"
             />
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
+          <div className="afp-form-row">
+            <div className="afp-form-group">
               <label>Department</label>
               <input
                 type="text"
                 value={departmentName}
                 disabled
-                className="readonly-field"
+                className="afp-readonly-field"
               />
             </div>
 
-            <div className="form-group">
+            <div className="afp-form-group">
               <label>Faculty</label>
               <input
                 type="text"
                 value={facultyName}
                 disabled
-                className="readonly-field"
+                className="afp-readonly-field"
               />
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
+          <div className="afp-form-row">
+            <div className="afp-form-group">
               <label>Batch</label>
               <input
                 type="text"
                 value={batchName}
                 disabled
-                className="readonly-field"
+                className="afp-readonly-field"
               />
             </div>
 
-            <div className="form-group">
+            <div className="afp-form-group">
               <label>Academic Year *</label>
               <input
                 type="text"
@@ -415,10 +415,10 @@ const BursaryApplicationPage = () => {
         </div>
 
         {/* Application Details Section */}
-        <div className="form-section">
+        <div className="afp-form-section">
           <h3>Application Details</h3>
           
-          <div className="form-group">
+          <div className="afp-form-group">
             <label>Title *</label>
             <input
               type="text"
@@ -430,7 +430,7 @@ const BursaryApplicationPage = () => {
             />
           </div>
 
-          <div className="form-group">
+          <div className="afp-form-group">
             <label>Description *</label>
             <textarea
               name="description"
@@ -444,10 +444,10 @@ const BursaryApplicationPage = () => {
         </div>
 
         {/* Financial Information Section */}
-        <div className="form-section">
+        <div className="afp-form-section">
           <h3>Financial Information</h3>
 
-          <div className="form-group">
+          <div className="afp-form-group">
             <label>Family Income Bracket *</label>
             <select
               name="family_income_bracket"
@@ -462,7 +462,7 @@ const BursaryApplicationPage = () => {
             </select>
           </div>
 
-          <div className="form-group checkbox">
+          <div className="afp-form-group checkbox">
             <label>
               <input
                 type="checkbox"
@@ -474,7 +474,7 @@ const BursaryApplicationPage = () => {
             </label>
           </div>
 
-          <div className="form-group">
+          <div className="afp-form-group">
             <label>Reason for Financial Aid *</label>
             <textarea
               name="reason_for_aid"
@@ -488,29 +488,29 @@ const BursaryApplicationPage = () => {
         </div>
 
         {/* Supporting Documents Section */}
-        <div className="form-section">
+        <div className="afp-form-section">
           <h3>Supporting Documents</h3>
           
-          <div className="form-group">
-            <label>Income Certificate <span className="required">*</span></label>
-            <div className="file-upload-area">
+          <div className="afp-form-group">
+            <label>Income Certificate <span className="afp-required">*</span></label>
+            <div className="afp-file-upload-area">
               <input
                 type="file"
                 id="income-certificate"
                 accept=".pdf"
                 onChange={handleIncomeCertificateChange}
-                className="file-input-hidden"
+                className="afp-file-input-hidden"
               />
-              <label htmlFor="income-certificate" className="file-upload-label">
+              <label htmlFor="income-certificate" className="afp-file-upload-label">
                 <MdCloudUpload />
                 <span>{incomeCertificate ? incomeCertificate.name : 'Click to upload income certificate (PDF)'}</span>
               </label>
               {incomeCertificate && (
-                <div className="file-info">
+                <div className="afp-file-info">
                   <span>{incomeCertificate.name} ({(incomeCertificate.size / 1024).toFixed(2)} KB)</span>
                   <button 
                     type="button" 
-                    className="remove-file"
+                    className="afp-remove-file"
                     onClick={() => setIncomeCertificate(null)}
                   >
                     <MdDelete />
@@ -521,26 +521,26 @@ const BursaryApplicationPage = () => {
             <small>Upload income certificate to verify your financial situation (PDF only, max 5MB)</small>
           </div>
 
-          <div className="form-group">
-            <label>Bank Statements <span className="optional">(Optional)</span></label>
-            <div className="file-upload-area">
+          <div className="afp-form-group">
+            <label>Bank Statements <span className="afp-optional">(Optional)</span></label>
+            <div className="afp-file-upload-area">
               <input
                 type="file"
                 id="bank-statements"
                 accept=".pdf"
                 onChange={handleBankStatementsChange}
-                className="file-input-hidden"
+                className="afp-file-input-hidden"
               />
-              <label htmlFor="bank-statements" className="file-upload-label">
+              <label htmlFor="bank-statements" className="afp-file-upload-label">
                 <MdCloudUpload />
                 <span>{bankStatements ? bankStatements.name : 'Click to upload bank statements (PDF)'}</span>
               </label>
               {bankStatements && (
-                <div className="file-info">
+                <div className="afp-file-info">
                   <span>{bankStatements.name} ({(bankStatements.size / 1024).toFixed(2)} KB)</span>
                   <button 
                     type="button" 
-                    className="remove-file"
+                    className="afp-remove-file"
                     onClick={() => setBankStatements(null)}
                   >
                     <MdDelete />
@@ -551,18 +551,18 @@ const BursaryApplicationPage = () => {
             <small>Upload recent bank statements (PDF only, max 5MB)</small>
           </div>
 
-          <div className="form-group">
-            <label>Supporting Documents <span className="optional">(Optional)</span></label>
-            <div className="file-upload-area">
+          <div className="afp-form-group">
+            <label>Supporting Documents <span className="afp-optional">(Optional)</span></label>
+            <div className="afp-file-upload-area">
               <input
                 type="file"
                 id="supporting-docs"
                 accept=".pdf"
                 multiple
                 onChange={handleSupportingDocsChange}
-                className="file-input-hidden"
+                className="afp-file-input-hidden"
               />
-              <label htmlFor="supporting-docs" className="file-upload-label">
+              <label htmlFor="supporting-docs" className="afp-file-upload-label">
                 <MdCloudUpload />
                 <span>Click to upload multiple supporting documents (PDF)</span>
               </label>
@@ -570,14 +570,14 @@ const BursaryApplicationPage = () => {
             <small>Upload any additional supporting documents (PDF only, max 5MB each). Only the first document will be attached as supporting_documents; additional documents will be uploaded as separate attachments.</small>
             
             {supportingDocs.length > 0 && (
-              <div className="attachments-list">
+              <div className="afp-attachments-list">
                 <label>Uploaded Documents ({supportingDocs.length}):</label>
                 {supportingDocs.map((doc, index) => (
-                  <div key={index} className="attachment-item">
+                  <div key={index} className="afp-attachment-item">
                     <span>{doc.name} ({(doc.size / 1024).toFixed(2)} KB)</span>
                     <button
                       type="button"
-                      className="remove-attachment"
+                      className="afp-remove-attachment"
                       onClick={() => removeSupportingDoc(index)}
                     >
                       <MdDelete />
@@ -589,11 +589,11 @@ const BursaryApplicationPage = () => {
           </div>
         </div>
 
-        <div className="form-actions">
-          <button type="button" className="cancel-btn" onClick={() => navigate('/lms/student/appeals')}>
+        <div className="afp-form-actions">
+          <button type="button" className="afp-cancel-btn" onClick={() => navigate('/lms/student/appeals')}>
             <MdCancel /> Cancel
           </button>
-          <button type="submit" className="submit-btn" disabled={loading || uploadingFile}>
+          <button type="submit" className="afp-submit-btn" disabled={loading || uploadingFile}>
             <MdSave /> {loading || uploadingFile ? 'Submitting...' : 'Submit Application'}
           </button>
         </div>

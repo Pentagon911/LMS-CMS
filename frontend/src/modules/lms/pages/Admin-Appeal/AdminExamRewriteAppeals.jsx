@@ -110,31 +110,31 @@ const AdminExamRewriteAppeals = () => {
   }
 
   return (
-    <div className="admin-appeal-page">
-      <div className="page-header">
+    <div className="aap-admin-appeal-page">
+      <div className="aap-page-header">
         <div>
           <h1>Exam Rewrite Appeals</h1>
           <p>Review and process exam rescheduling requests</p>
         </div>
-        <button className="refresh-btn" onClick={fetchAppeals}>
+        <button className="aap-refresh-btn" onClick={fetchAppeals}>
           <MdRefresh /> Refresh
         </button>
       </div>
 
       {error && (
-        <div className="error-alert">
+        <div className="aap-error-alert">
           <MdWarning />
           <span>{error}</span>
         </div>
       )}
 
       {appeals.length === 0 ? (
-        <div className="empty-state">
+        <div className="aap-empty-state">
           <p>No pending exam rewrite appeals to review.</p>
         </div>
       ) : (
-        <div className="appeals-table-container">
-          <table className="appeals-table">
+        <div className="aap-appeals-table-container">
+          <table className="aap-appeals-table">
             <thead>
               <tr>
                 <th>Appeal ID</th>
@@ -151,18 +151,18 @@ const AdminExamRewriteAppeals = () => {
             <tbody>
               {appeals.map((appeal) => (
                 <tr key={appeal.id}>
-                  <td className="appeal-id">{appeal.appeal_id?.slice(0, 8)}...</td>
+                  <td className="aap-appeal-id">{appeal.appeal_id?.slice(0, 8)}...</td>
                   <td>
-                    <div className="student-info">
+                    <div className="aap-student-info">
                       <strong>{appeal.student_name}</strong>
-                      <span className="student-detail">{appeal.student?.username}</span>
+                      <span className="aap-student-detail">{appeal.student?.username}</span>
                     </div>
                   </td>
                   <td>{appeal.course_name || appeal.course?.name}</td>
                   <td>{appeal.module_name || appeal.module?.name}</td>
                   <td>{appeal.semester}</td>
                   <td>
-                    <span className="reason-badge">
+                    <span className="aap-reason-badge">
                       {getReasonTypeDisplay(appeal.reason_type)}
                     </span>
                   </td>
@@ -172,9 +172,9 @@ const AdminExamRewriteAppeals = () => {
                       {appeal.status}
                     </span>
                   </td>
-                  <td className="actions">
+                  <td className="aap-actions">
                     <button
-                      className="action-btn-view-btn"
+                      className="aap-action-btn-view-btn"
                       onClick={() => handleViewDetails(appeal)}
                       title="View Details"
                     >
@@ -191,102 +191,102 @@ const AdminExamRewriteAppeals = () => {
 
       {/* Modal for viewing/processing appeal */}
       {modalOpen && selectedAppeal && (
-        <div className="modal-overlay" onClick={() => setModalOpen(false)}>
-          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="aap-modal-overlay" onClick={() => setModalOpen(false)}>
+          <div className="aap-modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="aap-modal-header">
               <h2>Exam Rewrite Appeal Details</h2>
-              <button className="close-btn" onClick={() => setModalOpen(false)}>
+              <button className="aap-close-btn" onClick={() => setModalOpen(false)}>
                 <MdClose />
               </button>
             </div>
 
-            <div className="modal-content">
-              <div className="appeal-info">
-                <div className="info-row">
+            <div className="aap-modal-content">
+              <div className="aap-appeal-info">
+                <div className="aap-info-row">
                   <label>Appeal ID:</label>
                   <span className = "user-examrw-data">{selectedAppeal.appeal_id}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Student:</label>
                   <span className = "user-examrw-data">{selectedAppeal.student_name}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Title:</label>
                   <span className = "user-examrw-data">{selectedAppeal.title}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Department:</label>
                   <span className = "user-examrw-data">{selectedAppeal.department_name}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Faculty:</label>
                   <span className = "user-examrw-data">{selectedAppeal.faculty_name}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Batch:</label>
                   <span className = "user-examrw-data">{selectedAppeal.batch_name || 'N/A'}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Academic Year:</label>
                   <span className = "user-examrw-data">{selectedAppeal.academic_year}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Description:</label>
-                  <p className="description-text">{selectedAppeal.description}</p>
+                  <p className="aap-description-text">{selectedAppeal.description}</p>
                 </div>
               </div>
 
-              <div className="type-specific">
+              <div className="aap-type-specific">
                 <h3>Exam Details</h3>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Course:</label>
                   <span className = "user-examrw-data">{selectedAppeal.course_name || selectedAppeal.course?.name}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Module:</label>
                   <span className = "user-examrw-data">{selectedAppeal.module_name || selectedAppeal.module?.name}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Semester:</label>
                   <span className = "user-examrw-data">{selectedAppeal.semester}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Original Exam Date:</label>
                   <span className = "user-examrw-data">{formatDate(selectedAppeal.original_exam_date)}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Reason Type:</label>
-                  <span className="reason-badge">{getReasonTypeDisplay(selectedAppeal.reason_type)}</span>
+                  <span className="aap-reason-badge">{getReasonTypeDisplay(selectedAppeal.reason_type)}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Detailed Reason:</label>
                   <p className = "user-examrw-data">{selectedAppeal.detailed_reason}</p>
                 </div>
                 {selectedAppeal.medical_certificate && (
-                  <div className="info-row">
+                  <div className="aap-info-row">
                     <label>Medical Certificate:</label>
                     <button 
-                      className="download-btn"
+                      className="aap-download-btn"
                       onClick={() => handleDownload(selectedAppeal.medical_certificate, 'medical_certificate')}
                     >
                       <MdDownload /> Download
                     </button>
                   </div>
                 )}
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>New Exam Date:</label>
                   <input
                     type="date"
-                    className="process-input"
+                    className="aap-process-input"
                     value={processData.new_exam_date}
                     onChange={(e) => setProcessData({ ...processData, new_exam_date: e.target.value })}
                   />
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Exam Venue:</label>
                   <input
                     type="text"
-                    className="process-input"
+                    className="aap-process-input"
                     placeholder="Enter exam venue"
                     value={processData.exam_venue}
                     onChange={(e) => setProcessData({ ...processData, exam_venue: e.target.value })}
@@ -294,10 +294,10 @@ const AdminExamRewriteAppeals = () => {
                 </div>
               </div>
 
-              <div className="review-section">
+              <div className="aap-review-section">
                 <h3>Review Notes</h3>
                 <textarea
-                  className="review-notes"
+                  className="aap-review-notes"
                   rows="4"
                   placeholder="Enter review notes..."
                   value={reviewNotes}
@@ -305,16 +305,16 @@ const AdminExamRewriteAppeals = () => {
                 />
               </div>
 
-              <div className="modal-actions">
+              <div className="aap-modal-actions">
                 <button
-                  className="reject-btn"
+                  className="aap-reject-btn"
                   onClick={() => handleProcess('reject')}
                   disabled={processing}
                 >
                   <MdCancel /> Reject
                 </button>
                 <button
-                  className="approve-btn"
+                  className="aap-approve-btn"
                   onClick={() => handleProcess('approve')}
                   disabled={processing}
                 >

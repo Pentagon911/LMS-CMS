@@ -96,31 +96,31 @@ const AdminBursaryAppeals = () => {
   }
 
   return (
-    <div className="admin-appeal-page">
-      <div className="page-header">
+    <div className="aap-admin-appeal-page">
+      <div className="aap-page-header">
         <div>
           <h1>Bursary Appeals</h1>
           <p>Review and process financial aid applications</p>
         </div>
-        <button className="refresh-btn" onClick={fetchAppeals}>
+        <button className="aap-refresh-btn" onClick={fetchAppeals}>
           <MdRefresh /> Refresh
         </button>
       </div>
 
       {error && (
-        <div className="error-alert">
+        <div className="aap-error-alert">
           <MdWarning />
           <span>{error}</span>
         </div>
       )}
 
       {appeals.length === 0 ? (
-        <div className="empty-state">
+        <div className="aap-empty-state">
           <p>No pending bursary appeals to review.</p>
         </div>
       ) : (
-        <div className="appeals-table-container">
-          <table className="appeals-table">
+        <div className="aap-appeals-table-container">
+          <table className="aap-appeals-table">
             <thead>
               <tr>
                 <th>Appeal ID</th>
@@ -136,16 +136,16 @@ const AdminBursaryAppeals = () => {
             <tbody>
               {appeals.map((appeal) => (
                 <tr key={appeal.id}>
-                  <td className="appeal-id">{appeal.appeal_id?.slice(0, 8)}...</td>
+                  <td className="aap-appeal-id">{appeal.appeal_id?.slice(0, 8)}...</td>
                   <td>
-                    <div className="student-info">
+                    <div className="aap-student-info">
                       <strong>{appeal.student_name}</strong>
-                      <span className="student-detail">{appeal.student?.username}</span>
+                      <span className="aap-student-detail">{appeal.student?.username}</span>
                     </div>
                   </td>
                   <td>{appeal.title}</td>
                   <td>
-                    <span className="income-badge">
+                    <span className="aap-income-badge">
                       {appeal.family_income_bracket}
                     </span>
                   </td>
@@ -156,9 +156,9 @@ const AdminBursaryAppeals = () => {
                       {appeal.status}
                     </span>
                   </td>
-                  <td className="actions">
+                  <td className="aap-actions">
                     <button
-                      className="action-btn-view-btn"
+                      className="aap-action-btn-view-btn"
                       onClick={() => handleViewDetails(appeal)}
                       title="View Details"
                     >
@@ -174,70 +174,70 @@ const AdminBursaryAppeals = () => {
 
       {/* Modal for viewing/processing appeal */}
       {modalOpen && selectedAppeal && (
-        <div className="modal-overlay" onClick={() => setModalOpen(false)}>
-          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="aap-modal-overlay" onClick={() => setModalOpen(false)}>
+          <div className="aap-modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="aap-modal-header">
               <h2>Bursary Appeal Details</h2>
-              <button className="close-btn" onClick={() => setModalOpen(false)}>
+              <button className="aap-close-btn" onClick={() => setModalOpen(false)}>
                 <MdClose />
               </button>
             </div>
 
-            <div className="modal-content">
-              <div className="appeal-info">
-                <div className="info-row">
+            <div className="aap-modal-content">
+              <div className="aap-appeal-info">
+                <div className="aap-info-row">
                   <label>Appeal ID:</label>
                   <span className = "user-bursary-data">{selectedAppeal.appeal_id}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Student:</label>
                   <span className = "user-bursary-data">{selectedAppeal.student_name}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Title:</label>
                   <span className = "user-bursary-data">{selectedAppeal.title}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Department:</label>
                   <span className = "user-bursary-data">{selectedAppeal.department_name}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Faculty:</label>
                   <span className = "user-bursary-data">{selectedAppeal.faculty_name}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Batch:</label>
                   <span className = "user-bursary-data">{selectedAppeal.batch_name || 'N/A'}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Academic Year:</label>
                   <span className = "user-bursary-data">{selectedAppeal.academic_year}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Description:</label>
-                  <p className="description-text">{selectedAppeal.description}</p>
+                  <p className="aap-description-text">{selectedAppeal.description}</p>
                 </div>
               </div>
 
-              <div className="type-specific">
+              <div className="aap-type-specific">
                 <h3>Financial Details</h3>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Family Income Bracket:</label>
                   <span className = "user-bursary-data">{selectedAppeal.family_income_bracket}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Has Scholarship:</label>
                   <span className = "user-bursary-data">{selectedAppeal.has_scholarship ? 'Yes' : 'No'}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Reason for Aid:</label>
                   <p className = "user-bursary-data">{selectedAppeal.reason_for_aid}</p>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Income Certificate:</label>
                   {selectedAppeal.income_certificate ? (
                     <button 
-                      className="download-btn"
+                      className="aap-download-btn"
                       onClick={() => handleDownload(selectedAppeal.income_certificate, 'income_certificate')}
                     >
                       <MdDownload /> Download
@@ -246,11 +246,11 @@ const AdminBursaryAppeals = () => {
                     <span className = "user-bursary-data">No file</span>
                   )}
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Bank Statements:</label>
                   {selectedAppeal.bank_statements ? (
                     <button 
-                      className="download-btn"
+                      className="aap-download-btn"
                       onClick={() => handleDownload(selectedAppeal.bank_statements, 'bank_statements')}
                     >
                       <MdDownload /> Download
@@ -259,11 +259,11 @@ const AdminBursaryAppeals = () => {
                     <span className = "user-bursary-data">No file</span>
                   )}
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Approved Amount (LKR):</label>
                   <input
                     type="number"
-                    className="process-input"
+                    className="aap-process-input"
                     placeholder="Enter approved amount"
                     value={processData.approved_amount}
                     onChange={(e) => setProcessData({ ...processData, approved_amount: e.target.value })}
@@ -271,10 +271,10 @@ const AdminBursaryAppeals = () => {
                 </div>
               </div>
 
-              <div className="review-section">
+              <div className="aap-review-section">
                 <h3>Review Notes</h3>
                 <textarea
-                  className="review-notes"
+                  className="aap-review-notes"
                   rows="4"
                   placeholder="Enter review notes..."
                   value={reviewNotes}
@@ -282,16 +282,16 @@ const AdminBursaryAppeals = () => {
                 />
               </div>
 
-              <div className="modal-actions">
+              <div className="aap-modal-actions">
                 <button
-                  className="reject-btn"
+                  className="aap-reject-btn"
                   onClick={() => handleProcess('reject')}
                   disabled={processing}
                 >
                   <MdCancel /> Reject
                 </button>
                 <button
-                  className="approve-btn"
+                  className="aap-approve-btn"
                   onClick={() => handleProcess('approve')}
                   disabled={processing}
                 >

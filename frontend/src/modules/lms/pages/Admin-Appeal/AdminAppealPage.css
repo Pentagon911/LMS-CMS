@@ -1,6 +1,4 @@
-/* src/modules/lms/pages/Admin-Appeal/AdminAppealPage.css */
-
-.admin-appeal-page {
+.aap-admin-appeal-page {
   padding: 24px;
   max-width: 1400px;
   margin: 0 auto;
@@ -8,12 +6,12 @@
   background: #f8fafd;
 }
 
-body.dark-mode .admin-appeal-page {
+body.dark-mode .aap-admin-appeal-page {
   background: #1a1e24;
 }
 
 /* Page Header */
-.page-header {
+.aap-page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -22,27 +20,27 @@ body.dark-mode .admin-appeal-page {
   gap: 16px;
 }
 
-.page-header h1 {
+.aap-page-header h1 {
   font-size: 28px;
   color: #1a2632;
   margin: 0 0 8px 0;
 }
 
-.page-header p {
+.aap-page-header p {
   color: #5a6778;
   margin: 0;
   font-size: 14px;
 }
 
-body.dark-mode .page-header h1 {
+body.dark-mode .aap-page-header h1 {
   color: #e5e9f0;
 }
 
-body.dark-mode .page-header p {
+body.dark-mode .aap-page-header p {
   color: #a0a8b7;
 }
 
-.refresh-btn {
+.aap-refresh-btn {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -56,23 +54,23 @@ body.dark-mode .page-header p {
   transition: all 0.2s ease;
 }
 
-.refresh-btn:hover {
+.aap-refresh-btn:hover {
   background: #f1f4f9;
   border-color: #d0d5dd;
 }
 
-body.dark-mode .refresh-btn {
+body.dark-mode .aap-refresh-btn {
   background: #2a313c;
   border-color: #323b48;
   color: #e5e9f0;
 }
 
-body.dark-mode .refresh-btn:hover {
+body.dark-mode .aap-refresh-btn:hover {
   background: #323b48;
 }
 
 /* Error Alert */
-.error-alert {
+.aap-error-alert {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -84,14 +82,14 @@ body.dark-mode .refresh-btn:hover {
   color: #d32f2f;
 }
 
-body.dark-mode .error-alert {
+body.dark-mode .aap-error-alert {
   background: #3a2a2a;
   border-left-color: #ff8a80;
   color: #ff8a80;
 }
 
 /* Empty State */
-.empty-state {
+.aap-empty-state {
   text-align: center;
   padding: 60px;
   background: white;
@@ -100,14 +98,14 @@ body.dark-mode .error-alert {
   border: 1px solid #eef2f6;
 }
 
-body.dark-mode .empty-state {
+body.dark-mode .aap-empty-state {
   background: #1e242c;
   border-color: #2a313c;
   color: #a0a8b7;
 }
 
 /* Table */
-.appeals-table-container {
+.aap-appeals-table-container {
   background: white;
   border-radius: 12px;
   overflow-x: auto;
@@ -115,17 +113,17 @@ body.dark-mode .empty-state {
   border: 1px solid #eef2f6;
 }
 
-body.dark-mode .appeals-table-container {
+body.dark-mode .aap-appeals-table-container {
   background: #1e242c;
   border-color: #2a313c;
 }
 
-.appeals-table {
+.aap-appeals-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.appeals-table th {
+.aap-appeals-table th {
   text-align: left;
   padding: 16px;
   background: #f8fafd;
@@ -135,50 +133,66 @@ body.dark-mode .appeals-table-container {
   border-bottom: 1px solid #eef2f6;
 }
 
-body.dark-mode .appeals-table th {
+body.dark-mode .aap-appeals-table th {
   background: #2a313c;
   color: #a0a8b7;
   border-bottom-color: #323b48;
 }
 
-.appeals-table td {
+.aap-appeals-table td {
   padding: 16px;
   border-bottom: 1px solid #eef2f6;
   color: #1a2632;
 }
 
-body.dark-mode .appeals-table td {
+body.dark-mode .aap-appeals-table td {
   border-bottom-color: #2a313c;
   color: #e5e9f0;
 }
 
-.appeals-table tr:hover {
+.aap-appeals-table tr:hover {
   background: #f8fafd;
 }
 
-body.dark-mode .appeals-table tr:hover {
+body.dark-mode .aap-appeals-table tr:hover {
   background: #2a313c;
 }
 
 /* Table Elements */
-.appeal-id {
+.aap-appeal-id {
   font-family: monospace;
   font-size: 12px;
   color: #7f8c9f;
 }
 
-.student-info {
+body.dark-mode .aap-appeal-id {
+  color: #a0a8b7;
+}
+
+.aap-student-info {
   display: flex;
   flex-direction: column;
 }
 
-.student-detail {
+.aap-student-info strong {
+  color: #1a2632;
+}
+
+body.dark-mode .aap-student-info strong {
+  color: #e5e9f0;
+}
+
+.aap-student-detail {
   font-size: 12px;
   color: #7f8c9f;
 }
 
+body.dark-mode .aap-student-detail {
+  color: #a0a8b7;
+}
+
 /* Badges */
-.status-badge {
+.aap-status-badge {
   display: inline-block;
   padding: 4px 12px;
   border-radius: 20px;
@@ -186,47 +200,49 @@ body.dark-mode .appeals-table tr:hover {
   font-weight: 500;
 }
 
-.status-pending {
+.aap-status-pending {
   background: #fff3e0;
   color: #ff9800;
 }
 
-.status-review {
+.aap-status-review {
   background: #e3f2fd;
   color: #2196f3;
 }
 
-.status-approved {
+.aap-status-approved {
   background: #e8f5e9;
   color: #4caf50;
 }
 
-.status-rejected {
+.aap-status-rejected {
   background: #fee9e7;
   color: #f44336;
 }
 
-body.dark-mode .status-pending {
+body.dark-mode .aap-status-pending {
   background: #3a2e1a;
   color: #ffb74d;
 }
 
-body.dark-mode .status-review {
+body.dark-mode .aap-status-review {
   background: #1a2a3a;
   color: #64b5f6;
 }
 
-body.dark-mode .status-approved {
+body.dark-mode .aap-status-approved {
   background: #1a2a1a;
   color: #81c784;
 }
 
-body.dark-mode .status-rejected {
+body.dark-mode .aap-status-rejected {
   background: #3a1a1a;
   color: #ff8a80;
 }
 
-.income-badge, .reason-badge, .grade-badge {
+.aap-income-badge,
+.aap-reason-badge,
+.aap-grade-badge {
   display: inline-block;
   padding: 4px 10px;
   border-radius: 16px;
@@ -236,29 +252,29 @@ body.dark-mode .status-rejected {
   color: #495057;
 }
 
-body.dark-mode .income-badge,
-body.dark-mode .reason-badge,
-body.dark-mode .grade-badge {
+body.dark-mode .aap-income-badge,
+body.dark-mode .aap-reason-badge,
+body.dark-mode .aap-grade-badge {
   background: #323b48;
   color: #e5e9f0;
 }
 
-.medical-yes {
+.aap-medical-yes {
   color: #f44336;
   font-weight: 500;
 }
 
-.medical-no {
+.aap-medical-no {
   color: #4caf50;
 }
 
-/* Action Buttons */
-.actions {
+/* Action Buttons - Matching ReviewQueue.css style */
+.aap-actions {
   display: flex;
   gap: 8px;
 }
 
-.action-btn {
+.aap-action-btn {
   width: 32px;
   height: 32px;
   border-radius: 6px;
@@ -271,22 +287,99 @@ body.dark-mode .grade-badge {
   transition: all 0.2s ease;
 }
 
-.view-btn {
-  background: #e3f2fd;
-  color: #2196f3;
+.aap-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.view-btn:hover {
-  background: #bbdef5;
+/* View Button - Specific Style */
+.aap-action-btn-view-btn {
+  background-color: #5caef2;
+  width: 40px;
+  height: 30px;
+  border-radius: 10px;
+  border: none;
+  transform: translateY(-0.8px);
+  transition: background-color 0.3s ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
 }
 
-body.dark-mode .view-btn {
-  background: #1a2a3a;
-  color: #64b5f6;
+.aap-action-btn-view-btn:hover {
+  background-color: #bbdef5;
 }
 
-/* Modal */
-.modal-overlay {
+body.dark-mode .aap-action-btn-view-btn {
+  background-color: #2c5a8c;
+  color: #e5e9f0;
+}
+
+body.dark-mode .aap-action-btn-view-btn:hover {
+  background-color: #3a6c9e;
+}
+
+/* Assign Button - Specific Style */
+.aap-action-btn-assign-btn {
+  background-color: #1ab15e;
+  width: 40px;
+  height: 30px;
+  border-radius: 10px;
+  border: none;
+  transform: translateY(-0.8px);
+  transition: background-color 0.3s ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.aap-action-btn-assign-btn:hover {
+  background-color: #91fac9;
+}
+
+body.dark-mode .aap-action-btn-assign-btn {
+  background-color: #0e6b3a;
+  color: #e5e9f0;
+}
+
+body.dark-mode .aap-action-btn-assign-btn:hover {
+  background-color: #158f4e;
+}
+
+/* Process Button - Specific Style */
+.aap-action-btn-process-btn {
+  background-color: #5caef2;
+  width: 40px;
+  height: 30px;
+  border-radius: 10px;
+  border: none;
+  transition: background-color 0.3s ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.aap-action-btn-process-btn:hover {
+  background-color: #bbdef5;
+}
+
+body.dark-mode .aap-action-btn-process-btn {
+  background-color: #2c5a8c;
+  color: #e5e9f0;
+}
+
+body.dark-mode .aap-action-btn-process-btn:hover {
+  background-color: #3a6c9e;
+}
+
+/* Modal - FIXED SCROLLING */
+.aap-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -297,25 +390,29 @@ body.dark-mode .view-btn {
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  animation: fadeIn 0.2s ease;
+  padding: 20px;
+  box-sizing: border-box;
+  animation: aap-fadeIn 0.2s ease;
 }
 
-@keyframes fadeIn {
+@keyframes aap-fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-.modal-container {
+.aap-modal-container {
   background: white;
   border-radius: 16px;
-  width: 90%;
+  width: 100%;
   max-width: 800px;
   max-height: 90vh;
-  overflow-y: auto;
-  animation: slideUp 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  animation: aap-slideUp 0.3s ease;
+  overflow: hidden;
 }
 
-@keyframes slideUp {
+@keyframes aap-slideUp {
   from {
     transform: translateY(50px);
     opacity: 0;
@@ -326,33 +423,34 @@ body.dark-mode .view-btn {
   }
 }
 
-body.dark-mode .modal-container {
+body.dark-mode .aap-modal-container {
   background: #1e242c;
 }
 
-.modal-header {
+.aap-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
   border-bottom: 1px solid #eef2f6;
+  flex-shrink: 0;
 }
 
-body.dark-mode .modal-header {
+body.dark-mode .aap-modal-header {
   border-bottom-color: #2a313c;
 }
 
-.modal-header h2 {
+.aap-modal-header h2 {
   margin: 0;
   font-size: 20px;
   color: #1a2632;
 }
 
-body.dark-mode .modal-header h2 {
+body.dark-mode .aap-modal-header h2 {
   color: #e5e9f0;
 }
 
-.close-btn {
+.aap-close-btn {
   width: 32px;
   height: 32px;
   border-radius: 8px;
@@ -364,73 +462,101 @@ body.dark-mode .modal-header h2 {
   justify-content: center;
   font-size: 18px;
   transition: all 0.2s ease;
+  flex-shrink: 0;
+  color: #5a6778;
 }
 
-body.dark-mode .close-btn {
+.aap-close-btn:hover {
+  background: #e5e9f0;
+}
+
+body.dark-mode .aap-close-btn {
   background: #2a313c;
+  color: #a0a8b7;
+}
+
+body.dark-mode .aap-close-btn:hover {
+  background: #323b48;
   color: #e5e9f0;
 }
 
-.modal-content {
+.aap-modal-content {
   padding: 24px;
+  overflow-y: auto;
+  flex: 1;
 }
 
 /* Info Rows */
-.appeal-info, .type-specific, .review-section {
+.aap-appeal-info,
+.aap-type-specific,
+.aap-review-section {
   margin-bottom: 24px;
+  overflow: visible;
+  height: auto;
 }
 
-.info-row {
+.aap-info-row {
   margin-bottom: 16px;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.info-row label {
+.aap-info-row label {
   font-weight: 500;
   color: #5a6778;
   min-width: 160px;
 }
 
-body.dark-mode .info-row label {
+body.dark-mode .aap-info-row label {
   color: #a0a8b7;
 }
 
-.description-text {
+/* Modal text colors - FIXED FOR DARK MODE */
+.aap-info-row span,
+.aap-info-row p {
+  color: #1a2632;
+}
+
+body.dark-mode .aap-info-row span,
+body.dark-mode .aap-info-row p {
+  color: #e5e9f0;
+}
+
+.aap-description-text {
   margin: 0;
   color: #1a2632;
   line-height: 1.5;
   flex: 1;
 }
 
-body.dark-mode .description-text {
+body.dark-mode .aap-description-text {
   color: #e5e9f0;
 }
 
 /* Type Specific */
-.type-specific {
+.aap-type-specific {
   background: #f8fafd;
   border-radius: 12px;
   padding: 20px;
 }
 
-body.dark-mode .type-specific {
+body.dark-mode .aap-type-specific {
   background: #2a313c;
 }
 
-.type-specific h3 {
+.aap-type-specific h3 {
   margin: 0 0 16px 0;
   font-size: 16px;
   color: #1a2632;
 }
 
-body.dark-mode .type-specific h3 {
+body.dark-mode .aap-type-specific h3 {
   color: #e5e9f0;
 }
 
 /* Form Inputs */
-.process-input {
+.aap-process-input {
   padding: 8px 12px;
   border: 1px solid #eef2f6;
   border-radius: 6px;
@@ -438,9 +564,16 @@ body.dark-mode .type-specific h3 {
   width: 100%;
   max-width: 300px;
   background: white;
+  color: #1a2632;
 }
 
-.process-textarea {
+.aap-process-input:focus {
+  outline: none;
+  border-color: #1a2632;
+  box-shadow: 0 0 0 2px rgba(26, 38, 50, 0.1);
+}
+
+.aap-process-textarea {
   width: 100%;
   padding: 8px 12px;
   border: 1px solid #eef2f6;
@@ -449,17 +582,30 @@ body.dark-mode .type-specific h3 {
   font-family: inherit;
   resize: vertical;
   background: white;
+  color: #1a2632;
 }
 
-body.dark-mode .process-input,
-body.dark-mode .process-textarea {
+.aap-process-textarea:focus {
+  outline: none;
+  border-color: #1a2632;
+  box-shadow: 0 0 0 2px rgba(26, 38, 50, 0.1);
+}
+
+body.dark-mode .aap-process-input,
+body.dark-mode .aap-process-textarea {
   background: #1e242c;
   border-color: #323b48;
   color: #e5e9f0;
 }
 
+body.dark-mode .aap-process-input:focus,
+body.dark-mode .aap-process-textarea:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+}
+
 /* Download Button */
-.download-btn {
+.aap-download-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -470,25 +616,34 @@ body.dark-mode .process-textarea {
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
+  transition: all 0.2s ease;
 }
 
-body.dark-mode .download-btn {
+.aap-download-btn:hover {
+  background: #bbdef5;
+}
+
+body.dark-mode .aap-download-btn {
   background: #1a2a3a;
   color: #64b5f6;
 }
 
+body.dark-mode .aap-download-btn:hover {
+  background: #2c3e50;
+}
+
 /* Review Section */
-.review-section h3 {
+.aap-review-section h3 {
   margin: 0 0 12px 0;
   font-size: 16px;
   color: #1a2632;
 }
 
-body.dark-mode .review-section h3 {
+body.dark-mode .aap-review-section h3 {
   color: #e5e9f0;
 }
 
-.review-notes {
+.aap-review-notes {
   width: 100%;
   padding: 12px;
   border: 1px solid #eef2f6;
@@ -497,16 +652,28 @@ body.dark-mode .review-section h3 {
   font-size: 14px;
   resize: vertical;
   background: white;
+  color: #1a2632;
 }
 
-body.dark-mode .review-notes {
+.aap-review-notes:focus {
+  outline: none;
+  border-color: #1a2632;
+  box-shadow: 0 0 0 2px rgba(26, 38, 50, 0.1);
+}
+
+body.dark-mode .aap-review-notes {
   background: #1e242c;
   border-color: #323b48;
   color: #e5e9f0;
 }
 
+body.dark-mode .aap-review-notes:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+}
+
 /* Modal Actions */
-.modal-actions {
+.aap-modal-actions {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
@@ -515,11 +682,12 @@ body.dark-mode .review-notes {
   border-top: 1px solid #eef2f6;
 }
 
-body.dark-mode .modal-actions {
+body.dark-mode .aap-modal-actions {
   border-top-color: #2a313c;
 }
 
-.approve-btn, .reject-btn {
+.aap-approve-btn,
+.aap-reject-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -532,31 +700,51 @@ body.dark-mode .modal-actions {
   transition: all 0.2s ease;
 }
 
-.approve-btn {
+.aap-approve-btn {
   background: #4caf50;
   color: white;
 }
 
-.approve-btn:hover:not(:disabled) {
+.aap-approve-btn:hover:not(:disabled) {
   background: #45a049;
+  transform: translateY(-1px);
 }
 
-.reject-btn {
+.aap-reject-btn {
   background: #f44336;
   color: white;
 }
 
-.reject-btn:hover:not(:disabled) {
+.aap-reject-btn:hover:not(:disabled) {
   background: #da190b;
+  transform: translateY(-1px);
 }
 
-.approve-btn:disabled, .reject-btn:disabled {
+.aap-approve-btn:disabled,
+.aap-reject-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
+}
+
+body.dark-mode .aap-approve-btn {
+  background: #2e7d32;
+}
+
+body.dark-mode .aap-approve-btn:hover:not(:disabled) {
+  background: #388e3c;
+}
+
+body.dark-mode .aap-reject-btn {
+  background: #c62828;
+}
+
+body.dark-mode .aap-reject-btn:hover:not(:disabled) {
+  background: #d32f2f;
 }
 
 /* Loading Spinner */
-.loading-spinner {
+.aap-loading-spinner {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -564,99 +752,116 @@ body.dark-mode .modal-actions {
   height: 400px;
 }
 
-.spinner {
+.aap-spinner {
   width: 40px;
   height: 40px;
   border: 3px solid #eef2f6;
   border-top-color: #1a2632;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: aap-spin 1s linear infinite;
 }
 
-@keyframes spin {
+@keyframes aap-spin {
   to { transform: rotate(360deg); }
 }
 
-body.dark-mode .spinner {
+body.dark-mode .aap-spinner {
   border-color: #2a313c;
   border-top-color: #e5e9f0;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .admin-appeal-page {
+  .aap-admin-appeal-page {
     padding: 16px;
   }
   
-  .page-header {
+  .aap-page-header {
     flex-direction: column;
     align-items: flex-start;
   }
   
-  .appeals-table th,
-  .appeals-table td {
+  .aap-appeals-table th,
+  .aap-appeals-table td {
     padding: 12px;
   }
   
-  .info-row {
+  .aap-info-row {
     flex-direction: column;
   }
   
-  .info-row label {
+  .aap-info-row label {
     min-width: auto;
   }
   
-  .modal-container {
-    width: 95%;
+  .aap-modal-overlay {
+    padding: 10px;
   }
   
-  .modal-actions {
+  .aap-modal-container {
+    width: 100%;
+    max-height: 95vh;
+  }
+  
+  .aap-modal-content {
+    padding: 20px;
+  }
+  
+  .aap-modal-actions {
     flex-direction: column;
   }
   
-  .approve-btn, .reject-btn {
+  .aap-approve-btn,
+  .aap-reject-btn {
     width: 100%;
     justify-content: center;
   }
 }
-.action-btn-view-btn{
-  transform: translateY(-15px);
-  width: 30px;
+
+/* User Data Styles - FIXED FOR DARK MODE */
+.aap-user-medical-data,
+.aap-user-bursary-data,
+.aap-user-hostel-data,
+.aap-user-examrw-data,
+.aap-user-resulteval-data {
+  color: #1a2632;
 }
 
-body.dark-mode .user-medical-data,
-body.dark-mode .user-bursary-data,
-body.dark-mode .user-hostel-data,
-body.dark-mode .user-examrw-data,
-body.dark-mode .user-resulteval-data{
-  color: white;
+body.dark-mode .aap-user-medical-data,
+body.dark-mode .aap-user-bursary-data,
+body.dark-mode .aap-user-hostel-data,
+body.dark-mode .aap-user-examrw-data,
+body.dark-mode .aap-user-resulteval-data {
+  color: #e5e9f0;
 }
 
-
-/* Ensure only the modal content scrolls */
-.modal-content {
-  overflow-y: auto;
-  max-height: 80vh; /* or whatever height you prefer */
+/* Scrollbar Styling */
+.aap-modal-content::-webkit-scrollbar {
+  width: 6px;
 }
 
-/* Remove overflow from inner containers */
-.appeal-info,
-.type-specific,
-.review-section {
-  overflow: visible;
+.aap-modal-content::-webkit-scrollbar-track {
+  background: #eef2f6;
+  border-radius: 3px;
 }
 
-/* If any inner element has a fixed height, make it auto */
-.appeal-info,
-.type-specific,
-.review-section {
-  height: auto;
-  
+.aap-modal-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
 }
 
-/* Ensure the modal container doesn't force extra scrolling */
-.modal-container {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+.aap-modal-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+body.dark-mode .aap-modal-content::-webkit-scrollbar-track {
+  background: #2a313c;
+}
+
+body.dark-mode .aap-modal-content::-webkit-scrollbar-thumb {
+  background: #404854;
+}
+
+body.dark-mode .aap-modal-content::-webkit-scrollbar-thumb:hover {
+  background: #4a5568;
 }
