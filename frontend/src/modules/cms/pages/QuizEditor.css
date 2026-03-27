@@ -219,6 +219,15 @@ body.dark-mode .module-selection-section {
   background-color: #2a313c;
   color: #e5e9f0;
 }
+.module-selection-section select,
+.module-filter select {
+  background-color: #1C1F27;  
+  color: #e0e0e0;            
+  border: 1px solid #444;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
 
 .module-select-large {
   width: 100%;
@@ -611,4 +620,15 @@ body.dark-mode .cancel-edit-btn:hover {
     width: 100%;
     justify-content: center;
   }
+}
+.question-image-preview {
+  margin-left: 10px;
+  margin-bottom: 5px;
+}
+
+.question-image-preview img {
+  width: 200px;        
+  height: 120px;      
+  object-fit: cover; 
+  border-radius: 4px;
 }

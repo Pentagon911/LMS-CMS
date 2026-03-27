@@ -101,7 +101,7 @@ useEffect(() => {
   const fetchAnnouncements = async () => {
     try {
       setLoading(true);
-      const data = await request.GET('/cms/announcements/'); 
+      const data = await request.GET('/cms/global-announcements/');
       setAnnouncements(Array.isArray(data) ? data : []);
       setError('');
     } catch (err) {

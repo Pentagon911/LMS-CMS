@@ -173,7 +173,7 @@ const Header = () => {
   }
 
   // Add Announcements for Instructors and Admins
-  if (isInstructor || isAdmin) {
+  if (isAdmin) {
     navigation.push({ name: 'Announcements', href: '/cms/announcements', icon: <MdCampaign /> });
   }
 

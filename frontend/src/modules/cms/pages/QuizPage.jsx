@@ -351,66 +351,38 @@ const QuizPage = () => {
     );
   }
 
-  // Completed State - Show Results
-  if (quizState === 'completed' && result) {
-    return (
-      <div className="quizsp-results">
-        <div className="quizsp-results-card">
-          <h1>Quiz Results</h1>
-          <div className="quizsp-score-summary">
-            <div className="quizsp-score-circle">
-              <span className="quizsp-score-percentage">{result.percentage}%</span>
-              <span className="quizsp-score-label">Score</span>
+if (quizState === 'completed' && result) {
+  return (
+    <div className="quizsp-results">
+      <div className="quizsp-results-card">
+        <h1>Quiz Results</h1>
+        <div className="quizsp-score-summary">
+          <div className="quizsp-score-circle">
+            <span className="quizsp-score-percentage">{result.percentage}%</span>
+            <span className="quizsp-score-label">Score</span>
+          </div>
+          <div className="quizsp-score-stats">
+            <div className="quizsp-stat-item">
+              <span className="quizsp-stat-label">Correct Answers:</span>
+              <span className="quizsp-stat-value">{result.correctCount} / {result.totalQuestions}</span>
             </div>
-            <div className="quizsp-score-stats">
-              <div className="quizsp-stat-item">
-                <span className="quizsp-stat-label">Correct Answers:</span>
-                <span className="quizsp-stat-value">{result.correctCount} / {result.totalQuestions}</span>
-              </div>
-              <div className="quizsp-stat-item">
-                <span className="quizsp-stat-label">Points Earned:</span>
-                <span className="quizsp-stat-value">{result.score} / {result.totalPoints}</span>
-              </div>
-              <div className="quizsp-stat-item">
-                <span className="quizsp-stat-label">Submitted:</span>
-                <span className="quizsp-stat-value">{new Date(result.submittedAt).toLocaleString()}</span>
-              </div>
+            <div className="quizsp-stat-item">
+              <span className="quizsp-stat-label">Points Earned:</span>
+              <span className="quizsp-stat-value">{result.score} / {result.totalPoints}</span>
+            </div>
+            <div className="quizsp-stat-item">
+              <span className="quizsp-stat-label">Submitted:</span>
+              <span className="quizsp-stat-value">{new Date(result.submittedAt).toLocaleString()}</span>
             </div>
           </div>
-
-          <div className="quizsp-review">
-            <h2>Review Answers</h2>
-            {result.results.map((q, idx) => (
-              <div key={idx} className={`quizsp-review-item ${q.isCorrect ? 'quizsp-correct' : 'quizsp-incorrect'}`}>
-                <div className="quizsp-review-header">
-                  <span className="quizsp-review-number">Question {idx + 1}</span>
-                  <span className={`quizsp-review-status ${q.isCorrect ? 'quizsp-status-correct' : 'quizsp-status-incorrect'}`}>
-                    {q.isCorrect ? <MdCheckCircle /> : <MdCancel />}
-                    {q.isCorrect ? ' Correct' : ' Incorrect'}
-                  </span>
-                </div>
-                <div className="quizsp-review-question" dangerouslySetInnerHTML={{ __html: q.question }} />
-                <div className="quizsp-review-answers">
-                  <div className="quizsp-your-answer">
-                    <strong>Your Answer:</strong> {q.userAnswers.length > 0 ? q.userAnswers.join(', ') : 'Not answered'}
-                  </div>
-                  <div className="quizsp-correct-answer">
-                    <strong>Correct Answer:</strong> {q.correctAnswers.join(', ')}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <button className="quizsp-back-btn" onClick={() => navigate('/cms/courses')}>
-            Back to Courses
-          </button>
         </div>
+        <button className="quizsp-back-btn" onClick={() => navigate('/cms/courses')}>
+          Back to Courses
+        </button>
       </div>
-    );
-  }
-
-  // In Progress State
+    </div>
+  );
+}
   const currentQuestion = quizData.questions[currentQuestionIndex];
   const isMultiple = currentQuestion.multipleAnswers === "true";
   const currentAnswers = answers[currentQuestion.questionId] || [];
@@ -448,7 +420,7 @@ const QuizPage = () => {
 
           {currentQuestion.image && (
             <div className="quizsp-question-image">
-              <img src={currentQuestion.image} alt="Question" />
+              <img src={request.getBaseUrl() + currentQuestion.image} alt="Question" />
             </div>
           )}
 
