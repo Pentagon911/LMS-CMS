@@ -8,11 +8,7 @@ import LMSDashboard from "../modules/lms/pages/Dashboard.jsx";
 import LMSEditProfile from "../modules/lms/pages/EditProfile.jsx";
 import ExamTimeTablePage from "../modules/lms/pages/TimeTablePage.jsx";
 import UserManagement from "../modules/lms/pages/UserManagement.jsx";
-<<<<<<< HEAD
-//import CourseManagement from "../modules/lms/pages/CourseManagement.jsx";
-=======
 // import CourseManagement from "../modules/lms/pages/CourseManagement.jsx";
->>>>>>> 0d2f8da30ebae6602499cb0a2491abe1f4a2532a
 import EnrollmentsPage from "../modules/lms/pages/EnrollmentsPage.jsx";
 import MyCoursesPage from "../modules/lms/pages/MyCoursesPage.jsx";
 import ExamResultsPage from "../modules/lms/pages/ExamResultsPage.jsx";

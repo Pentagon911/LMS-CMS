@@ -106,31 +106,31 @@ const AdminHostelAppeals = () => {
   }
 
   return (
-    <div className="admin-appeal-page">
-      <div className="page-header">
+    <div className="aap-admin-appeal-page">
+      <div className="aap-page-header">
         <div>
           <h1>Hostel Appeals</h1>
           <p>Review and process hostel accommodation requests</p>
         </div>
-        <button className="refresh-btn" onClick={fetchAppeals}>
+        <button className="aap-refresh-btn" onClick={fetchAppeals}>
           <MdRefresh /> Refresh
         </button>
       </div>
 
       {error && (
-        <div className="error-alert">
+        <div className="aap-error-alert">
           <MdWarning />
           <span>{error}</span>
         </div>
       )}
 
       {appeals.length === 0 ? (
-        <div className="empty-state">
+        <div className="aap-empty-state">
           <p>No pending hostel appeals to review.</p>
         </div>
       ) : (
-        <div className="appeals-table-container">
-          <table className="appeals-table">
+        <div className="aap-appeals-table-container">
+          <table className="aap-appeals-table">
             <thead>
               <tr>
                 <th>Appeal ID</th>
@@ -147,11 +147,11 @@ const AdminHostelAppeals = () => {
             <tbody>
               {appeals.map((appeal) => (
                 <tr key={appeal.id}>
-                  <td className="appeal-id">{appeal.appeal_id?.slice(0, 8)}...</td>
+                  <td className="aap-appeal-id">{appeal.appeal_id?.slice(0, 8)}...</td>
                   <td>
-                    <div className="student-info">
+                    <div className="aap-student-info">
                       <strong>{appeal.student_name}</strong>
-                      <span className="student-detail">{appeal.student?.username}</span>
+                      <span className="aap-student-detail">{appeal.student?.username}</span>
                     </div>
                   </td>
                   <td>{appeal.title}</td>
@@ -168,9 +168,9 @@ const AdminHostelAppeals = () => {
                       {appeal.status}
                     </span>
                   </td>
-                  <td className="actions">
+                  <td className="aap-actions">
                     <button
-                      className="action-btn-view-btn"
+                      className="aap-action-btn-view-btn"
                       onClick={() => handleViewDetails(appeal)}
                       title="View Details"
                     >
@@ -186,124 +186,124 @@ const AdminHostelAppeals = () => {
 
       {/* Modal for viewing/processing appeal */}
       {modalOpen && selectedAppeal && (
-        <div className="modal-overlay" onClick={() => setModalOpen(false)}>
-          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="aap-modal-overlay" onClick={() => setModalOpen(false)}>
+          <div className="aap-modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="aap-modal-header">
               <h2>Hostel Appeal Details</h2>
-              <button className="close-btn" onClick={() => setModalOpen(false)}>
+              <button className="aap-close-btn" onClick={() => setModalOpen(false)}>
                 <MdClose />
               </button>
             </div>
 
-            <div className="modal-content">
-              <div className="appeal-info">
-                <div className="info-row">
+            <div className="aap-modal-content">
+              <div className="aap-appeal-info">
+                <div className="aap-info-row">
                   <label>Appeal ID:</label>
                   <span className = "user-hostel-data">{selectedAppeal.appeal_id}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Student:</label>
                   <span className = "user-hostel-data">{selectedAppeal.student_name}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Title:</label>
                   <span className = "user-hostel-data">{selectedAppeal.title}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Department:</label>
                   <span className = "user-hostel-data">{selectedAppeal.department_name}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Faculty:</label>
                   <span className = "user-hostel-data">{selectedAppeal.faculty_name}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Batch:</label>
                   <span className = "user-hostel-data">{selectedAppeal.batch_name || 'N/A'}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Academic Year:</label>
                   <span className = "user-hostel-data">{selectedAppeal.academic_year}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Description:</label>
-                  <p className="description-text">{selectedAppeal.description}</p>
+                  <p className="aap-description-text">{selectedAppeal.description}</p>
                 </div>
               </div>
 
-              <div className="type-specific">
+              <div className="aap-type-specific">
                 <h3>Hostel Details</h3>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Preferred Check-in:</label>
                   <span className = "user-hostel-data">{formatDate(selectedAppeal.preferred_check_in)}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Duration (months):</label>
                   <span className = "user-hostel-data">{selectedAppeal.duration_months}</span>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Special Requirements:</label>
                   <p className = "user-hostel-data">{selectedAppeal.special_requirements || 'None'}</p>
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Has Medical Condition:</label>
                   <span className = "user-hostel-data">{selectedAppeal.has_medical_condition ? 'Yes' : 'No'}</span>
                 </div>
                 {selectedAppeal.medical_certificate && (
-                  <div className="info-row">
+                  <div className="aap-info-row">
                     <label>Medical Certificate:</label>
                     <button 
-                      className="download-btn"
+                      className="aap-download-btn"
                       onClick={() => handleDownload(selectedAppeal.medical_certificate, 'medical_certificate')}
                     >
                       <MdDownload /> Download
                     </button>
                   </div>
                 )}
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Room Number:</label>
                   <input
                     type="text"
-                    className="process-input"
+                    className="aap-process-input"
                     placeholder="Enter room number"
                     value={processData.room_number}
                     onChange={(e) => setProcessData({ ...processData, room_number: e.target.value })}
                   />
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Hostel Name:</label>
                   <input
                     type="text"
-                    className="process-input"
+                    className="aap-process-input"
                     placeholder="Enter hostel name"
                     value={processData.hostel_name}
                     onChange={(e) => setProcessData({ ...processData, hostel_name: e.target.value })}
                   />
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Check-in Date:</label>
                   <input
                     type="date"
-                    className="process-input"
+                    className="aap-process-input"
                     value={processData.check_in_date}
                     onChange={(e) => setProcessData({ ...processData, check_in_date: e.target.value })}
                   />
                 </div>
-                <div className="info-row">
+                <div className="aap-info-row">
                   <label>Check-out Date:</label>
                   <input
                     type="date"
-                    className="process-input"
+                    className="aap-process-input"
                     value={processData.check_out_date}
                     onChange={(e) => setProcessData({ ...processData, check_out_date: e.target.value })}
                   />
                 </div>
               </div>
 
-              <div className="review-section">
+              <div className="aap-review-section">
                 <h3>Review Notes</h3>
                 <textarea
-                  className="review-notes"
+                  className="aap-review-notes"
                   rows="4"
                   placeholder="Enter review notes..."
                   value={reviewNotes}
@@ -311,16 +311,16 @@ const AdminHostelAppeals = () => {
                 />
               </div>
 
-              <div className="modal-actions">
+              <div className="aap-modal-actions">
                 <button
-                  className="reject-btn"
+                  className="aap-reject-btn"
                   onClick={() => handleProcess('reject')}
                   disabled={processing}
                 >
                   <MdCancel /> Reject
                 </button>
                 <button
-                  className="approve-btn"
+                  className="aap-approve-btn"
                   onClick={() => handleProcess('approve')}
                   disabled={processing}
                 >

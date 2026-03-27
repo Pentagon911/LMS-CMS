@@ -228,12 +228,12 @@ const ResultReevalPage = () => {
 
   if (success) {
     return (
-      <div className="appeal-form-container">
-        <div className="success-message">
-          <MdCheckCircle className="success-icon" />
+      <div className="afp-appeal-form-container">
+        <div className="afp-success-message">
+          <MdCheckCircle className="afp-success-icon" />
           <h2>Appeal Submitted Successfully!</h2>
           <p>Your result re-evaluation appeal has been submitted. You can track its status in My Appeals.</p>
-          <button onClick={() => navigate('/lms/appeals-and-welfare/my-appeals')} className="view-appeals-btn">
+          <button onClick={() => navigate('/lms/appeals-and-welfare/my-appeals')} className="afp-view-appeals-btn">
             View My Appeals
           </button>
         </div>
@@ -244,67 +244,67 @@ const ResultReevalPage = () => {
   const selectedResult = getSelectedExamResult();
 
   return (
-    <div className="appeal-form-container">
-      <div className="form-header">
+    <div className="afp-appeal-form-container">
+      <div className="afp-form-header">
         <h1><MdGrade /> Result Re-evaluation Appeal</h1>
         <p>Request a review of your exam results</p>
       </div>
 
       {error && (
-        <div className="error-alert">
+        <div className="afp-error-alert">
           <MdWarning />
           <span>{error}</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="appeal-form">
-        <div className="form-section">
+      <form onSubmit={handleSubmit} className="afp-appeal-form">
+        <div className="afp-form-section">
           <h3>Student Information</h3>
           
-          <div className="form-group">
+          <div className="afp-form-group">
             <label>Student Name</label>
             <input
               type="text"
               value={studentData?.name || (user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username || '' : '')}
               disabled
-              className="readonly-field"
+              className="afp-readonly-field"
             />
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
+          <div className="afp-form-row">
+            <div className="afp-form-group">
               <label>Department</label>
               <input
                 type="text"
                 value={departmentName}
                 disabled
-                className="readonly-field"
+                className="afp-readonly-field"
               />
             </div>
 
-            <div className="form-group">
+            <div className="afp-form-group">
               <label>Faculty</label>
               <input
                 type="text"
                 value={facultyName}
                 disabled
-                className="readonly-field"
+                className="afp-readonly-field"
               />
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
+          <div className="afp-form-row">
+            <div className="afp-form-group">
               <label>Batch</label>
               <input
                 type="text"
                 value={studentData?.intake_batch || batchName}
                 disabled
-                className="readonly-field"
+                className="afp-readonly-field"
               />
             </div>
 
-            <div className="form-group">
+            <div className="afp-form-group">
               <label>Academic Year *</label>
               <input
                 type="text"
@@ -318,10 +318,10 @@ const ResultReevalPage = () => {
           </div>
         </div>
 
-        <div className="form-section">
+        <div className="afp-form-section">
           <h3>Appeal Details</h3>
           
-          <div className="form-group">
+          <div className="afp-form-group">
             <label>Title *</label>
             <input
               type="text"
@@ -333,7 +333,7 @@ const ResultReevalPage = () => {
             />
           </div>
 
-          <div className="form-group">
+          <div className="afp-form-group">
             <label>Description *</label>
             <textarea
               name="description"
@@ -346,13 +346,13 @@ const ResultReevalPage = () => {
           </div>
         </div>
 
-        <div className="form-section">
+        <div className="afp-form-section">
           <h3>Result Details</h3>
 
-          <div className="form-group">
-            <label>Select Exam Result <span className="required">*</span></label>
+          <div className="afp-form-group">
+            <label>Select Exam Result <span className="afp-required">*</span></label>
             {fetchingResults ? (
-              <div className="loading-placeholder">Loading your exam results...</div>
+              <div className="afp-loading-placeholder">Loading your exam results...</div>
             ) : (
               <select
                 name="exam_result"
@@ -375,35 +375,35 @@ const ResultReevalPage = () => {
           </div>
 
           {selectedResult && (
-            <div className="selected-result-info">
+            <div className="afp-selected-result-info">
               <h4>Selected Result Details:</h4>
-              <div className="result-details-grid">
-                <div className="result-detail-item">
-                  <span className="detail-label">Course:</span>
-                  <span className="detail-value">{selectedResult.course_name || selectedResult.course_code || 'N/A'}</span>
+              <div className="afp-result-details-grid">
+                <div className="afp-result-detail-item">
+                  <span className="afp-detail-label">Course:</span>
+                  <span className="afp-detail-value">{selectedResult.course_name || selectedResult.course_code || 'N/A'}</span>
                 </div>
-                <div className="result-detail-item">
-                  <span className="detail-label">Assessment:</span>
-                  <span className="detail-value">{selectedResult.assessment_name || 'Exam'}</span>
+                <div className="afp-result-detail-item">
+                  <span className="afp-detail-label">Assessment:</span>
+                  <span className="afp-detail-value">{selectedResult.assessment_name || 'Exam'}</span>
                 </div>
-                <div className="result-detail-item">
-                  <span className="detail-label">Semester:</span>
-                  <span className="detail-value">{selectedResult.semester_name || `Semester ${selectedResult.semester}`}</span>
+                <div className="afp-result-detail-item">
+                  <span className="afp-detail-label">Semester:</span>
+                  <span className="afp-detail-value">{selectedResult.semester_name || `Semester ${selectedResult.semester}`}</span>
                 </div>
-                <div className="result-detail-item">
-                  <span className="detail-label">Score:</span>
-                  <span className="detail-value">{selectedResult.marks_obtained || selectedResult.score || 0} / {selectedResult.total_marks || 100}</span>
+                <div className="afp-result-detail-item">
+                  <span className="afp-detail-label">Score:</span>
+                  <span className="afp-detail-value">{selectedResult.marks_obtained || selectedResult.score || 0} / {selectedResult.total_marks || 100}</span>
                 </div>
-                <div className="result-detail-item">
-                  <span className="detail-label">Grade:</span>
-                  <span className="detail-value grade-value">{selectedResult.grade || 'N/A'}</span>
+                <div className="afp-result-detail-item">
+                  <span className="afp-detail-label">Grade:</span>
+                  <span className="afp-detail-value grade-value">{selectedResult.grade || 'N/A'}</span>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="form-group">
-            <label>Reason Type <span className="required">*</span></label>
+          <div className="afp-form-group">
+            <label>Reason Type <span className="afp-required">*</span></label>
             <select
               name="reason_type"
               value={formData.reason_type}
@@ -418,8 +418,8 @@ const ResultReevalPage = () => {
             </select>
           </div>
 
-          <div className="form-group">
-            <label>Specific Concerns <span className="required">*</span></label>
+          <div className="afp-form-group">
+            <label>Specific Concerns <span className="afp-required">*</span></label>
             <textarea
               name="specific_concerns"
               value={formData.specific_concerns}
@@ -431,11 +431,11 @@ const ResultReevalPage = () => {
           </div>
         </div>
 
-        <div className="form-actions">
-          <button type="button" className="cancel-btn" onClick={() => navigate('/lms/student/appeals')}>
+        <div className="afp-form-actions">
+          <button type="button" className="afp-cancel-btn" onClick={() => navigate('/lms/student/appeals')}>
             <MdCancel /> Cancel
           </button>
-          <button type="submit" className="submit-btn" disabled={loading || fetchingResults}>
+          <button type="submit" className="afp-submit-btn" disabled={loading || fetchingResults}>
             <MdSave /> {loading ? 'Submitting...' : 'Submit Appeal'}
           </button>
         </div>

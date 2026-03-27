@@ -101,16 +101,16 @@ const ReviewQueue = () => {
   }
 
   return (
-    <div className="review-queue-container">
-      <div className="queue-header">
+    <div className="rq-review-queue-container">
+      <div className="rq-queue-header">
         <h1>Appeal Review Queue</h1>
-        <button className="refresh-btn" onClick={fetchQueueItems}>
+        <button className="rq-refresh-btn" onClick={fetchQueueItems}>
           <MdRefresh /> Refresh
         </button>
       </div>
 
-      <div className="filters-section">
-        <div className="filter-group">
+      <div className="rq-filters-section">
+        <div className="rq-filter-group">
           <label>Category:</label>
           <select
             value={filters.category}
@@ -126,19 +126,19 @@ const ReviewQueue = () => {
       </div>
 
       {error && (
-        <div className="error-alert">
+        <div className="rq-error-alert">
           <MdWarning />
           <span>{error}</span>
         </div>
       )}
 
       {queueItems.length === 0 ? (
-        <div className="empty-state">
+        <div className="rq-empty-state">
           <p>No items in the review queue.</p>
         </div>
       ) : (
-        <div className="queue-table-container">
-          <table className="queue-table">
+        <div className="rq-queue-table-container">
+          <table className="rq-queue-table">
             <thead>
               <tr>
                 <th>ID</th>
@@ -155,7 +155,7 @@ const ReviewQueue = () => {
             <tbody>
               {queueItems.map((item) => (
                 <tr key={item.id}>
-                  <td className="queue-id">{item.id}</td>
+                  <td className="rq-queue-id">{item.id}</td>
                   <td>{getCategoryDisplay(item.category)}</td>
                   <td>
                     <span className={`priority-badge ${getPriorityBadgeClass(item.priority)}`}>
@@ -167,9 +167,9 @@ const ReviewQueue = () => {
                   <td>{item.academic_year || 'N/A'}</td>
                   <td>{item.batch_name || 'N/A'}</td>
                   <td>{item.assigned_to_name || 'Unassigned'}</td>
-                  <td className="actions">
+                  <td className="rq-actions">
                     <button
-                      className="action-btn-view-btn"
+                      className="rq-action-btn-view-btn"
                       onClick={() => handleViewAppeal(item)}
                       title="View Appeal"
                     >
@@ -177,7 +177,7 @@ const ReviewQueue = () => {
                     </button>
                     {!item.assigned_to && (
                       <button
-                        className="action-btn-assign-btn"
+                        className="rq-action-btn-assign-btn"
                         onClick={() => handleAssign(item.id)}
                         disabled={processingId === item.id}
                         title="Assign to me"
@@ -187,7 +187,7 @@ const ReviewQueue = () => {
                     )}
                     {!item.is_processed && (
                       <button
-                        className="action-btn-process-btn"
+                        className="rq-action-btn-process-btn"
                         onClick={() => handleProcess(item.id)}
                         disabled={processingId === item.id}
                         title="Mark as Processed"

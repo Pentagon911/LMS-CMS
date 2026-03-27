@@ -96,68 +96,68 @@ const AdminAppealDashboard = () => {
   }
 
   return (
-    <div className="admin-dashboard-container">
-      <div className="dashboard-header">
-        <div className="header-title">
+    <div className="aad-admin-dashboard-container">
+      <div className="aad-dashboard-header">
+        <div className="aad-header-title">
           <h1>Appeal Management Dashboard</h1>
           <p>Review and process student appeals</p>
         </div>
-        <button className="_refresh-btn" onClick={fetchDashboardData}>
+        <button className="aad-_refresh-btn" onClick={fetchDashboardData}>
           <MdRefresh /> Refresh
         </button>
       </div>
 
       {error && (
-        <div className="error-alert">
+        <div className="aad-error-alert">
           <MdWarning />
           <span>{error}</span>
         </div>
       )}
 
-      <div className="stats-summary">
-        <div className="stat-card">
-          <div className="stat-icon">
+      <div className="aad-stats-summary">
+        <div className="aad-stat-card">
+          <div className="aad-stat-icon">
             <MdQueue />
           </div>
-          <div className="stat-info">
+          <div className="aad-stat-info">
             <h3>Total Pending</h3>
-            <p className="stat-number">{dashboardData?.total_appeals || 0}</p>
+            <p className="aad-stat-number">{dashboardData?.total_appeals || 0}</p>
           </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon">
+        <div className="aad-stat-card">
+          <div className="aad-stat-icon">
             <MdWarning />
           </div>
-          <div className="stat-info">
+          <div className="aad-stat-info">
             <h3>Unprocessed Queue</h3>
-            <p className="stat-number">{dashboardData?.unprocessed_queue || 0}</p>
+            <p className="aad-stat-number">{dashboardData?.unprocessed_queue || 0}</p>
           </div>
         </div>
         <button 
-          className="view-queue-btn"
+          className="aad-view-queue-btn"
           onClick={() => navigate('/lms/admin/review-queue')}
         >
           <MdQueue /> View Review Queue
         </button>
       </div>
 
-      <div className="appeals-grid">
+      <div className="aad-appeals-grid">
         <h2>Pending Appeals by Category</h2>
-        <div className="grid-container">
+        <div className="aad-grid-container">
           {appealCategories.map((category) => (
             <div
               key={category.id}
-              className="appeal-card"
+              className="aad-appeal-card"
               onClick={() => handleCategoryClick(category.path)}
               style={{ borderTopColor: category.color }}
             >
-              <div className="card-icon" style={{ backgroundColor: `${category.color}20`, color: category.color }}>
+              <div className="aad-card-icon" style={{ backgroundColor: `${category.color}20`, color: category.color }}>
                 {category.icon}
               </div>
-              <div className="card-content">
+              <div className="aad-card-content">
                 <h3>{category.title}</h3>
-                <p className="description">{category.description}</p>
-                <div className="badge" style={{ backgroundColor: category.color }}>
+                <p className="aad-description">{category.description}</p>
+                <div className="aad-badge" style={{ backgroundColor: category.color }}>
                   {category.count} Pending
                 </div>
               </div>
@@ -166,9 +166,9 @@ const AdminAppealDashboard = () => {
         </div>
       </div>
 
-      <div className="quick-actions">
+      <div className="aad-quick-actions">
         
-        <div className="actions-list">
+        <div className="aad-actions-list">
           
         </div>
       </div>

@@ -320,12 +320,12 @@ const MedicalLeavePage = () => {
 
   if (success) {
     return (
-      <div className="appeal-form-container">
-        <div className="success-message">
-          <MdCheckCircle className="success-icon" />
+      <div className="afp-appeal-form-container">
+        <div className="afp-success-message">
+          <MdCheckCircle className="afp-success-icon" />
           <h2>Application Submitted Successfully!</h2>
           <p>Your medical leave application has been submitted. You can track its status in My Appeals.</p>
-          <button onClick={() => navigate('/lms/appeals-and-welfare/my-appeals')} className="view-appeals-btn">
+          <button onClick={() => navigate('/lms/appeals-and-welfare/my-appeals')} className="afp-view-appeals-btn">
             View My Appeals
           </button>
         </div>
@@ -334,67 +334,67 @@ const MedicalLeavePage = () => {
   }
 
   return (
-    <div className="appeal-form-container">
-      <div className="form-header">
+    <div className="afp-appeal-form-container">
+      <div className="afp-form-header">
         <h1><MdMedicalServices /> Medical Leave Application</h1>
         <p>Apply for medical leave with supporting documents</p>
       </div>
 
       {error && (
-        <div className="error-alert">
+        <div className="afp-error-alert">
           <MdWarning />
           <span>{error}</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="appeal-form">
-        <div className="form-section">
+      <form onSubmit={handleSubmit} className="afp-appeal-form">
+        <div className="afp-form-section">
           <h3>Student Information</h3>
           
-          <div className="form-group">
+          <div className="afp-form-group">
             <label>Student Name</label>
             <input
               type="text"
               value={user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username || '' : ''}
               disabled
-              className="readonly-field"
+              className="afp-readonly-field"
             />
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
+          <div className="afp-form-row">
+            <div className="afp-form-group">
               <label>Department</label>
               <input
                 type="text"
                 value={departmentName}
                 disabled
-                className="readonly-field"
+                className="afp-readonly-field"
               />
             </div>
 
-            <div className="form-group">
+            <div className="afp-form-group">
               <label>Faculty</label>
               <input
                 type="text"
                 value={facultyName}
                 disabled
-                className="readonly-field"
+                className="afp-readonly-field"
               />
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
+          <div className="afp-form-row">
+            <div className="afp-form-group">
               <label>Batch</label>
               <input
                 type="text"
                 value={batchName}
                 disabled
-                className="readonly-field"
+                className="afp-readonly-field"
               />
             </div>
 
-            <div className="form-group">
+            <div className="afp-form-group">
               <label>Academic Year *</label>
               <input
                 type="text"
@@ -408,10 +408,10 @@ const MedicalLeavePage = () => {
           </div>
         </div>
 
-        <div className="form-section">
+        <div className="afp-form-section">
           <h3>Application Details</h3>
           
-          <div className="form-group">
+          <div className="afp-form-group">
             <label>Title *</label>
             <input
               type="text"
@@ -423,7 +423,7 @@ const MedicalLeavePage = () => {
             />
           </div>
 
-          <div className="form-group">
+          <div className="afp-form-group">
             <label>Description *</label>
             <textarea
               name="description"
@@ -436,11 +436,11 @@ const MedicalLeavePage = () => {
           </div>
         </div>
 
-        <div className="form-section">
+        <div className="afp-form-section">
           <h3>Leave Details</h3>
 
-          <div className="form-row">
-            <div className="form-group">
+          <div className="afp-form-row">
+            <div className="afp-form-group">
               <label>Start Date *</label>
               <input
                 type="date"
@@ -451,7 +451,7 @@ const MedicalLeavePage = () => {
               />
             </div>
 
-            <div className="form-group">
+            <div className="afp-form-group">
               <label>End Date *</label>
               <input
                 type="date"
@@ -464,18 +464,18 @@ const MedicalLeavePage = () => {
           </div>
 
           {formData.start_date && formData.end_date && (
-            <div className="form-group">
+            <div className="afp-form-group">
               <label>Total Days Requested:</label>
               <input
                 type="text"
                 value={`${calculateDays()} day${calculateDays() !== 1 ? 's' : ''}`}
                 disabled
-                className="days-display readonly-field"
+                className="afp-days-display readonly-field"
               />
             </div>
           )}
 
-          <div className="form-group">
+          <div className="afp-form-group">
             <label>Diagnosis</label>
             <input
               type="text"
@@ -486,8 +486,8 @@ const MedicalLeavePage = () => {
             />
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
+          <div className="afp-form-row">
+            <div className="afp-form-group">
               <label>Hospital Name *</label>
               <input
                 type="text"
@@ -499,7 +499,7 @@ const MedicalLeavePage = () => {
               />
             </div>
 
-            <div className="form-group">
+            <div className="afp-form-group">
               <label>Doctor Name *</label>
               <input
                 type="text"
@@ -513,29 +513,29 @@ const MedicalLeavePage = () => {
           </div>
         </div>
 
-        <div className="form-section">
+        <div className="afp-form-section">
           <h3>Supporting Documents</h3>
           
-          <div className="form-group">
-            <label>Medical Report <span className="required">*</span></label>
-            <div className="file-upload-area">
+          <div className="afp-form-group">
+            <label>Medical Report <span className="afp-required">*</span></label>
+            <div className="afp-file-upload-area">
               <input
                 type="file"
                 id="medical-report"
                 accept=".pdf"
                 onChange={handleMedicalReportChange}
-                className="file-input-hidden"
+                className="afp-file-input-hidden"
               />
-              <label htmlFor="medical-report" className="file-upload-label">
+              <label htmlFor="medical-report" className="afp-file-upload-label">
                 <MdCloudUpload />
                 <span>{medicalReport ? medicalReport.name : 'Click to upload medical report (PDF)'}</span>
               </label>
               {medicalReport && (
-                <div className="file-info">
+                <div className="afp-file-info">
                   <span>{medicalReport.name} ({(medicalReport.size / 1024).toFixed(2)} KB)</span>
                   <button 
                     type="button" 
-                    className="remove-file"
+                    className="afp-remove-file"
                     onClick={() => setMedicalReport(null)}
                   >
                     <MdDelete />
@@ -546,26 +546,26 @@ const MedicalLeavePage = () => {
             <small>Upload detailed medical report from your doctor (PDF only, max 5MB)</small>
           </div>
 
-          <div className="form-group">
-            <label>Hospital Letter <span className="required">*</span></label>
-            <div className="file-upload-area">
+          <div className="afp-form-group">
+            <label>Hospital Letter <span className="afp-required">*</span></label>
+            <div className="afp-file-upload-area">
               <input
                 type="file"
                 id="hospital-letter"
                 accept=".pdf"
                 onChange={handleHospitalLetterChange}
-                className="file-input-hidden"
+                className="afp-file-input-hidden"
               />
-              <label htmlFor="hospital-letter" className="file-upload-label">
+              <label htmlFor="hospital-letter" className="afp-file-upload-label">
                 <MdCloudUpload />
                 <span>{hospitalLetter ? hospitalLetter.name : 'Click to upload hospital letter (PDF)'}</span>
               </label>
               {hospitalLetter && (
-                <div className="file-info">
+                <div className="afp-file-info">
                   <span>{hospitalLetter.name} ({(hospitalLetter.size / 1024).toFixed(2)} KB)</span>
                   <button 
                     type="button" 
-                    className="remove-file"
+                    className="afp-remove-file"
                     onClick={() => setHospitalLetter(null)}
                   >
                     <MdDelete />
@@ -576,18 +576,18 @@ const MedicalLeavePage = () => {
             <small>Upload official letter from the hospital (PDF only, max 5MB)</small>
           </div>
 
-          <div className="form-group">
-            <label>Supporting Documents <span className="optional">(Optional)</span></label>
-            <div className="file-upload-area">
+          <div className="afp-form-group">
+            <label>Supporting Documents <span className="afp-optional">(Optional)</span></label>
+            <div className="afp-file-upload-area">
               <input
                 type="file"
                 id="supporting-docs"
                 accept=".pdf"
                 multiple
                 onChange={handleSupportingDocsChange}
-                className="file-input-hidden"
+                className="afp-file-input-hidden"
               />
-              <label htmlFor="supporting-docs" className="file-upload-label">
+              <label htmlFor="supporting-docs" className="afp-file-upload-label">
                 <MdCloudUpload />
                 <span>Click to upload multiple supporting documents (PDF)</span>
               </label>
@@ -595,14 +595,14 @@ const MedicalLeavePage = () => {
             <small>Upload any additional supporting documents like lab reports, prescriptions (PDF only, max 5MB each)</small>
             
             {supportingDocs.length > 0 && (
-              <div className="attachments-list">
+              <div className="afp-attachments-list">
                 <label>Uploaded Documents ({supportingDocs.length}):</label>
                 {supportingDocs.map((doc, index) => (
-                  <div key={index} className="attachment-item">
+                  <div key={index} className="afp-attachment-item">
                     <span>{doc.name} ({(doc.size / 1024).toFixed(2)} KB)</span>
                     <button
                       type="button"
-                      className="remove-attachment"
+                      className="afp-remove-attachment"
                       onClick={() => removeSupportingDoc(index)}
                     >
                       <MdDelete />
@@ -614,11 +614,11 @@ const MedicalLeavePage = () => {
           </div>
         </div>
 
-        <div className="form-actions">
-          <button type="button" className="cancel-btn" onClick={() => navigate('/lms/student/appeals')}>
+        <div className="afp-form-actions">
+          <button type="button" className="afp-cancel-btn" onClick={() => navigate('/lms/student/appeals')}>
             <MdCancel /> Cancel
           </button>
-          <button type="submit" className="submit-btn" disabled={loading || uploadingFile}>
+          <button type="submit" className="afp-submit-btn" disabled={loading || uploadingFile}>
             <MdSave /> {loading || uploadingFile ? 'Submitting...' : 'Submit Application'}
           </button>
         </div>

@@ -104,86 +104,86 @@ const StudentAppealDashboard = () => {
   }
 
   return (
-    <div className="student-dashboard-container">
-      <div className="dashboard-header">
-        <div className="header-title">
+    <div className="sad-student-dashboard-container">
+      <div className="sad-dashboard-header">
+        <div className="sad-header-title">
           <h1>Appeals & Welfare Dashboard</h1>
           <p>Submit and track your appeals and applications</p>
         </div>
-        <button className="refresh-btn" onClick={fetchDashboardData}>
+        <button className="sad-refresh-btn" onClick={fetchDashboardData}>
           <MdRefresh /> Refresh
         </button>
       </div>
 
       {error && (
-        <div className="error-alert">
+        <div className="sad-error-alert">
           <MdWarning />
           <span>{error}</span>
         </div>
       )}
 
-      <div className="stats-summary">
-        <div className="stat-card pending-card">
-          <div className="stat-icon pending">
+      <div className="sad-stats-summary">
+        <div className="sad-stat-card pending-card">
+          <div className="sad-stat-icon pending">
             <MdPending />
           </div>
-          <div className="stat-info">
+          <div className="sad-stat-info">
             <h3>Pending Appeals</h3>
-            <p className="stat-number">{dashboardData?.my_appeals?.pending || 0}</p>
+            <p className="sad-stat-number">{dashboardData?.my_appeals?.pending || 0}</p>
           </div>
         </div>
-        <div className="stat-card review-card">
-          <div className="stat-icon review">
+        <div className="sad-stat-card review-card">
+          <div className="sad-stat-icon review">
             <MdVisibility />
           </div>
-          <div className="stat-info">
+          <div className="sad-stat-info">
             <h3>Under Review</h3>
-            <p className="stat-number">{dashboardData?.my_appeals?.under_review || 0}</p>
+            <p className="sad-stat-number">{dashboardData?.my_appeals?.under_review || 0}</p>
           </div>
         </div>
-        <div className="stat-card approved-card">
-          <div className="stat-icon approved">
+        <div className="sad-stat-card approved-card">
+          <div className="sad-stat-icon approved">
             <MdCheckCircle />
           </div>
-          <div className="stat-info">
+          <div className="sad-stat-info">
             <h3>Approved</h3>
-            <p className="stat-number">{dashboardData?.my_appeals?.approved || 0}</p>
+            <p className="sad-stat-number">{dashboardData?.my_appeals?.approved || 0}</p>
           </div>
         </div>
-        <div className="stat-card rejected-card">
-          <div className="stat-icon rejected">
+        <div className="sad-stat-card rejected-card">
+          <div className="sad-stat-icon rejected">
             <MdCancel />
           </div>
-          <div className="stat-info">
+          <div className="sad-stat-info">
             <h3>Rejected</h3>
-            <p className="stat-number">{dashboardData?.my_appeals?.rejected || 0}</p>
+            <p className="sad-stat-number">{dashboardData?.my_appeals?.rejected || 0}</p>
           </div>
         </div>
         <button 
-          className="view-all-btn"
+          className="sad-view-all-btn"
           onClick={handleViewMyAppeals}
         >
           View All My Appeals ({dashboardData?.my_appeals?.total || 0})
         </button>
       </div>
 
-      <div className="appeals-grid">
+      <div className="sad-appeals-grid">
         <h2>Submit New Appeal</h2>
-        <div className="grid-container">
+        <div className="sad-grid-container">
           {appealTypes.map((type) => (
             <div
               key={type.id}
-              className="appeal-card"
+              className="sad-appeal-card"
               onClick={() => handleApplyClick(type.path)}
               style={{ borderTopColor: type.color }}
             >
-              <div className="card-icon" style={{ backgroundColor: `${type.color}20`, color: type.color }}>
+              <div className="sad-card-icon" style={{ backgroundColor: `${type.color}20`, color: type.color }}>
                 {type.icon}
               </div>
-              <div className="card-content">
+              <div className="sad-card-content">
                 <h3>{type.title}</h3>
-                <p className="description">{type.description}</p>
-                <button className="apply-btn" style={{ backgroundColor: type.color }}>
+                <p className="sad-description">{type.description}</p>
+                <button className="sad-apply-btn" style={{ backgroundColor: type.color }}>
                   <MdAdd /> Apply Now
                 </button>
               </div>
@@ -192,8 +192,8 @@ const StudentAppealDashboard = () => {
         </div>
       </div>
 
-      <div className="info-section">
-        <div className="info-card">
+      <div className="sad-info-section">
+        <div className="sad-info-card">
           <h3>Need Help?</h3>
           <p>If you need assistance with your application, please contact:</p>
           <ul>
@@ -202,7 +202,7 @@ const StudentAppealDashboard = () => {
             <li>Help Desk: +94 11 234 5678</li>
           </ul>
         </div>
-        <div className="info-card">
+        <div className="sad-info-card">
           <h3>Processing Time</h3>
           <p>Appeals are typically processed within 5-7 business days. You will receive notifications about your appeal status via email.</p>
         </div>
