@@ -59,6 +59,9 @@ class Content(models.Model):
         return self.title
     
 class Video(Content):
+    """Model to upload video files
+     Files will be stored in: media/content/video/"""
+    
     file = models.FileField(upload_to='content/video/')
     @property
     def item_type(self):
@@ -72,6 +75,9 @@ class Video(Content):
         return 0
 
 class Pdf(Content):
+    """Model to upload pdf files
+     Files will be stored in: media/content/pdf/"""
+    
     file = models.FileField(upload_to ='content/pdfs/')
     @property
     def item_type(self):
@@ -83,6 +89,8 @@ class Pdf(Content):
         return 0
 
 class Link(Content):
+    """Model to links"""
+
     link_url = models.URLField()
     @property
     def item_type(self):
@@ -192,7 +200,7 @@ class Question(models.Model):
         ('short',"Short Answer"),
     ]
 
-    #Which quiz this question belongs to
+    #
     quiz = models.ForeignKey(Quiz,on_delete=models.CASCADE,related_name='questions')
 
     # Custom question ID (e.g., 'q1', 'q2')

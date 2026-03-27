@@ -5,24 +5,22 @@ from . import views
 
 router = DefaultRouter()
 router.register(r'quizzes', views.QuizViewSet, basename='quiz')
-"""
-GET cms/quizzes/draft_quizzes/
-GET cms/quizzes/quizId/
-POST cms/quizzes/31/add_to_week/
-POST cms/quizzes/{quiz_id}/submit/
-"""
+
+# GET cms/quizzes/draft_quizzes/ -> Get all quizzes created by instructor
+# GET cms/quizzes/{quiz_id}/ -> Get specific quiz
+# POST cms/quizzes/{quiz_id}/add_to_week/ -> Add quiz to week
+# POST cms/quizzes/{quiz_id}/submit/ -> Submit quiz
+
 router.register(r'questions', views.QuestionViewSet, basename='question')
 router.register(r'options', views.OptionViewSet, basename='option')
 router.register(r'attempts', views.QuizAttemptViewSet, basename='attempt')
 router.register(r'answers', views.StudentAnswerViewSet, basename='answer')
 router.register(r'weeks', views.WeekViewSet, basename='week')
 router.register(r'courses', views.CourseViewSet, basename='course')
-"""
-GET cms/courses/ -> Get courses for relevent user
-GET cms/course/course_id/dashboard/ -> Get all content related to week
 
-"""
-router.register(r'announcements', views.AnnouncementViewSet, basename='announcement')
+# GET cms/courses/ -> Get courses for relevent user
+# GET cms/course/{course_id}/dashboard/ -> Get all content related to week
+# POST cms/courses/{course_id}/announcements/ -> Add specific week announcement
 
 router.register(r'academic-calendars', views.AcademicCalendarViewSet, basename='academic-calendar')
 router.register(r'practical-timetables', views.PracticalTimetableViewSet, basename='practical-timetable')
@@ -30,23 +28,9 @@ router.register(r'practical-timetables', views.PracticalTimetableViewSet, basena
 urlpatterns = [
     path('', include(router.urls)),
         
-    # Announcement preview
-    path('announcements/preview/', views.AnnouncementViewSet.as_view({'post': 'preview'}), name='announcement-preview'),
-    
-    # Course announcements
-    path('courses/<int:course_id>/announcements/', views.AnnouncementViewSet.as_view({'get': 'by_course'}), name='course-announcements'),
-    
-    # Week announcements (using AnnouncementViewSet)
-    path('courses/<int:course_id>/weeks/<int:week_id>/announcements/', views.AnnouncementViewSet.as_view({'get': 'by_week'}), name='week-announcements'),
-    path(
-        'courses/<int:course_id>/dashboard/add_content/', 
-        views.CourseContentViewSet.as_view({'post': 'create'}), 
+    path('courses/<int:course_id>/dashboard/add_content/',views.CourseContentViewSet.as_view({'post': 'create'}), 
         name='special-add-week-content'
     ),
-
-    path('courses/<int:course_id>/weeks/<int:week_number>/announcements/create/', 
-         views.AnnouncementViewSet.as_view({'post': 'create_for_week'}), 
-         name='week-announcements-create'),
     
     # Announcement endpoints
     path('global-announcements/faculty-batch-years/', views.FacultyBatchYearsView.as_view(), name='faculty-batch-years'),

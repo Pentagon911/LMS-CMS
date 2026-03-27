@@ -43,7 +43,7 @@ class CourseViewSet(viewsets.ModelViewSet):
             return Course.objects.filter(instructor = user)
         elif user.role == 'student':
             return Course.objects.filter(
-                enrollments__student=user,  # Note: enrollments__student (singular)
+                enrollments__student=user,  
                 enrollments__status='enrolled'
             ).distinct()
         elif user.role == 'admin':
@@ -53,7 +53,7 @@ class CourseViewSet(viewsets.ModelViewSet):
     
     def list(self,request,*args,**kwargs):
         """
-        Custom list method to format response exactly as frontend expects
+        List of courses that user is assigned
         """
         queryset = self.get_queryset()
         queryset = self.filter_queryset(queryset)
@@ -69,38 +69,38 @@ class CourseViewSet(viewsets.ModelViewSet):
 
         return Response(courses)
     
-    def get_announcements(self,course,user):
-        """Get batch and course announcements for this course"""
-        announcements = []
-        batch_announcements = []
-        if course.batch:
-            batch_announcements = Announcement.objects.filter(batch=course.batch,announcement_type='batch'
-            ).order_by('-created_at')[:3]
+    # def get_announcements(self,course,user):
+    #     """Get batch and course announcements for this course"""
+    #     announcements = []
+    #     batch_announcements = []
+    #     if course.batch:
+    #         batch_announcements = Announcement.objects.filter(batch=course.batch,announcement_type='batch'
+    #         ).order_by('-created_at')[:3]
 
-        for ann in batch_announcements:
-            announcements.append({
-                'id' : ann.id,
-                'title': ann.title,
-                'content': ann.content[:100] if len(ann.content) > 100 else ann.content,
-                'type':'batch',
-                'created_at':ann.created_at,
-                'created_by':ann.created_by.username if ann.created_by else None
-            })
+    #     for ann in batch_announcements:
+    #         announcements.append({
+    #             'id' : ann.id,
+    #             'title': ann.title,
+    #             'content': ann.content[:100] if len(ann.content) > 100 else ann.content,
+    #             'type':'batch',
+    #             'created_at':ann.created_at,
+    #             'created_by':ann.created_by.username if ann.created_by else None
+    #         })
 
-        course_announcements = Announcement.objects.filter(course = course,announcement_type = 'course').order_by('-created_at')[:3]
+    #     course_announcements = Announcement.objects.filter(course = course,announcement_type = 'course').order_by('-created_at')[:3]
 
-        for ann in course_announcements:
-            announcements.append({
-                'id' : ann.id,
-                'title': ann.title,
-                'content': ann.content[:100] if len(ann.content) > 100 else ann.content,
-                'type':'course',
-                'created_at':ann.created_at,
-                'created_by':ann.created_by.username if ann.created_by else None
-            })
+    #     for ann in course_announcements:
+    #         announcements.append({
+    #             'id' : ann.id,
+    #             'title': ann.title,
+    #             'content': ann.content[:100] if len(ann.content) > 100 else ann.content,
+    #             'type':'course',
+    #             'created_at':ann.created_at,
+    #             'created_by':ann.created_by.username if ann.created_by else None
+    #         })
 
-            announcements.sort(key=lambda x: x['created_at'], reverse=True)
-        return announcements[:3]
+    #         announcements.sort(key=lambda x: x['created_at'], reverse=True)
+    #     return announcements[:3]
     
     @action(detail = True, methods =['get'],url_path='dashboard')
     def dashboard(self,request,pk = None):
@@ -127,11 +127,9 @@ class CourseViewSet(viewsets.ModelViewSet):
     def add_week(self, request, pk=None):
         course = self.get_object()
         
-        # 1. Standard permissions
         if request.user.role != 'instructor' or request.user != course.instructor:
             return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
 
-        # 2. Just create the object. The Model handles the 'order' field automatically!
         week = Week.objects.create(
             course=course,
             topic=request.data.get('topic'),
@@ -141,16 +139,15 @@ class CourseViewSet(viewsets.ModelViewSet):
         return Response({
             'Message': 'Week Added Successfully',
             'week': week.order,
-            'Topic': week.topic # This will be 1, 2, 3... automatically
+            'Topic': week.topic 
         }, status=status.HTTP_201_CREATED)  
 
-    # Inside CourseViewSet
     @action(detail=True, methods=['get', 'post'], url_path='announcements')
     def course_announcements(self, request, pk=None):
         course = self.get_object()
         
         if request.method == 'GET':
-            # Shows both general course announcements AND week-specific ones for this course
+            # Shows week-specific ones for this course
             queryset = Announcement.objects.filter(course=course,week__isnull = False).order_by('-created_at')
             serializer = AnnouncementSerializer(queryset, many=True, context={'request': request, 'view': self})
             return Response(serializer.data)
@@ -158,7 +155,6 @@ class CourseViewSet(viewsets.ModelViewSet):
         if request.method == 'POST':
             serializer = AnnouncementSerializer(data=request.data, context={'request': request, 'view': self})
             if serializer.is_valid():
-                # FIXED: Navigate the chain here just like in perform_create
                 target_faculty = None
                 if course.department:
                     target_faculty = course.department.faculty
@@ -167,7 +163,7 @@ class CourseViewSet(viewsets.ModelViewSet):
                     created_by=request.user,
                     course=course,
                     faculty=target_faculty,
-                    batch=course.batch  # Auto-fill from Course 10
+                    batch=course.batch 
                 )
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -179,7 +175,6 @@ class QuizViewSet(viewsets.ModelViewSet):
     """
     queryset = Quiz.objects.all()
     
-    #accept both normal JSON and FormData
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     
     def get_serializer_class(self):
@@ -243,37 +238,7 @@ class QuizViewSet(viewsets.ModelViewSet):
             'message': 'Quiz created successfully'
         }, status=status.HTTP_201_CREATED)
     
-    # Handle the FormData mapping for Updates
-    # def update(self, request, pk=None, *args, **kwargs):
-    #     """Update quiz - handles stringified JSON + Images from FormData"""
-    #     partial = kwargs.pop('partial', False)
-    #     instance = self.get_object()
-
-    #     if 'quiz_data' in request.data:
-    #         try:
-    #             quiz_data = json.loads(request.data.get('quiz_data'))
-    #         except json.JSONDecodeError:
-    #             return Response({"error": "Invalid JSON format in quiz_data"}, status=status.HTTP_400_BAD_REQUEST)
-
-    #         questions = quiz_data.get('questions', [])
-    #         for index, question in enumerate(questions):
-    #             image_key = f'image_{index}'
-    #             if image_key in request.FILES:
-    #                 question['image'] = request.FILES[image_key]
-    #     else:
-    #         quiz_data = request.data
-
-    #     serializer = self.get_serializer(instance, data=quiz_data, partial=partial, context={'request': request})
-    #     serializer.is_valid(raise_exception=True)
-    #     self.perform_update(serializer)
-        
-    #     return Response({
-    #         'id': instance.id,
-    #         'quizId': instance.quizId,
-    #         'message': 'Quiz updated successfully'
-    #     }, status=status.HTTP_200_OK)
-
-# Inside your QuizViewSet
+    
     def update(self, request, *args, **kwargs):
         """
         Intercepts the PUT/PATCH request, unpacks the FormData, 
@@ -282,7 +247,6 @@ class QuizViewSet(viewsets.ModelViewSet):
         partial = kwargs.pop('partial', False) 
         instance = self.get_object()
 
-        # 1. Unpack the stringified JSON sent by the frontend
         if 'quiz_data' in request.data:
             try:
                 quiz_data = json.loads(request.data.get('quiz_data'))
@@ -292,7 +256,7 @@ class QuizViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # 2. Map the uploaded images to their corresponding questions
+            #  Map the uploaded images to their corresponding questions
             questions = quiz_data.get('questions', [])
             for index, question in enumerate(questions):
                 image_key = f'image_{index}'
@@ -381,22 +345,21 @@ class QuizViewSet(viewsets.ModelViewSet):
                 # Get correct options for this question
                 correct_options = question.options.filter(is_correct=True)
                 total_correct = correct_options.count()
+
+                correct_mark = 1/total_correct
+                incorrect_mark = 1/(question.options.count() - total_correct)
                 
                 # Calculate points for this question
                 if total_correct > 0:
                     # Count correct selections
                     correct_selected = selected_options.filter(is_correct=True).count()
-                    
+                
                     # Count incorrect selections (penalty)
                     incorrect_selected = selected_options.filter(is_correct=False).count()
                     
                     # Calculate score: correct selections minus incorrect selections
                     # Minimum score is 0
-                    points_earned = max(0, correct_selected - incorrect_selected)
-                    
-                    # Normalize to per-question points (1 point per question)
-                    # Each question is worth 1 point total
-                    points_earned = points_earned / total_correct
+                    points_earned = max(0, correct_selected*correct_mark - incorrect_selected*incorrect_mark)
                     
                     earned_points += points_earned
                     
