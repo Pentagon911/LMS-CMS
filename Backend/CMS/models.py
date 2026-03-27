@@ -1,5 +1,5 @@
 #CMS/ models.py
-from django.db import models
+from django.db import IntegrityError, models
 import re
 from django.db.models import Sum
 from django.contrib.auth import get_user_model
@@ -22,6 +22,27 @@ class Week(models.Model):
 
     def __str__(self):
         return f"Week {self.order}: {self.topic}"
+    
+    def save(self, *args, **kwargs):
+        # 1. Only calculate order if it's a NEW record and order isn't manually set
+        if not self.pk and not self.order:
+            # Look at the database for the current highest week number for this course
+            max_order = Week.objects.filter(course=self.course).aggregate(
+                max_val=models.Max('order')
+            )['max_val'] or 0
+            
+            self.order = max_order + 1
+
+        # 2. Try to save. If another request beat us to it, catch the error and increment
+        try:
+            super().save(*args, **kwargs)
+        except IntegrityError:
+            # Refetch the max order (it likely changed in the last millisecond)
+            max_order = Week.objects.filter(course=self.course).aggregate(
+                max_val=models.Max('order')
+            )['max_val'] or 0
+            self.order = max_order + 1
+            super().save(*args, **kwargs)
 
 #Abstract parent class
 class Content(models.Model):
@@ -282,41 +303,27 @@ class Announcement(models.Model):
     ANNOUNCEMENT_TYPES = [
         ('batch', 'Batch Announcement'),    
         ('course', 'Course Announcement'),        
-        ('week', 'Week Announcement'),     
+        ('faculty', 'Faculty Announcement'),     
     ]
-    
-    announcement_type = models.CharField(max_length=10, choices=ANNOUNCEMENT_TYPES, default='course')
-    attachment_url = models.URLField(max_length=500, null=True, blank=True)
-    # For batch announcements (all students in this batch)
-    batch = models.ForeignKey(Batch,on_delete=models.CASCADE,related_name='announcements',null=True,blank=True)
-    
-    # For course announcements
-    course = models.ForeignKey(Course,on_delete=models.CASCADE,related_name='announcements',null=True,blank=True)
-    
-    # For week announcements
-    week = models.ForeignKey(Week,on_delete=models.CASCADE,related_name='announcements',null=True,blank=True)
     
     title = models.CharField(max_length=200)
     content = models.TextField()
-    
-    # Attachments
+
+    faculty = models.ForeignKey('lms.Faculty', on_delete=models.CASCADE, null=True, blank=True)
+    batch = models.ForeignKey('lms.Batch', on_delete=models.CASCADE, null=True, blank=True)
+    course = models.ForeignKey('lms.Course', on_delete=models.CASCADE, null=True, blank=True)
+
     image = models.ImageField(upload_to='announcements/images/', null=True, blank=True)
     pdf = models.FileField(upload_to='announcements/pdfs/', null=True, blank=True)
-    
-    created_at = models.DateTimeField(auto_now_add=True)
+
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-created_at']
 
     def __str__(self):
-        if self.announcement_type == 'batch':
-            return f"Semester {self.batch}: {self.title}"
-        elif self.announcement_type == 'course':
-            return f"Course {self.course.code}: {self.title}"
-        else:
-            return f"Week {self.week.order}: {self.title}"
-
+        return self.title
 
 class AcademicCalendar(models.Model):
     SEMESTER_CHOICES = [(i, f'Semester {i}') for i in range(1, 9)]  # 1-8

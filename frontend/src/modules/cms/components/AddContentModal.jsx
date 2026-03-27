@@ -1,32 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import TextEditor from './TextEditor';
-import request from '../../../utils/requestMethods.jsx'; 
-import { MdDescription, MdCampaign, MdQuiz, MdClose, MdAttachFile, MdSchedule, MdAccessTime, MdStar, MdFileUpload } from 'react-icons/md';
+import request from '../../../utils/requestMethods.jsx';
+import { MdDescription, MdCampaign, MdQuiz, MdClose, MdAttachFile, MdAccessTime, MdStar, MdFileUpload, MdCheckCircle, MdRadioButtonUnchecked } from 'react-icons/md';
 import './AddContentModal.css';
 
-const AddContentModal = ({ closeModal, onAdd, weekNumber }) => {
+const AddContentModal = ({ closeModal, onAdd, weekId, weekNumber, courseId }) => {
   const [contentType, setContentType] = useState('content');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [attachments, setAttachments] = useState([]);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [quizzes, setQuizzes] = useState([]);
-  const [duration, setDuration] = useState('30');
   const [startTime, setStartTime] = useState(() => {
-        const now = new Date();
-        now.setMinutes(now.getMinutes() + 60); // Default to 1 hour from now
-        return now.toISOString().slice(0, 16)
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 60);
+    return now.toISOString().slice(0, 16);
   });
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  // Load available quizzes using request.GET
   useEffect(() => {
     if (contentType === 'quiz') {
       const fetchQuizzes = async () => {
         setLoading(true);
         try {
-          const data = await request.GET('/_data/quizzes.json');
+          const data = await request.GET('/cms/quizzes/draft_quizzes/');
           setQuizzes(data);
         } catch (err) {
           console.error("Failed to load quizzes", err);
@@ -34,32 +32,13 @@ const AddContentModal = ({ closeModal, onAdd, weekNumber }) => {
           setLoading(false);
         }
       };
-      
       fetchQuizzes();
     }
   }, [contentType]);
 
-  // File upload handler using request.UPLOAD
-  const handleFileUpload = async (e) => {
+  const handleFileUpload = (e) => {
     const files = Array.from(e.target.files);
-    
     if (files.length > 0) {
-      setUploading(true);
-      try {
-        const formData = new FormData();
-        files.forEach(file => {
-          formData.append('attachments', file);
-        });
-        
-        const uploadedFiles = await request.UPLOAD('/api/upload', formData);
-        setAttachments(prev => [...prev, ...uploadedFiles]);
-      } catch (err) {
-        console.error("Failed to upload files", err);
-        alert("Failed to upload files. Please try again.");
-      } finally {
-        setUploading(false);
-      }
-    } else {
       setAttachments(prev => [...prev, ...files]);
     }
   };
@@ -68,77 +47,107 @@ const AddContentModal = ({ closeModal, onAdd, weekNumber }) => {
     setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
+  const getContentUrl = () => {
+    // weekId is now the index (0-based), so we use weekId + 1 for API calls
+    const weekNumberForApi = weekId + 1;
+    
+    switch (contentType) {
+      case 'content':
+        return `/cms/weeks/${weekNumberForApi}/upload/`;
+      case 'announcement':
+        return `/cms/courses/${courseId}/weeks/${weekNumberForApi}/announcement/create/`;
+      case 'quiz':
+        return `/cms/quizzes/${selectedQuiz?.quizId}/add_to_week/`;
+      default:
+        return '/cms/course-content/';
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const baseContent = {
-      type: contentType,
-      title: title,
-      weekNumber: weekNumber,
-      attachments: attachments.map(file => ({
-        fileName: file.name || file.fileName,
-        fileUrl: file.url || file.fileUrl || URL.createObjectURL(file),
-        fileSize: file.size || file.fileSize,
-        fileType: file.type || file.fileType
-      }))
-    };
-
-    let newContent;
-
-    if (contentType === 'content') {
-      newContent = {
-        ...baseContent,
-        content: content,
-        format: 'Document',
-        createdAt: new Date().toISOString()
-      };
-    } 
-    else if (contentType === 'announcement') {
-      newContent = {
-        ...baseContent,
-        content: content,
-        postedAt: new Date().toISOString()
-      };
-    } 
-    else if (contentType === 'quiz') {
-      newContent = {
-        ...baseContent,
-        quizId: selectedQuiz?.quizId,
-        quizTitle: selectedQuiz?.title,
-        duration: parseInt(duration),
-        startTime: startTime,
-        questions: selectedQuiz?.questions || [],
-        totalPoints: selectedQuiz?.totalPoints || 0
-      };
-    }
-
     try {
-      const savedContent = await request.POST('/api/course-content', newContent);
-      onAdd(savedContent);
+      setSubmitting(true);
+      const url = getContentUrl();
+      const weekNumberForApi = weekId + 1;
+      
+      if (contentType === 'quiz') {
+        const quizData = {
+          week_id: weekNumberForApi,  // Send the 1-based week number
+          start_time: startTime
+        };
+        
+        const savedContent = await request.POST(url, quizData);
+        // Add the quiz ID and type to the saved content for the response
+        savedContent.quizId = selectedQuiz?.quizId;
+        savedContent.type = 'quiz';
+        savedContent.title = selectedQuiz?.title;
+        onAdd(savedContent);
+        closeModal();
+      } 
+      else {
+        const formData = new FormData();
+        
+        formData.append('type', contentType);
+        formData.append('title', title);
+        formData.append('weekId', weekNumberForApi);
+        formData.append('weekNumber', weekNumber);
+        
+        if (courseId) {
+          formData.append('courseId', courseId);
+        }
+        
+        if (contentType === 'content') {
+          const cleanedContent = content.trim() === "<p><br></p>" || content === "<p></p>" ? "" : content;
+          formData.append('content', cleanedContent);
+          formData.append('format', 'Document');
+          formData.append('createdAt', new Date().toISOString());
+          
+          attachments.forEach((file, index) => {
+            formData.append(`attachment_${index}`, file);
+          });
+        } 
+        else if (contentType === 'announcement') {
+          const cleanedContent = content.trim() === "<p><br></p>" || content === "<p></p>" ? "" : content;
+          formData.append('message', cleanedContent);
+          formData.append('postedAt', new Date().toISOString());
+          
+          attachments.forEach((file, index) => {
+            formData.append(`attachment_${index}`, file);
+          });
+        }
+        
+        const savedContent = await request.POST(url, formData, {
+          isFormData: true
+        });
+        onAdd(savedContent);
+        closeModal();
+      }
     } catch (err) {
       console.error("Failed to save content", err);
       alert("Failed to save content. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="modal-overlay" onClick={closeModal}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
+    <div className="acm-modal-overlay" onClick={closeModal}>
+      <div className="acm-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="acm-modal-header">
           <h2>Add Content to Week {weekNumber}</h2>
-          <button className="close-btn" onClick={closeModal}>
+          <button className="acm-close-btn" onClick={closeModal}>
             <MdClose size={24} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* Content Type Selection */}
-          <div className="form-group">
+          <div className="acm-form-group">
             <label>Content Type</label>
-            <div className="type-selector">
+            <div className="acm-type-selector">
               <button
                 type="button"
-                className={`type-btn ${contentType === 'content' ? 'active' : ''}`}
+                className={`acm-type-btn ${contentType === 'content' ? 'acm-active' : ''}`}
                 onClick={() => {
                   setContentType('content');
                   setSelectedQuiz(null);
@@ -149,7 +158,7 @@ const AddContentModal = ({ closeModal, onAdd, weekNumber }) => {
               </button>
               <button
                 type="button"
-                className={`type-btn ${contentType === 'announcement' ? 'active' : ''}`}
+                className={`acm-type-btn ${contentType === 'announcement' ? 'acm-active' : ''}`}
                 onClick={() => {
                   setContentType('announcement');
                   setSelectedQuiz(null);
@@ -160,7 +169,7 @@ const AddContentModal = ({ closeModal, onAdd, weekNumber }) => {
               </button>
               <button
                 type="button"
-                className={`type-btn ${contentType === 'quiz' ? 'active' : ''}`}
+                className={`acm-type-btn ${contentType === 'quiz' ? 'acm-active' : ''}`}
                 onClick={() => {
                   setContentType('quiz');
                   setContent('');
@@ -172,21 +181,22 @@ const AddContentModal = ({ closeModal, onAdd, weekNumber }) => {
             </div>
           </div>
 
-          {/* Title */}
-          <div className="form-group">
-            <label>Title</label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-              placeholder={`Enter ${contentType} title`}
-            />
-          </div>
-
-          {/* Content/Announcement Editor */}
           {(contentType === 'content' || contentType === 'announcement') && (
-            <div className="form-group">
+            <div className="acm-form-group">
+              <label>Title</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                placeholder={`Enter ${contentType} title`}
+                className="acm-input"
+              />
+            </div>
+          )}
+
+          {(contentType === 'content' || contentType === 'announcement') && (
+            <div className="acm-form-group">
               <label>{contentType === 'content' ? 'Content' : 'Announcement Message'}</label>
               <TextEditor
                 value={content}
@@ -197,45 +207,44 @@ const AddContentModal = ({ closeModal, onAdd, weekNumber }) => {
             </div>
           )}
 
-          {/* Attachments */}
           {(contentType === 'content' || contentType === 'announcement') && (
-            <div className="form-group">
+            <div className="acm-form-group">
               <label>
                 <MdAttachFile size={18} />
                 Attachments (Optional)
               </label>
               
-              <div className="file-upload-area">
+              <div className="acm-file-upload-area">
                 <input
                   type="file"
-                  id="file-upload"
+                  id="acm-file-upload"
                   multiple
                   onChange={handleFileUpload}
-                  className="file-input"
+                  className="acm-file-input"
                   accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.mp4,.zip"
-                  disabled={uploading}
+                  disabled={submitting}
                 />
-                <label htmlFor="file-upload" className="file-upload-label">
-                  <span className="upload-icon">+</span>
-                  <span className="upload-text">
-                    {uploading ? 'Uploading...' : 'Click to upload files'}
+                <label htmlFor="acm-file-upload" className="acm-file-upload-label">
+                  <span className="acm-upload-icon">+</span>
+                  <span className="acm-upload-text">
+                    {submitting ? 'Uploading...' : 'Click to upload files'}
                   </span>
-                  <span className="upload-hint">PDF, DOC, PPT, Images, Videos (max 50MB each)</span>
+                  <span className="acm-upload-hint">PDF, DOC, PPT, Images, Videos (max 50MB each)</span>
                 </label>
               </div>
 
               {attachments.length > 0 && (
-                <div className="file-list">
+                <div className="acm-file-list">
                   {attachments.map((file, index) => (
-                    <div key={index} className="file-item">
-                      <span className="file-icon"><MdFileUpload /></span>
-                      <span className="file-name">{file.name || file.fileName}</span>
-                      <span className="file-size">
-                        {file.size ? (file.size / 1024).toFixed(1) : file.fileSize} KB
+                    <div key={index} className="acm-file-item">
+                      <span className="acm-file-icon"><MdFileUpload /></span>
+                      <span className="acm-file-name">{file.name}</span>
+                      <span className="acm-file-size">
+                        {(file.size / 1024).toFixed(1)} KB
                       </span>
                       <button
                         type="button"
-                        className="file-remove"
+                        className="acm-file-remove"
                         onClick={() => removeAttachment(index)}
                         title="Remove file"
                       >
@@ -248,29 +257,45 @@ const AddContentModal = ({ closeModal, onAdd, weekNumber }) => {
             </div>
           )}
 
-          {/* Quiz Selection - Radio buttons completely removed */}
           {contentType === 'quiz' && (
             <>
-              <div className="form-group">
-                <label>Select Quiz</label>
+              <div className="acm-form-group">
+                <label>Select Quiz (Only one quiz can be added per week)</label>
                 {loading ? (
-                  <p>Loading quizzes...</p>
+                  <div className="acm-loading-state">
+                    <div className="acm-spinner"></div>
+                    <p>Loading quizzes...</p>
+                  </div>
+                ) : quizzes.length === 0 ? (
+                  <div className="acm-empty-state">
+                    <p>No quizzes available. Create a quiz first.</p>
+                  </div>
                 ) : (
-                  <div className="quiz-selector">
+                  <div className="acm-quiz-selector">
                     {quizzes.map(quiz => (
                       <div
                         key={quiz.quizId}
-                        className={`quiz-option ${selectedQuiz?.quizId === quiz.quizId ? 'selected' : ''}`}
+                        className={`acm-quiz-option ${selectedQuiz?.quizId === quiz.quizId ? 'acm-selected' : ''}`}
                         onClick={() => setSelectedQuiz(quiz)}
                       >
-                        <div className="quiz-info">
-                          <div className="quiz-title-row">
-                            <span className="quiz-title">{quiz.title}</span>
+                        <div className="acm-quiz-radio">
+                          {selectedQuiz?.quizId === quiz.quizId ? (
+                            <MdCheckCircle className="acm-radio-selected" />
+                          ) : (
+                            <MdRadioButtonUnchecked className="acm-radio-unchecked" />
+                          )}
+                        </div>
+                        <div className="acm-quiz-info">
+                          <div className="acm-quiz-title-row">
+                            <span className="acm-quiz-title">{quiz.title}</span>
                           </div>
-                          <div className="quiz-details">
-                            <span className="quiz-course">{quiz.course}</span>
-                            <span className="quiz-time"><MdAccessTime /> {quiz.time}</span>
-                            <span className="quiz-date"><MdAccessTime /> {new Date(quiz.createdAt).toLocaleDateString()}</span>
+                          <div className="acm-quiz-details">
+                            <span className="acm-quiz-course">
+                              <MdStar size={12} /> {quiz.course}
+                            </span>
+                            <span className="acm-quiz-time">
+                              <MdAccessTime size={12} /> {quiz.time}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -278,55 +303,36 @@ const AddContentModal = ({ closeModal, onAdd, weekNumber }) => {
                   </div>
                 )}
               </div>
-          
-              {selectedQuiz && (
-                <>
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>
-                        Duration (miniutes)
-                      </label>
-                      <input
-                        type="number"
-                        value={duration}
-                        onChange={(e) => setDuration(e.target.value)}
-                        min="1"
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Start Time
 
-                  </label>
-                      <input
-                        type="datetime-local"
-                        value={startTime}
-                        onChange={(e) => setStartTime(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-                </>
+              {selectedQuiz && (
+                <div className="acm-form-group">
+                  <label>Start Time</label>
+                  <input
+                    type="datetime-local"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    required
+                    className="acm-input"
+                  />
+                </div>
               )}
             </>
           )}
 
-          {/* Form Actions */}
-          <div className="modal-actions">
-            <button type="button" className="cancel-btn" onClick={closeModal}>
+          <div className="acm-modal-actions">
+            <button type="button" className="acm-cancel-btn" onClick={closeModal}>
               Cancel
             </button>
             <button 
               type="submit" 
-              className="submit-btn"
+              className="acm-submit-btn"
               disabled={
-                !title || 
-                ((contentType === 'content' || contentType === 'announcement') && !content) ||
+                ((contentType === 'content' || contentType === 'announcement') && (!title || !content)) ||
                 (contentType === 'quiz' && (!selectedQuiz || !startTime)) ||
-                uploading
+                submitting
               }
             >
-              {uploading ? 'Uploading...' : `Add ${contentType}`}
+              {submitting ? 'Saving...' : `Add ${contentType}`}
             </button>
           </div>
         </form>

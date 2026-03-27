@@ -119,59 +119,45 @@ class CourseViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(course,context = {'request':request})
         return Response(serializer.data)  
 
-    @action(detail = True, methods = ['post'],url_path='dashboard/add_week/')
+    @action(detail=True, methods=['post'], url_path='dashboard/add_week')
     def add_week(self, request, pk=None):
         course = self.get_object()
         
-        # Check permissions (only instructors can add weeks)
-        if request.user.role != 'instructor':
-            return Response(
-                {'error': 'Only instructors can add weeks to a course'}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
-        if request.user != course.instructor:
-            return Response(
-                {'error': 'You are not the instructor of this course'}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
-        # Validate input
-        topic = request.data.get('topic')
-        if not topic:
-            return Response(
-                {'error': 'Topic is required'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Calculate next order number
-        # Get the highest order number for this course
-        max_order = Week.objects.filter(course=course).aggregate(
-            max_order=models.Max('order')
-        )['max_order']
-        
-        # If no weeks exist yet, start at 1, otherwise increment by 1
-        next_order = (max_order or 0) + 1
-        
-        # Create the week with transaction to ensure data integrity
-        with transaction.atomic():
-            week = Week.objects.create(
-                course=course,
-                order=next_order,
-                topic=topic,
-                description=request.data.get('description', '')  # Optional description
-            )
-        
-        # Return success response with week details
+        # 1. Standard permissions
+        if request.user.role != 'instructor' or request.user != course.instructor:
+            return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
+
+        # 2. Just create the object. The Model handles the 'order' field automatically!
+        week = Week.objects.create(
+            course=course,
+            topic=request.data.get('topic'),
+            description=request.data.get('description', '')
+        )
+
         return Response({
-            'success': True,
-            'message': f'Week "{topic}" created successfully',
-            'week_id': week.id,
-            'topic': week.topic,
-            'order': week.order,
-            'course_id': course.id,
-            'course_title': course.name
-        }, status=status.HTTP_201_CREATED)        
+            'Message': 'Week Added Successfully',
+            'week': week.order,
+            'Topic': week.topic # This will be 1, 2, 3... automatically
+        }, status=status.HTTP_201_CREATED)  
+
+    # Inside CourseViewSet
+    @action(detail=True, methods=['get', 'post'], url_path='announcements')
+    def course_announcements(self, request, pk=None):
+        course = self.get_object()
+        
+        if request.method == 'GET':
+            # Shows both general course announcements AND week-specific ones for this course
+            queryset = Announcement.objects.filter(course=course,week__isnull = False).order_by('-created_at')
+            serializer = AnnouncementSerializer(queryset, many=True, context={'request': request, 'view': self})
+            return Response(serializer.data)
+
+        if request.method == 'POST':
+            serializer = AnnouncementSerializer(data=request.data, context={'request': request, 'view': self})
+            if serializer.is_valid():
+                # Force the course to be the one from the URL
+                serializer.save(created_by=request.user, course=course, faculty=course.faculty)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
 
 class QuizViewSet(viewsets.ModelViewSet):
     """
@@ -361,8 +347,13 @@ class QuizViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def draft_quizzes(self, request):
         """Get all draft quizzes (not assigned to any week)"""
-
+        if request.user.role != 'instructor':
+            return Response(
+            {'error': 'Only instructors can access quizzes'}, 
+            status=status.HTTP_403_FORBIDDEN
+        )
         drafts = Quiz.objects.filter(
+            courseCode__instructor = request.user,
             status='draft',
             week__isnull=True  # Not assigned to any week
         )
@@ -383,15 +374,15 @@ class QuizViewSet(viewsets.ModelViewSet):
         quiz = self.get_object()
         
         # Get week ID
-        week_id = request.data.get('week_id')
-        if not week_id:
+        week_order = request.data.get('week_id')
+        if not week_order:
             return Response({'error': 'week_id required'}, status=400)
         
         # Validate week
         try:
-            week = Week.objects.get(id=week_id)
+            week = Week.objects.get(course = quiz.courseCode,order=week_order)
         except Week.DoesNotExist:
-            return Response({'error': f'Week {week_id} not found'}, status=404)
+            return Response({'error': f'Week {week_order} not found'}, status=404)
         
         quiz.week = week
         
@@ -419,7 +410,8 @@ class QuizViewSet(viewsets.ModelViewSet):
             'start_time': quiz.start_time,
             'status': quiz.status,
             'week': {
-                'id': week.id,
+                'id':week.id,
+                'order': week.order,
                 'topic': week.topic
             },
             'message': f'Quiz added to Week {week.order}'
@@ -551,154 +543,202 @@ class WeekViewSet(viewsets.ModelViewSet):
 class AnnouncementViewSet(viewsets.ModelViewSet):
     """
     Manage announcements for batch, course, or week
+    Manage announcements targeted at faculty, batches, and modules.
     """
     queryset = Announcement.objects.all()
     serializer_class = AnnouncementSerializer
-    permission_classes = [IsAuthenticated]
     
     def get_permissions(self):
-        if self.action in ['create', 'update', 'destroy']:
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
             permission_classes = [IsAuthenticated, IsInstructorUser]
         else:
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
     
+    def perform_create(self, serializer):
+        # Automatically set the author to the logged-in instructor
+        serializer.save(created_by=self.request.user)
+
     def get_queryset(self):
         user = self.request.user
         
         if user.role == 'student':
-            # Get student's batch from their enrolled courses
-            enrolled_courses = Course.objects.filter(enrollments__student=user,enrollments__status='enrolled')
-            batches = enrolled_courses.values_list('batch', flat=True).distinct()
+            # Get student's attributes (Adjust field names to match your actual Student/User model)
+            student_faculty = getattr(user, 'faculty', None) 
+            student_batch = getattr(user, 'batch', None)
             
-            # Students see:
-            # 1. Batch announcements for their batch
-            # 2. Course announcements for courses they're enrolled in
-            batch_q = Q(batch__in=batches, announcement_type='batch')
-            course_q = Q(course__in=enrolled_courses, announcement_type='course')
-            
-            return Announcement.objects.filter(batch_q | course_q).distinct()
-        
-        # Instructors see announcements from their courses and batches
-        taught_courses = user.courses_taught.all()
-        batches = taught_courses.values_list('batch', flat=True).distinct()
-        
-        batch_q = Q(batch__in=batches, announcement_type='batch')
-        course_q = Q(course__in=taught_courses, announcement_type='course')
-        
-        return Announcement.objects.filter(batch_q | course_q).distinct()
-    
-    def perform_create(self, serializer):
-        """Create announcement based on type"""
-        announcement_type = self.request.data.get('announcement_type', 'course')
-        
-        if announcement_type == 'batch':
-            # Try batch_id first, then batch_name
-            batch_id = self.request.data.get('batch')
-            
-            if  batch_id:
-                batch = get_object_or_404(Batch, id = batch_id)
-            else:
-                raise serializers.ValidationError({"batch": "Batch ID or name required"})
-            
-            serializer.save(batch=batch, created_by=self.request.user)
-        
-        elif announcement_type == 'course':
-            course_id = self.request.data.get('course')
-            if not course_id:
-                raise serializers.ValidationError({"course": "Course ID required"})
-            course = get_object_or_404(Course, id=course_id)
-            serializer.save(course=course, created_by=self.request.user)
-        
-        elif announcement_type == 'week':
-            week_id = self.request.data.get('week')
-            if not week_id:
-                raise serializers.ValidationError({"week": "Week ID required"})
-            week = get_object_or_404(Week, id=week_id)
-            serializer.save(week=week, created_by=self.request.user)
-        
-        else:
-            serializer.save(created_by=self.request.user)
-    
-    @action(detail=False, methods=['get'])
-    def by_course(self, request):
-        """Get announcements for a specific course"""
-        course_id = request.query_params.get('course_id')
-        if not course_id:
-            return Response({'error': 'course_id required'}, status=400)
-        
-        course = get_object_or_404(Course, id=course_id)
-        
-        # Check access
-        if request.user.role == 'student' and request.user not in course.students.all():
-            return Response({'error': 'Not enrolled'}, status=403)
-        
-        # Get batch announcements for this course's batch
-        batch_announcements = Announcement.objects.filter(
-            batch=course.batch,
-            announcement_type='batch'
-        )
-        
-        # Get course announcements
-        course_announcements = Announcement.objects.filter(
-            course=course,
-            announcement_type='course'
-        )
-        
-        all_announcements = (batch_announcements | course_announcements).order_by('-created_at')
-        serializer = self.get_serializer(all_announcements, many=True)
-        
-        return Response({
-            'course': {
-                'id': course.id,
-                'code': course.code,
-                'name': course.name,
-                'batch': course.batch.name if course.batch else None
-            },
-            'announcements': serializer.data
-        })
-    
-    @action(detail=False, methods=['get'], url_path='week/(?P<week_id>[^/.]+)')
-    def by_week(self, request, week_id=None):
-        """Get announcements for a specific week"""
-        week = get_object_or_404(Week, id=week_id)
-        
-        if request.user.role == 'student' and request.user not in week.course.students.all():
-            return Response({'error': 'Not enrolled'}, status=403)
-        
-        announcements = Announcement.objects.filter(week=week)
-        serializer = self.get_serializer(announcements, many=True)
-        
-        return Response({
-            'week': {
-                'id': week.id,
-                'order': week.order,
-                'topic': week.topic
-            },
-            'announcements': serializer.data
-        })
-    @action(detail=False, methods=['post'], url_path='courses/(?P<course_id>[^/.]+)/week/(?P<week_number>[^/.]+)/create')
-    def create_for_week(self, request, week_number=None,course_id = None):
-        """Create announcement for a specific week"""
-        course = get_object_or_404(Course, id=course_id)
-        week = get_object_or_404(Week, course=course, order=week_number)
-        
-        if request.user.role != 'instructor':
-            return Response({'error': 'Only instructors can create announcements'}, status=403)
-        
-        if request.user != week.course.instructor:
-            return Response({'error': 'Not your course'}, status=403)
-        
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            announcement = serializer.save(
-                week=week,
-                created_by=request.user,
-                announcement_type='week'
+            # Get enrolled courses/modules
+            enrolled_courses = Course.objects.filter(
+                enrollments__student=user, 
+                enrollments__status='enrolled'
             )
-            return Response(serializer.data, status=201)
+            
+            # Intersection Logic: 
+            # If an announcement specifies a target, the student MUST match that target.
+            # If a target is NULL, it doesn't restrict the announcement.
+            faculty_q = Q(faculty__isnull=True) | Q(faculty=student_faculty)
+            batch_q = Q(batch__isnull=True) | Q(batch=student_batch)
+            course_q = Q(module__isnull=True) | Q(module__in=enrolled_courses)
+            
+            # Combine queries with AND to create the intersection behavior
+            return Announcement.objects.filter(faculty_q & batch_q & course_q).distinct()
         
-        return Response(serializer.errors, status=400)
+        elif user.role == 'instructor':
+            # Instructors see announcements they created OR announcements for their assigned modules
+            taught_courses = user.courses_taught.all()
+            
+            return Announcement.objects.filter(
+                Q(created_by=user) | Q(course__in=taught_courses)
+            ).distinct()
+            
+        return Announcement.objects.none()
+    # queryset = Announcement.objects.all()
+    # serializer_class = AnnouncementSerializer
+    # permission_classes = [IsAuthenticated]
+    
+    # def get_permissions(self):
+    #     if self.action in ['create', 'update', 'destroy']:
+    #         permission_classes = [IsAuthenticated, IsInstructorUser]
+    #     else:
+    #         permission_classes = [IsAuthenticated]
+    #     return [permission() for permission in permission_classes]
+    
+    # def get_queryset(self):
+    #     user = self.request.user
+        
+    #     if user.role == 'student':
+    #         # Get student's batch from their enrolled courses
+    #         enrolled_courses = Course.objects.filter(enrollments__student=user,enrollments__status='enrolled')
+    #         batches = enrolled_courses.values_list('batch', flat=True).distinct()
+            
+    #         # Students see:
+    #         # 1. Batch announcements for their batch
+    #         # 2. Course announcements for courses they're enrolled in
+    #         batch_q = Q(batch__in=batches, announcement_type='batch')
+    #         course_q = Q(course__in=enrolled_courses, announcement_type='course')
+            
+    #         return Announcement.objects.filter(batch_q | course_q).distinct()
+        
+    #     # Instructors see announcements from their courses and batches
+    #     taught_courses = user.courses_taught.all()
+    #     batches = taught_courses.values_list('batch', flat=True).distinct()
+        
+    #     batch_q = Q(batch__in=batches, announcement_type='batch')
+    #     course_q = Q(course__in=taught_courses, announcement_type='course')
+        
+    #     return Announcement.objects.filter(batch_q | course_q).distinct()
+    
+    # def perform_create(self, serializer):
+    #     """Create announcement based on type"""
+    #     announcement_type = self.request.data.get('announcement_type', 'course')
+        
+    #     if announcement_type == 'batch':
+    #         # Try batch_id first, then batch_name
+    #         batch_id = self.request.data.get('batch')
+            
+    #         if  batch_id:
+    #             batch = get_object_or_404(Batch, id = batch_id)
+    #         else:
+    #             raise serializers.ValidationError({"batch": "Batch ID or name required"})
+            
+    #         serializer.save(batch=batch, created_by=self.request.user)
+        
+    #     elif announcement_type == 'course':
+    #         course_id = self.request.data.get('course')
+    #         if not course_id:
+    #             raise serializers.ValidationError({"course": "Course ID required"})
+    #         course = get_object_or_404(Course, id=course_id)
+    #         serializer.save(course=course, created_by=self.request.user)
+        
+    #     elif announcement_type == 'week':
+    #         week_id = self.request.data.get('week')
+    #         if not week_id:
+    #             raise serializers.ValidationError({"week": "Week ID required"})
+    #         week = get_object_or_404(Week, id=week_id)
+    #         serializer.save(week=week, created_by=self.request.user)
+        
+    #     else:
+    #         serializer.save(created_by=self.request.user)
+    
+    # @action(detail=False, methods=['get'])
+    # def by_course(self, request):
+    #     """Get announcements for a specific course"""
+    #     course_id = request.query_params.get('course_id')
+    #     if not course_id:
+    #         return Response({'error': 'course_id required'}, status=400)
+        
+    #     course = get_object_or_404(Course, id=course_id)
+        
+    #     # Check access
+    #     if request.user.role == 'student' and request.user not in course.students.all():
+    #         return Response({'error': 'Not enrolled'}, status=403)
+        
+    #     # Get batch announcements for this course's batch
+    #     batch_announcements = Announcement.objects.filter(
+    #         batch=course.batch,
+    #         announcement_type='batch'
+    #     )
+        
+    #     # Get course announcements
+    #     course_announcements = Announcement.objects.filter(
+    #         course=course,
+    #         announcement_type='course'
+    #     )
+        
+    #     all_announcements = (batch_announcements | course_announcements).order_by('-created_at')
+    #     serializer = self.get_serializer(all_announcements, many=True)
+        
+    #     return Response({
+    #         'course': {
+    #             'id': course.id,
+    #             'code': course.code,
+    #             'name': course.name,
+    #             'batch': course.batch.name if course.batch else None
+    #         },
+    #         'announcements': serializer.data
+    #     })
+    
+    # @action(detail=False, methods=['get'], url_path='week/(?P<week_id>[^/.]+)')
+    # def by_week(self, request, week_id=None):
+    #     """Get announcements for a specific week"""
+    #     week = get_object_or_404(Week, id=week_id)
+        
+    #     if request.user.role == 'student' and request.user not in week.course.students.all():
+    #         return Response({'error': 'Not enrolled'}, status=403)
+        
+    #     announcements = Announcement.objects.filter(week=week)
+    #     serializer = self.get_serializer(announcements, many=True)
+        
+    #     return Response({
+    #         'week': {
+    #             'id': week.id,
+    #             'order': week.order,
+    #             'topic': week.topic
+    #         },
+    #         'announcements': serializer.data
+    #     })
+    # @action(detail=False, methods=['post'], url_path='courses/(?P<course_id>[^/.]+)/week/(?P<week_number>[^/.]+)/create')
+    # def create_for_week(self, request, week_number=None,course_id = None):
+    #     """Create announcement for a specific week"""
+    #     course = get_object_or_404(Course, id=course_id)
+    #     week = get_object_or_404(Week, course=course, order=week_number)
+        
+    #     if request.user.role != 'instructor':
+    #         return Response({'error': 'Only instructors can create announcements'}, status=403)
+        
+    #     if request.user != week.course.instructor:
+    #         return Response({'error': 'Not your course'}, status=403)
+        
+    #     serializer = self.get_serializer(data=request.data)
+    #     if serializer.is_valid():
+    #         announcement = serializer.save(
+    #             week=week,
+    #             created_by=request.user,
+    #             announcement_type='week'
+    #         )
+    #         return Response(serializer.data, status=201)
+        
+    #     return Response(serializer.errors, status=400)
     
 class AcademicCalendarViewSet(viewsets.ModelViewSet):
     """
@@ -793,4 +833,3 @@ class CourseContentViewSet(viewsets.ModelViewSet):
             target_serializer.save(week=week)
 
         return Response(target_serializer.data, status=status.HTTP_201_CREATED)
-

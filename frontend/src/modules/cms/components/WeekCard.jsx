@@ -3,7 +3,7 @@ import AddContentModal from "./AddContentModal.jsx";
 import {MdDescription,MdQuiz,MdCampaign,MdFolder,MdAttachFile,MdLink,MdAccessTime,MdAssignment,MdCalendarToday,MdClose,MdAdd,MdExpandMore,MdChevronRight} from "react-icons/md";
 import "./WeekCard.css";
 
-const WeekCard = ({ data, isLecturer, onContentClick }) => {
+const WeekCard = ({ data, weekNumber, weekIndex, isLecturer, onContentClick, onAddContent }) => {
   const [expanded, setExpanded] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [items, setItems] = useState(data.items || []);
@@ -14,6 +14,9 @@ const WeekCard = ({ data, isLecturer, onContentClick }) => {
   const closeModal = () => setShowModal(false);
 
   const handleAddContent = (newContent) => {
+    if (onAddContent) {
+      onAddContent(newContent);
+    }
     setItems([...items, newContent]);
     closeModal();
   };
@@ -31,7 +34,6 @@ const WeekCard = ({ data, isLecturer, onContentClick }) => {
     }
   };
 
-  // Get icon based on content type (removed assignment)
   const getTypeIcon = (type) => {
     switch(type) {
       case 'content': return <MdDescription />;
@@ -41,17 +43,15 @@ const WeekCard = ({ data, isLecturer, onContentClick }) => {
     }
   };
 
-  // Get color based on content type (removed assignment)
   const getTypeColor = (type) => {
     switch(type) {
-      case 'content': return '#3498db';      // Blue
-      case 'quiz': return '#e74c3c';          // Red
-      case 'announcement': return '#27ae60';  // Green
-      default: return '#95a5a6';               // Gray
+      case 'content': return '#433AC2';
+      case 'quiz': return '#B01D1D';
+      case 'announcement': return '#05B010';
+      default: return '#95a5a6'; 
     }
   };
 
-  // Format file size (if available)
   const formatFileSize = (bytes) => {
     if (!bytes) return '';
     if (bytes < 1024) return bytes + ' B';
@@ -59,7 +59,6 @@ const WeekCard = ({ data, isLecturer, onContentClick }) => {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
-  // Render content item
   const renderContentItem = (item, index) => {
     const typeColor = getTypeColor(item.type);
     const typeIcon = getTypeIcon(item.type);
@@ -67,45 +66,44 @@ const WeekCard = ({ data, isLecturer, onContentClick }) => {
     return (
       <div 
         key={index} 
-        className="content-card"
+        className="cms-week-content-card"
         style={{ borderLeftColor: typeColor }}
         onClick={() => handleItemClick(item)}
       >
-        <div className="content-icon" style={{ backgroundColor: typeColor + '20', color: typeColor }}>
+        <div className="cms-week-content-icon" style={{ backgroundColor: typeColor + '20', color: typeColor }}>
           {typeIcon}
         </div>
         
-        <div className="content-details">
-          <div className="content-title">
+        <div className="cms-week-content-details">
+          <div className="cms-week-content-title">
             {item.title}
-            <span className="content-type-badge" style={{ backgroundColor: typeColor + '20', color: typeColor }}>
+            <span className="cms-week-content-type-badge" style={{ backgroundColor: typeColor + '20', color: typeColor }}>
               {item.type}
             </span>
           </div>
           
-          {/* Render different metadata based on type (removed assignment) */}
-          <div className="content-meta">
+          <div className="cms-week-content-meta">
             {item.type === 'content' && (
               <>
-                <span className="meta-item"><MdAttachFile /> {item.format || 'File'}</span>
-                {item.fileSize && <span className="meta-item">{formatFileSize(item.fileSize)}</span>}
-                {item.fileUrl && <span className="meta-item"><MdLink /> View</span>}
+                <span className="cms-week-meta-item"><MdAttachFile /> {item.format || 'File'}</span>
+                {item.fileSize && <span className="cms-week-meta-item">{formatFileSize(item.fileSize)}</span>}
+                {item.fileUrl && <span className="cms-week-meta-item"><MdLink /> View</span>}
               </>
             )}
 
             {item.type === 'quiz' && (
               <>
-                <span className="meta-item"><MdAccessTime /> {item.duration || '15 min'}</span>
-                {item.questionsCount && <span className="meta-item">{item.questionsCount} questions</span>}
-                <span className="meta-item"><MdAssignment /> {item.quizId ? 'Available' : 'No ID'}</span>
+                <span className="cms-week-meta-item"><MdAccessTime /> {item.duration || '15 min'}</span>
+                {item.questionsCount && <span className="cms-week-meta-item">{item.questionsCount} questions</span>}
+                <span className="cms-week-meta-item"><MdAssignment /> {item.quizId ? 'Available' : 'No ID'}</span>
               </>
             )}
 
             {item.type === 'announcement' && (
               <>
-                <span className="meta-item"><MdCalendarToday /> {item.date || new Date().toLocaleDateString()}</span>
+                <span className="cms-week-meta-item"><MdCalendarToday /> {item.date || new Date().toLocaleDateString()}</span>
                 {item.message && (
-                  <span className="meta-item">
+                  <span className="cms-week-meta-item">
                     {item.message.length > 30 ? item.message.substring(0, 30) + '...' : item.message}
                   </span>
                 )}
@@ -113,9 +111,8 @@ const WeekCard = ({ data, isLecturer, onContentClick }) => {
             )}
           </div>
 
-          {/* Preview for announcements */}
           {item.type === 'announcement' && item.message && (
-            <div className="announcement-preview">
+            <div className="cms-week-announcement-preview">
               {item.message.length > 100 ? item.message.substring(0, 100) + '...' : item.message}
             </div>
           )}
@@ -123,7 +120,7 @@ const WeekCard = ({ data, isLecturer, onContentClick }) => {
 
         {isLecturer && (
           <button
-            className="content-remove"
+            className="cms-week-content-remove"
             onClick={(e) => {
               e.stopPropagation();
               removeContent(index);
@@ -138,18 +135,17 @@ const WeekCard = ({ data, isLecturer, onContentClick }) => {
   };
 
   return (
-    <div className={`week-container ${expanded ? 'expanded' : ''}`}>
-      {/* Week Header */}
-      <div className="week-header" onClick={toggleWeek}>
-        <div className="week-title">
-          <span className="week-number">{data.week}</span>
-          <span className="item-count">{items.length} items</span>
+    <div className={`cms-week-container ${expanded ? 'cms-week-expanded' : ''}`}>
+      <div className="cms-week-header" onClick={toggleWeek}>
+        <div className="cms-week-title">
+          <span className="cms-week-number">{weekNumber || data.week || 'Week'}</span>
+          <span className="cms-week-item-count">{items.length} items</span>
         </div>
         
-        <div className="week-actions">
+        <div className="cms-week-actions">
           {isLecturer && (
             <button 
-              className="add-btn"
+              className="cms-week-add-btn"
               onClick={(e) => {
                 e.stopPropagation();
                 addContent();
@@ -160,38 +156,38 @@ const WeekCard = ({ data, isLecturer, onContentClick }) => {
             </button>
           )}
           
-          <button className="expand-btn">
-            {expanded ? <MdExpandMore />:<MdChevronRight />}
+          <button className="cms-week-expand-btn">
+            {expanded ? <MdExpandMore /> : <MdChevronRight />}
           </button>
         </div>
       </div>
 
-      {/* Expanded Content */}
       {expanded && (
-        <div className="week-content">
+        <div className="cms-week-content">
           {items.length === 0 ? (
-            <div className="empty-state">
+            <div className="cms-week-empty-state">
               <p>No items in this week yet.</p>
               {isLecturer && (
-                <button className="add-first-btn" onClick={addContent}>
+                <button className="cms-week-add-first-btn" onClick={addContent}>
                   + Add First Item
                 </button>
               )}
             </div>
           ) : (
-            <div className="content-grid">
+            <div className="cms-week-content-grid">
               {items.map((item, index) => renderContentItem(item, index))}
             </div>
           )}
         </div>
       )}
 
-      {/* Add Content Modal */}
       {showModal && (
         <AddContentModal 
           closeModal={closeModal} 
           onAdd={handleAddContent}
-          weekNumber={data.week}
+          weekId={weekIndex}  // Pass the week index (0-based) as weekId
+          weekNumber={weekNumber || data.week}
+          courseId={data.courseId}
         />
       )}
     </div>

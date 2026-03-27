@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import TextEditor from "./TextEditor";
-import request from '../../../utils/requestMethods.jsx';
 import { 
   MdClose, MdAdd, MdRemove, MdPreview, 
   MdCheckCircle, MdRadioButtonChecked,
@@ -13,8 +12,6 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
   const [question, setQuestion] = useState("");
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
-  const [imageUrl, setImageUrl] = useState(null); // Store the actual URL from server
-  const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [options, setOptions] = useState([
     { text: "", isCorrect: false },
@@ -22,27 +19,39 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
   ]);
   const [multipleAnswers, setMultipleAnswers] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
+  const [isExistingImage, setIsExistingImage] = useState(false);
 
-  // Effect to load initial data for editing
   useEffect(() => {
     if (initialData) {
-      console.log("Loading question for edit:", initialData);
-      
       setQuestion(initialData.question || "");
       
-      // Handle image - if it's a URL from server
       if (initialData.image && initialData.image !== null && initialData.image !== "") {
-        setImagePreview(initialData.image);
-        setImageUrl(initialData.image);
-        setImage(null);
+        if (initialData.image instanceof File) {
+          const previewUrl = URL.createObjectURL(initialData.image);
+          setImagePreview(previewUrl);
+          setImage(initialData.image);
+          setIsExistingImage(false);
+        } else if (typeof initialData.image === 'string') {
+          if (initialData.image.startsWith('blob:')) {
+            setImagePreview(initialData.image);
+            setImage(null);
+            setIsExistingImage(false);
+          } else if (initialData.image.startsWith('data:image')) {
+            setImagePreview(initialData.image);
+            setImage(null);
+            setIsExistingImage(false);
+          } else {
+            setImagePreview(initialData.image);
+            setImage(null);
+            setIsExistingImage(true);
+          }
+        }
       } else {
         setImage(null);
         setImagePreview("");
-        setImageUrl(null);
+        setIsExistingImage(false);
       }
       
-      // Handle options
       if (initialData.options && initialData.options.length > 0) {
         const formattedOptions = initialData.options.map(opt => ({
           text: opt.text || opt,
@@ -56,14 +65,17 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
         ]);
       }
       
-      // Handle multiple answers
       setMultipleAnswers(initialData.multipleAnswers === "true" || initialData.multipleAnswers === true);
     } else {
-      // Reset form for new question
-      console.log("Resetting form for new question");
       resetForm();
     }
-  }, [initialData]); // This dependency is crucial for updates
+    
+    return () => {
+      if (imagePreview && imagePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [initialData]);
 
   const resetForm = () => {
     setOptions([
@@ -73,69 +85,46 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
     setQuestion("");
     setImage(null);
     setImagePreview("");
-    setImageUrl(null);
     setUploadError("");
     setMultipleAnswers(false);
+    setIsExistingImage(false);
   };
 
-  const handleImageUpload = async (e) => {
+  const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     
-    // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
       setUploadError('Please upload a valid image file (JPEG, PNG, GIF, WEBP)');
       return;
     }
     
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       setUploadError('Image size should be less than 5MB');
       return;
     }
     
     setUploadError("");
-    setUploadingImage(true);
     
-    // Show preview immediately
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result);
-    };
-    reader.readAsDataURL(file);
-    setImage(file);
-    
-    try {
-      // Create FormData for upload
-      const formData = new FormData();
-      formData.append('image', file);
-      formData.append('type', 'question_image');
-      
-      const response = await request.UPLOAD('/cms/media/question_images/', formData);
-      
-      // Store the image URL from server response
-      const uploadedUrl = response.url || response.image_url || response.path;
-      setImageUrl(uploadedUrl);
-      
-      console.log('Image uploaded successfully:', response);
-    } catch (error) {
-      console.error('Image upload failed:', error);
-      setUploadError('Failed to upload image. Please try again.');
-      // Remove preview if upload fails
-      setImagePreview("");
-      setImage(null);
-      setImageUrl(null);
-    } finally {
-      setUploadingImage(false);
+    if (imagePreview && imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview);
     }
+    
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
+    setImage(file);
+    setIsExistingImage(false);
   };
 
   const removeImage = () => {
+    if (imagePreview && imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview);
+    }
     setImage(null);
     setImagePreview("");
-    setImageUrl(null);
     setUploadError("");
+    setIsExistingImage(false);
   };
 
   const addOption = () => {
@@ -145,7 +134,6 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
   const removeOption = (index) => {
     if (options.length > 2) {
       const newOptions = options.filter((_, i) => i !== index);
-      // If removing a correct answer, ensure there's still a correct answer
       if (options[index].isCorrect && !newOptions.some(opt => opt.isCorrect)) {
         newOptions[0].isCorrect = true;
       }
@@ -165,10 +153,8 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
     const newOptions = [...options];
     
     if (multipleAnswers) {
-      // Toggle the selected option
       newOptions[index].isCorrect = !newOptions[index].isCorrect;
     } else {
-      // Single answer - set only this one as correct
       newOptions.forEach((opt, i) => {
         opt.isCorrect = i === index;
       });
@@ -178,26 +164,22 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
   };
 
   const validateForm = () => {
-    // Check question
     if (!question.trim() || question === "<p><br></p>" || question === "<p></p>") {
       alert("Please enter a question");
       return false;
     }
     
-    // Check options
     if (options.length < 2) {
       alert("Please add at least 2 options");
       return false;
     }
     
-    // Check if all options have text
     const emptyOptions = options.some(opt => !opt.text.trim());
     if (emptyOptions) {
       alert("Please fill in all options");
       return false;
     }
     
-    // Check for correct answer
     const hasCorrectAnswer = options.some(opt => opt.isCorrect);
     if (!hasCorrectAnswer) {
       alert("Please select at least one correct answer");
@@ -215,30 +197,36 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
     setIsSubmitting(true);
     
     try {
-      // Format options for API
+      const formData = new FormData();
+      
+      const cleanedQuestion = question.trim() === "<p><br></p>" || question === "<p></p>" ? "" : question;
+      formData.append('question', cleanedQuestion);
+      formData.append('multipleAnswers', multipleAnswers ? "true" : "false");
+      
+      if (image) {
+        formData.append('image', image);
+      } else if (imagePreview && isExistingImage) {
+        formData.append('existing_image_url', imagePreview);
+      }
+      
       const formattedOptions = options.map((opt, idx) => ({
         id: String.fromCharCode(65 + idx),
         text: opt.text,
         is_correct: opt.isCorrect ? "true" : "false"
       }));
-
-      const questionData = {
-        question: question,
-        // Use the server URL if available, otherwise use the preview (for new questions without upload)
-        image: imageUrl || (imagePreview && !image ? imagePreview : null),
-        multipleAnswers: multipleAnswers ? "true" : "false",
-        options: formattedOptions
-      };
-
-      // Call the onSubmit callback
-      await onSubmit(questionData);
       
-      // Reset form only if it's a new question (not editing)
+      formData.append('options', JSON.stringify(formattedOptions));
+      
+      if (initialData && initialData.id) {
+        formData.append('question_id', initialData.id);
+      }
+      
+      await onSubmit(formData);
+      
       if (!initialData) {
         resetForm();
       }
       
-      // Show success message
       const message = initialData ? "Question updated successfully!" : "Question added successfully!";
       alert(message);
       
@@ -257,7 +245,6 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
     resetForm();
   };
 
-  // Get correct answer indicator text
   const getCorrectAnswersText = () => {
     const correctIndices = options.reduce((indices, opt, idx) => {
       if (opt.isCorrect) indices.push(idx + 1);
@@ -274,7 +261,6 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
   return (
     <div className="quiz-editor-container">
       <div className="quiz-editor-content">
-        {/* Header with title */}
         <div className="editor-header">
           <h3>{initialData ? "Edit Question" : "Add New Question"}</h3>
           {initialData && onCancel && (
@@ -284,7 +270,6 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
           )}
         </div>
 
-        {/* Question */}
         <div className="form-group">
           <label><MdQuiz /> Question *</label>
           <TextEditor
@@ -295,7 +280,6 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
           />
         </div>
 
-        {/* Image */}
         <div className="form-group">
           <label><MdImage /> Image (Optional)</label>
           {!imagePreview ? (
@@ -304,21 +288,11 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
                 type="file" 
                 id="question-image" 
                 accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
-                onChange={handleImageUpload} 
-                disabled={uploadingImage}
+                onChange={handleImageUpload}
                 hidden 
               />
               <label htmlFor="question-image" className="upload-label">
-                {uploadingImage ? (
-                  <>
-                    <span className="spinner"></span>
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <MdUpload /> Click to upload image
-                  </>
-                )}
+                <MdUpload /> Click to upload image
               </label>
               <p className="upload-hint">Supported: JPEG, PNG, GIF, WEBP (Max 5MB)</p>
               {uploadError && <p className="upload-error">{uploadError}</p>}
@@ -327,16 +301,9 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
             <div className="preview-area">
               <img src={imagePreview} alt="Question preview" />
               <div className="preview-actions">
-                {uploadingImage && (
-                  <div className="uploading-overlay">
-                    <span className="spinner"></span>
-                    <span>Uploading to server...</span>
-                  </div>
-                )}
                 <button 
                   onClick={removeImage} 
                   className="remove-image-btn"
-                  disabled={uploadingImage}
                 >
                   <MdDelete /> Remove
                 </button>
@@ -345,7 +312,6 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
           )}
         </div>
 
-        {/* Answer Type */}
         <div className="form-group">
           <label><MdCheckCircle /> Answer Type *</label>
           <div className="toggle-group">
@@ -366,7 +332,6 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
           </div>
         </div>
 
-        {/* Options */}
         <div className="form-group">
           <div className="options-header">
             <label>✓ Answer Options *</label>
@@ -417,11 +382,10 @@ function QuizEditor({ onSubmit, initialData = null, onCancel = null }) {
           )}
         </div>
 
-        {/* Actions */}
         <div className="action-buttons">
           <button 
             onClick={handleSubmit} 
-            disabled={isSubmitting || uploadingImage} 
+            disabled={isSubmitting} 
             className="submit-btn"
           >
             {isSubmitting ? 'Saving...' : (initialData ? 'Update Question' : 'Add Question')}

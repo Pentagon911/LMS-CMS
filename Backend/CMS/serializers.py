@@ -75,27 +75,63 @@ class AnnouncementSerializer(serializers.ModelSerializer):
     week_number = serializers.IntegerField(source='week.order', read_only=True)
     attachments = serializers.SerializerMethodField()
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request')
+
+        if request and hasattr(request.user, 'role') and request.user.role == 'instructor':
+            # 1. Filter Courses (Modules)
+            if 'course' in self.fields:
+                self.fields['course'].queryset = request.user.courses_taught.all()
+
+            # 2. Filter Faculty
+            if 'faculty' in self.fields:
+                # Assuming instructor has a profile linked to a faculty
+                if hasattr(request.user, 'instructor_profile'):
+                    instructor_faculty = request.user.instructor_profile.faculty
+                    # only shows their specific faculty
+                    self.fields['faculty'].queryset = Faculty.objects.filter(id=instructor_faculty.id)
+                else:
+                    # If no profile found, show nothing to prevent unauthorized posting
+                    self.fields['faculty'].queryset = Faculty.objects.none()
+                    self.fields['course'].queryset = request.user.courses_taught.all()
     class Meta:
         model = Announcement
         fields = [
-            'id', 'title', 'content', 'attachments', 'week_number', 
-            'created_at', 'created_by_name'
+            'id', 'title', 'content', 'faculty', 'batch', 'course', 
+            'image', 'pdf', 'attachments', 'created_at', 'created_by_name','week_number'
         ]
         read_only_fields = ['id', 'created_at', 'created_by_name']
+        extra_kwargs = {
+            'image': {'write_only': True},
+            'pdf': {'write_only': True}
+        }
 
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        
-        # Merge pdf, image, and url into one "attachment" field for the frontend
-        if instance.pdf:
-            representation['attachment'] = representation.pop('pdf')
-        elif instance.image:
-            representation['attachment'] = representation.pop('image')
-        elif instance.attachment_url:
-            representation['attachment'] = representation.pop('attachment_url')
-        
+    def validate(self, data):
+        faculty = data.get('faculty')
+        batch = data.get('batch')
+        course = data.get('course')
+        request = self.context.get('request')
+
+        # 1. Mandatory Target Validation
+        if not any([faculty, batch, course]):
+            raise serializers.ValidationError(
+                "At least one target (Faculty, Batch, or Course) must be selected."
+            )
+
+        # 2. Instructor Specific Restrictions
+        if request and request.user.role == 'instructor':
+            # Faculty Check
+            if faculty and hasattr(request.user, 'instructor_profile'):
+                if faculty != request.user.instructor_profile.faculty:
+                    raise serializers.ValidationError({"faculty": "You can only post to your own faculty."})
             
-        return representation
+            # Course Check
+            if course:
+                if not request.user.courses_taught.filter(id=course.id).exists():
+                    raise serializers.ValidationError({"course": "You are not assigned to this course."})
+
+        return data
     
     def get_attachments(self, obj):
         """
@@ -157,13 +193,7 @@ class AnnouncementSerializer(serializers.ModelSerializer):
                 }
         except Exception:
             pass
-            
-        return {
-            "fileName": None,
-            "fileUrl": None,
-            "fileSize": None,
-            "fileType": default_mime_type
-        }
+        return None
 
 
 # ========== BASE Serilizers for Quiz Operations ==========
@@ -530,6 +560,7 @@ class courseDashboardSerializer(serializers.ModelSerializer):
     
     def get_week_items(self, week):
         items = []
+        
 
         # Helper function to safely check file size without crashing
         def get_safe_file_size(file_obj):
@@ -552,11 +583,6 @@ class courseDashboardSerializer(serializers.ModelSerializer):
                     "fileSize": get_safe_file_size(video.file),
                     "description": video.description
                 })
-        else:
-            items.append({
-                "type": None, "title": None, "format": None,
-                "fileUrl": None, "fileSize": None, "description": None
-            })
 
         # 2. PDFs
         pdfs = week.pdf_set.all()
@@ -570,11 +596,7 @@ class courseDashboardSerializer(serializers.ModelSerializer):
                     "fileSize": get_safe_file_size(pdf.file),
                     "description": pdf.description
                 })
-        else:
-            items.append({
-                "type": None, "title": None, "format": None,
-                "fileUrl": None, "fileSize": None, "description": None
-            })
+        
 
         # 3. Links
         links = week.link_set.all()
@@ -588,18 +610,15 @@ class courseDashboardSerializer(serializers.ModelSerializer):
                     "fileSize": None, 
                     "description": link.description
                 })
-        else:
-            items.append({
-                "type": None, "title": None, "format": None,
-                "fileUrl": None, "fileSize": None, "description": None
-            })
+        
 
         # 4. Quizzes
         request = self.context.get('request')
         quizzes = week.quizzes.all()
 
-        if request and getattr(request.user, 'role', None) == 'student':
+        if request.user.role== 'student' or request.user.role == 'instructor':
             quizzes = quizzes.filter(status__in=['scheduled', 'active'])
+        
         
         if quizzes:
             for quiz in quizzes:
@@ -611,27 +630,23 @@ class courseDashboardSerializer(serializers.ModelSerializer):
                     'questionsCount': quiz.questions.count(),
                     'description': getattr(quiz, 'description', '')
                 })
-        else:
-            items.append({
-                'type': None, 'title': None, 'quizId': None,
-                'duration': None, 'questionsCount': None, 'description': None
-            })
+        
 
         # 5. Announcements
-        announcements = week.announcements.all()
-        if announcements:
-            for announcement in announcements:
-                items.append({
-                    'type': 'announcement',
-                    'title': announcement.content[:50],
-                    'message': announcement.content,
-                    'date': announcement.created_at.strftime('%Y-%m-%d')
-                })
-        else:
-            items.append({
-                'type': None, 'title': None, 'quizId': None, 
-                'duration': None, 'questionsCount': None, 'description': None
-            })
+        # announcements = week.announcements.all()
+        # if announcements:
+        #     for announcement in announcements:
+        #         items.append({
+        #             'type': 'announcement',
+        #             'title': announcement.content[:50],
+        #             'message': announcement.content,
+        #             'date': announcement.created_at.strftime('%Y-%m-%d')
+        #         })
+        # else:
+        #     items.append({
+        #         'type': None, 'title': None, 'quizId': None, 
+        #         'duration': None, 'questionsCount': None, 'description': None
+        #     })
 
         return items
     
