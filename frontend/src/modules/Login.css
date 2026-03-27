@@ -1,6 +1,3 @@
-/* Login.css - Minimal & Professional with Dark Mode */
-/* Using unique lgn__ prefix to avoid style conflicts */
-
 .lgn__container {
   min-height: 100vh;
   display: flex;
@@ -207,13 +204,13 @@ body.dark-mode .lgn__form-group input::placeholder {
 
 /* Dark mode radio options */
 body.dark-mode .lgn__radio-option {
-  background: #2a313c;
   border-color: #323b48;
+  background: #1e242c;
 }
 
 body.dark-mode .lgn__radio-option.selected {
-  border-color: #3a4a5e;
-  background: #1e242c;
+  border-color: white;
+  background: #2a313c;
 }
 
 body.dark-mode .lgn__radio-icon {

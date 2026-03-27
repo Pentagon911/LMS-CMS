@@ -27,7 +27,6 @@ const CreateQuizPage = () => {
     questions: []
   });
 
-  // Get user from localStorage
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -40,7 +39,6 @@ const CreateQuizPage = () => {
     }
   }, []);
 
-  // Fetch all modules
   useEffect(() => {
     const fetchModules = async () => {
       try {
@@ -50,11 +48,9 @@ const CreateQuizPage = () => {
         console.error('Failed to fetch modules', err);
       }
     };
-
     fetchModules();
   }, []);
 
-  // Fetch existing quizzes
   const fetchExistingQuizzes = async () => {
     try {
       setLoading(true);
@@ -71,7 +67,6 @@ const CreateQuizPage = () => {
     fetchExistingQuizzes();
   }, []);
 
-  // Load quiz for editing when quizId is provided
   useEffect(() => {
     if (quizId && mode === 'select') {
       loadQuizForEdit(quizId);
@@ -84,17 +79,28 @@ const CreateQuizPage = () => {
       const data = await request.GET(`/cms/quizzes/${id}/`);
       const moduleInfo = modules.find(m => m.code === data.course);
       
-      // Transform questions to frontend format
-      const transformedQuestions = data.questions?.map(q => ({
-        id: q.id,
-        text: q.text,
-        options: q.options.map(opt => ({
-          text: opt.text,
-          is_correct: opt.is_correct
-        })),
-        multipleAnswers: q.multipleAnswers || 'false',
-        image: q.image || null
-      })) || [];
+      const transformedQuestions = data.questions?.map(q => {
+        let imageUrl = null;
+        if (q.image) {
+          if (typeof q.image === 'string' && !q.image.startsWith('http')) {
+            imageUrl = `${request.getBaseUrl()}${q.image}`;
+          } else {
+            imageUrl = q.image;
+          }
+        }
+        
+        return {
+          id: q.id || q.questionId,
+          text: q.text,
+          options: q.options.map(opt => ({
+            text: opt.text,
+            is_correct: opt.is_correct
+          })),
+          multipleAnswers: q.multipleAnswers || 'false',
+          image: imageUrl,
+          imageFile: null
+        };
+      }) || [];
       
       setQuizData({
         id: data.id,
@@ -139,9 +145,7 @@ const CreateQuizPage = () => {
   const handleModuleChange = (e) => {
     const course = e.target.value;
     setSelectedModule(course);
-    
     const moduleInfo = modules.find(m => m.code === course);
-    
     setQuizData({
       ...quizData,
       course: course,
@@ -157,7 +161,6 @@ const CreateQuizPage = () => {
   const handleEditQuestion = (index) => {
     setCurrentQuestionIndex(index);
     setIsEditingQuestion(true);
-    
     setTimeout(() => {
       document.querySelector('.quiz-editor-section')?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
@@ -168,43 +171,55 @@ const CreateQuizPage = () => {
     setIsEditingQuestion(false);
   };
 
-  // UPDATED: Handle question submission with image
-  const handleQuizEditorSubmit = (questionData) => {
-    // Format options correctly
-    const formattedOptions = questionData.options.map(opt => ({
+  const handleQuizEditorSubmit = async (formData) => {
+    const questionText = formData.get('question');
+    const multipleAnswers = formData.get('multipleAnswers');
+    const optionsJson = formData.get('options');
+    const existingImageUrl = formData.get('existing_image_url');
+    const questionId = formData.get('question_id');
+    
+    const parsedOptions = JSON.parse(optionsJson);
+    
+    const formattedOptions = parsedOptions.map(opt => ({
       text: opt.text,
-      is_correct: opt.is_correct === true || opt.is_correct === "true"
+      is_correct: opt.is_correct === "true" || opt.is_correct === true
     }));
     
-    // Prepare the question with correct property names
+    let imageValue = null;
+    let imageFile = null;
+    
+    if (formData.has('image')) {
+      imageFile = formData.get('image');
+      imageValue = imageFile;
+    } else if (existingImageUrl) {
+      imageValue = existingImageUrl;
+    }
+    
     const updatedQuestion = {
       id: isEditingQuestion && currentQuestionIndex !== null 
-        ? quizData.questions[currentQuestionIndex].id
+        ? quizData.questions[currentQuestionIndex]?.id || null
         : null,
-      text: questionData.question,
+      text: questionText,
       options: formattedOptions,
-      multipleAnswers: questionData.multipleAnswers,
-      image: questionData.image || null  // Image URL from uploaded file
+      multipleAnswers: multipleAnswers,
+      image: imageValue,
+      imageFile: imageFile
     };
 
     let updatedQuestions;
     
     if (isEditingQuestion && currentQuestionIndex !== null) {
-      // Update existing question
       updatedQuestions = [...quizData.questions];
       updatedQuestions[currentQuestionIndex] = updatedQuestion;
     } else {
-      // Add new question
       updatedQuestions = [...quizData.questions, updatedQuestion];
     }
 
-    // Update quiz data with new questions
     setQuizData({
       ...quizData,
       questions: updatedQuestions
     });
 
-    // Reset editing state
     setCurrentQuestionIndex(null);
     setIsEditingQuestion(false);
   };
@@ -212,18 +227,14 @@ const CreateQuizPage = () => {
   const handleRemoveQuestion = (index) => {
     if (window.confirm('Are you sure you want to remove this question?')) {
       const updatedQuestions = quizData.questions.filter((_, i) => i !== index);
-      
       setQuizData({
         ...quizData,
         questions: updatedQuestions
       });
-
-      // If we're editing the removed question, cancel edit mode
       if (currentQuestionIndex === index) {
         setCurrentQuestionIndex(null);
         setIsEditingQuestion(false);
       } else if (currentQuestionIndex !== null && currentQuestionIndex > index) {
-        // Adjust index if we removed a question before the one being edited
         setCurrentQuestionIndex(currentQuestionIndex - 1);
       }
     }
@@ -246,7 +257,6 @@ const CreateQuizPage = () => {
       questions: updatedQuestions
     });
 
-    // Update current question index if we're moving the question being edited
     if (currentQuestionIndex === index) {
       setCurrentQuestionIndex(newIndex);
     } else if (currentQuestionIndex === newIndex) {
@@ -273,74 +283,70 @@ const CreateQuizPage = () => {
     try {
       setLoading(true);
       
-      // Format questions exactly as API expects
-      const formattedQuestions = quizData.questions.map((q, index) => {
-        // Format options with proper IDs (A, B, C, D, etc.)
+      const quizObject = {
+        title: quizData.title,
+        course: selectedModule,
+        time: quizData.time,
+        questions: []
+      };
+      
+      if (mode === 'edit' && quizData.id) {
+        quizObject.id = quizData.id;
+      }
+      
+      if (mode === 'edit' && quizData.createdAt) {
+        quizObject.createdAt = quizData.createdAt;
+      } else if (mode === 'create') {
+        quizObject.createdAt = new Date().toISOString();
+      }
+      
+      const formData = new FormData();
+      
+      for (let i = 0; i < quizData.questions.length; i++) {
+        const q = quizData.questions[i];
+        
         const formattedOptions = q.options.map((opt, optIndex) => ({
           id: String.fromCharCode(65 + optIndex),
           text: opt.text,
           is_correct: opt.is_correct === true || opt.is_correct === "true"
         }));
-
-        // Base question object
+        
         const questionObj = {
           text: q.text,
+          multipleAnswers: q.multipleAnswers === "true" || q.multipleAnswers === true ? "true" : "false",
           options: formattedOptions
         };
         
-        // Add id ONLY if it exists (for existing questions)
         if (q.id && q.id !== null && q.id !== undefined) {
           questionObj.id = q.id;
         }
         
-        // Add multipleAnswers if it exists and is true
-        if (q.multipleAnswers && q.multipleAnswers !== 'false') {
-          questionObj.multipleAnswers = q.multipleAnswers;
-        }
-        
-        // Add image if it exists
-        if (q.image && q.image !== null && q.image !== '') {
+        if (q.image && q.image instanceof File) {
+          questionObj.image = null;
+          formData.append(`image_${i}`, q.image);
+        } else if (q.image && typeof q.image === 'string' && q.image.startsWith('http')) {
           questionObj.image = q.image;
         }
         
-        return questionObj;
-      });
-      
-      // Create the payload
-      const quizPayload = {
-        title: quizData.title,
-        course: selectedModule,
-        time: quizData.time,
-        questions: formattedQuestions
-      };
-      
-      // Add id only for updates
-      if (mode === 'edit' && quizData.id) {
-        quizPayload.id = quizData.id;
+        quizObject.questions.push(questionObj);
       }
       
-      // Add createdAt only if it exists (for updates)
-      if (mode === 'edit' && quizData.createdAt) {
-        quizPayload.createdAt = quizData.createdAt;
-      } else if (mode === 'create') {
-        quizPayload.createdAt = new Date().toISOString();
-      }
-      
-      console.log('Saving quiz payload:', JSON.stringify(quizPayload, null, 2));
-      
-      let response;
+      formData.append('quiz_data', JSON.stringify(quizObject));
       
       if (mode === 'edit' && quizData.id) {
-        // UPDATE - PUT request
-        response = await request.PUT(`/cms/quizzes/${quizData.id}/`, quizPayload);
+        await request.PUT(`/cms/quizzes/${quizData.id}/`, formData, {
+          isFormData: true
+        });
         alert('Quiz updated successfully!');
       } else {
-        // CREATE - POST request
-        response = await request.POST('/cms/quizzes/', quizPayload);
+        await request.POST('/cms/quizzes/', formData, {
+          isFormData: true
+        });
         alert('Quiz created successfully!');
       }
       
       navigate('/cms/courses');
+      
     } catch (err) {
       console.error('Failed to save quiz', err);
       alert('Failed to save quiz: ' + (err.message || 'Please try again'));
@@ -520,10 +526,19 @@ const CreateQuizPage = () => {
                       </button>
                     </div>
                   </div>
-                  {q.image && (
+                  {q.image && typeof q.image === 'string' && q.image.startsWith('http') && (
                     <div className="question-image-preview">
                       <img 
                         src={q.image} 
+                        alt="Question" 
+                        className="preview-thumbnail"
+                      />
+                    </div>
+                  )}
+                  {q.image && q.image instanceof File && (
+                    <div className="question-image-preview">
+                      <img 
+                        src={URL.createObjectURL(q.image)} 
                         alt="Question" 
                         className="preview-thumbnail"
                       />
@@ -550,6 +565,7 @@ const CreateQuizPage = () => {
             onCancel={handleCancelEdit}
             initialData={isEditingQuestion && currentQuestionIndex !== null 
               ? {
+                  id: quizData.questions[currentQuestionIndex]?.id,
                   question: quizData.questions[currentQuestionIndex]?.text || '',
                   options: quizData.questions[currentQuestionIndex]?.options || [],
                   multipleAnswers: quizData.questions[currentQuestionIndex]?.multipleAnswers || 'false',

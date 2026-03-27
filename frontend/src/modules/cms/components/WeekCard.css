@@ -1,6 +1,6 @@
-/* WeekCard.css - Professional with dark/light mode */
+/* WeekCard.css - Professional with dark/light mode - CMS Prefix */
 
-.week-container {
+.cms-week-container {
   background: #ffffff;
   border: 1px solid #eef2f6;
   border-radius: 16px;
@@ -9,13 +9,13 @@
   transition: all 0.3s ease;
 }
 
-body.dark-mode .week-container {
+body.dark-mode .cms-week-container {
   background: #1e242c;
   border-color: #2a313c;
 }
 
 /* Week Header */
-.week-header {
+.cms-week-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -24,21 +24,21 @@ body.dark-mode .week-container {
   transition: all 0.2s ease;
 }
 
-.week-header:hover {
+.cms-week-header:hover {
   background: #f8fafd;
 }
 
-body.dark-mode .week-header:hover {
+body.dark-mode .cms-week-header:hover {
   background: #2a313c;
 }
 
-.week-title {
+.cms-week-title {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-.week-number {
+.cms-week-number {
   font-size: 1.2rem;
   font-weight: 700;
   color: #1a2632;
@@ -48,29 +48,30 @@ body.dark-mode .week-header:hover {
   border: 1px solid #eef2f6;
 }
 
-body.dark-mode .week-number {
+body.dark-mode .cms-week-number {
   color: #e5e9f0;
   background: #2a313c;
   border-color: #323b48;
 }
 
-.item-count {
+.cms-week-item-count {
   font-size: 0.9rem;
   color: #7f8c9f;
 }
 
-body.dark-mode .item-count {
+body.dark-mode .cms-week-item-count {
   color: #a0a8b7;
 }
 
-.week-actions {
+.cms-week-actions {
   display: flex;
   align-items: center;
   gap: 0.8rem;
 }
 
 /* Buttons */
-.add-btn, .expand-btn {
+.cms-week-add-btn, 
+.cms-week-expand-btn {
   width: 32px;
   height: 32px;
   border: none;
@@ -83,66 +84,66 @@ body.dark-mode .item-count {
   transition: all 0.2s ease;
 }
 
-.add-btn {
+.cms-week-add-btn {
   background: #1a2632;
   color: white;
 }
 
-.add-btn:hover {
+.cms-week-add-btn:hover {
   background: #2c3e50;
   transform: scale(1.1);
 }
 
-.expand-btn {
+.cms-week-expand-btn {
   background: #f8fafd;
   border: 1px solid #eef2f6;
   color: #5a6778;
 }
 
-.expand-btn:hover {
+.cms-week-expand-btn:hover {
   background: #1a2632;
   color: white;
 }
 
-body.dark-mode .add-btn {
+body.dark-mode .cms-week-add-btn {
   background: #2c3e50;
 }
 
-body.dark-mode .add-btn:hover {
+body.dark-mode .cms-week-add-btn:hover {
   background: #3a4a5e;
 }
 
-body.dark-mode .expand-btn {
+body.dark-mode .cms-week-expand-btn {
   background: #2a313c;
   border-color: #323b48;
   color: #e5e9f0;
 }
 
-body.dark-mode .expand-btn:hover {
+body.dark-mode .cms-week-expand-btn:hover {
   background: #2c3e50;
   color: white;
 }
 
 /* Week Content */
-.week-content {
+.cms-week-content {
   padding: 1.5rem;
   border-top: 1px solid #eef2f6;
   background: #fafcff;
 }
 
-body.dark-mode .week-content {
+body.dark-mode .cms-week-content {
   border-top-color: #2a313c;
   background: #1a1e24;
 }
 
-.content-grid {
+.cms-week-content-grid {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
 /* Content Card */
-.content-card {
+.cms-week-content-card {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -155,22 +156,22 @@ body.dark-mode .week-content {
   transition: all 0.2s ease;
 }
 
-.content-card:hover {
+.cms-week-content-card:hover {
   transform: translateX(5px);
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
 }
 
-body.dark-mode .content-card {
+body.dark-mode .cms-week-content-card {
   background: #1e242c;
   border-color: #2a313c;
 }
 
-body.dark-mode .content-card:hover {
+body.dark-mode .cms-week-content-card:hover {
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
 /* Content Icon */
-.content-icon {
+.cms-week-content-icon {
   width: 48px;
   height: 48px;
   border-radius: 12px;
@@ -182,12 +183,12 @@ body.dark-mode .content-card:hover {
 }
 
 /* Content Details */
-.content-details {
+.cms-week-content-details {
   flex: 1;
   min-width: 0;
 }
 
-.content-title {
+.cms-week-content-title {
   display: flex;
   align-items: center;
   gap: 0.8rem;
@@ -196,11 +197,11 @@ body.dark-mode .content-card:hover {
   margin-bottom: 0.3rem;
 }
 
-body.dark-mode .content-title {
+body.dark-mode .cms-week-content-title {
   color: #e5e9f0;
 }
 
-.content-type-badge {
+.cms-week-content-type-badge {
   padding: 0.2rem 0.8rem;
   border-radius: 30px;
   font-size: 0.7rem;
@@ -208,7 +209,7 @@ body.dark-mode .content-title {
   text-transform: uppercase;
 }
 
-.content-meta {
+.cms-week-content-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 0.8rem;
@@ -216,18 +217,18 @@ body.dark-mode .content-title {
   color: #7f8c9f;
 }
 
-body.dark-mode .content-meta {
+body.dark-mode .cms-week-content-meta {
   color: #a0a8b7;
 }
 
-.meta-item {
+.cms-week-meta-item {
   display: flex;
   align-items: center;
   gap: 0.2rem;
 }
 
 /* Announcement Preview */
-.announcement-preview {
+.cms-week-announcement-preview {
   margin-top: 0.5rem;
   font-size: 0.9rem;
   color: #5a6778;
@@ -237,13 +238,13 @@ body.dark-mode .content-meta {
   border-left: 3px solid #27ae60;
 }
 
-body.dark-mode .announcement-preview {
+body.dark-mode .cms-week-announcement-preview {
   color: #e5e9f0;
   background: #2a313c;
 }
 
 /* Remove Button */
-.content-remove {
+.cms-week-content-remove {
   width: 32px;
   height: 32px;
   border: none;
@@ -259,32 +260,32 @@ body.dark-mode .announcement-preview {
   flex-shrink: 0;
 }
 
-.content-remove:hover {
+.cms-week-content-remove:hover {
   background: #fee9e7;
   color: #d32f2f;
 }
 
-body.dark-mode .content-remove:hover {
+body.dark-mode .cms-week-content-remove:hover {
   background: #3a2a2a;
   color: #ff8a80;
 }
 
 /* Empty State */
-.empty-state {
+.cms-week-empty-state {
   text-align: center;
   padding: 3rem 1rem;
   color: #7f8c9f;
 }
 
-.empty-state p {
+.cms-week-empty-state p {
   margin-bottom: 1rem;
 }
 
-body.dark-mode .empty-state {
+body.dark-mode .cms-week-empty-state {
   color: #a0a8b7;
 }
 
-.add-first-btn {
+.cms-week-add-first-btn {
   padding: 0.6rem 1.5rem;
   background: #1a2632;
   color: white;
@@ -295,68 +296,69 @@ body.dark-mode .empty-state {
   transition: all 0.2s ease;
 }
 
-.add-first-btn:hover {
+.cms-week-add-first-btn:hover {
   background: #2c3e50;
   transform: translateY(-2px);
 }
 
-body.dark-mode .add-first-btn {
+body.dark-mode .cms-week-add-first-btn {
   background: #2c3e50;
 }
 
-body.dark-mode .add-first-btn:hover {
+body.dark-mode .cms-week-add-first-btn:hover {
   background: #3a4a5e;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .week-header {
+  .cms-week-header {
     padding: 1rem;
   }
   
-  .week-number {
+  .cms-week-number {
     font-size: 1rem;
     padding: 0.3rem 0.8rem;
   }
   
-  .week-content {
+  .cms-week-content {
     padding: 1rem;
   }
   
-  .content-card {
+  .cms-week-content-card {
     padding: 0.8rem;
   }
   
-  .content-icon {
+  .cms-week-content-icon {
     width: 40px;
     height: 40px;
     font-size: 1.2rem;
   }
   
-  .content-title {
+  .cms-week-content-title {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.3rem;
   }
   
-  .content-meta {
+  .cms-week-content-meta {
     flex-direction: column;
     gap: 0.3rem;
   }
 }
 
 @media (max-width: 480px) {
-  .week-actions {
+  .cms-week-actions {
     gap: 0.4rem;
   }
   
-  .add-btn, .expand-btn {
+  .cms-week-add-btn, 
+  .cms-week-expand-btn {
     width: 28px;
     height: 28px;
     font-size: 1rem;
   }
   
-  .item-count {
+  .cms-week-item-count {
     display: none;
   }
 }

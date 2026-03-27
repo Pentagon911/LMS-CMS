@@ -8,7 +8,11 @@ import LMSDashboard from "../modules/lms/pages/Dashboard.jsx";
 import LMSEditProfile from "../modules/lms/pages/EditProfile.jsx";
 import ExamTimeTablePage from "../modules/lms/pages/TimeTablePage.jsx";
 import UserManagement from "../modules/lms/pages/UserManagement.jsx";
+<<<<<<< HEAD
 //import CourseManagement from "../modules/lms/pages/CourseManagement.jsx";
+=======
+// import CourseManagement from "../modules/lms/pages/CourseManagement.jsx";
+>>>>>>> 0d2f8da30ebae6602499cb0a2491abe1f4a2532a
 import EnrollmentsPage from "../modules/lms/pages/EnrollmentsPage.jsx";
 import MyCoursesPage from "../modules/lms/pages/MyCoursesPage.jsx";
 import ExamResultsPage from "../modules/lms/pages/ExamResultsPage.jsx";
@@ -52,6 +56,7 @@ import AnnouncementEditor from "../modules/cms/pages/AnnouncementEditor.jsx";
 import Quiz from "../modules/cms/pages/QuizPage.jsx";
 import TimeTablePage from "../modules/cms/pages/TimeTablePage.jsx";
 import EditProfile from "../modules/cms/pages/EditProfile.jsx";
+import ViewQuiz from "../modules/cms/pages/ViewQuiz.jsx";
 
 // --- ProtectedRoute Component ---
 function ProtectedRoute({ children }) {
@@ -75,12 +80,13 @@ function AppRoutes() {
       {/* CMS Routes - Each route individually wrapped with CMSLayout */}
       <Route path="/cms/dashboard" element={<CMSLayout> <CMSDashboard /> </CMSLayout>} />
       <Route path="/cms/quiz-editor" element={<CMSLayout> <QuizEditor /> </CMSLayout>} />
-      <Route path="/cms/quizes" element={<CMSLayout> <Quiz /> </CMSLayout>} />
+      <Route path="/cms/quizes/:quizId" element={<CMSLayout> <Quiz /> </CMSLayout>} />
       <Route path="/cms/courses" element={<CMSLayout> <Coursepage /> </CMSLayout>} />
       <Route path="/cms/course-content/:moduleId" element={<CMSLayout> <CourseContentPage /> </CMSLayout>} />
       <Route path="/cms/announcements" element={<CMSLayout> <AnnouncementEditor /> </CMSLayout>} />
       <Route path="/cms/time-tables" element={<CMSLayout> <TimeTablePage /> </CMSLayout>} />
       <Route path="/cms/edit-profile" element={<CMSLayout> <EditProfile /> </CMSLayout>} />
+      <Route path="/cms/quizes/:quizId/instructor" element={<CMSLayout> <ViewQuiz /> </CMSLayout>} />
 
       {/* LMS Routes */}
       <Route path="/lms/dashboard" element={<LMSLayout> <LMSDashboard /> </LMSLayout>} />
