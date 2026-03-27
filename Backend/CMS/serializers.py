@@ -34,7 +34,7 @@ class pdfSerializer(contentSerializer):
         return value
     
     def get_fileSize(self, obj):
-        return obj.fileSizemb2
+        return obj.fileSizemb
     
 class videoSerializer(contentSerializer):
     """Serializer for Video content - adds file field and validation"""
