@@ -93,7 +93,7 @@
 }
 
 .nav-link.active {
-  background: #1a2632;
+  background: #0a1219;
   color: white;
 }
 
@@ -713,7 +713,7 @@ body.dark-mode .mobile-divider {
   align-items: center;
   justify-content: space-between;
 
-  background: linear-gradient(to right, #0b5cdf, #ac4ffe);
+  background-color: #1d2d44;
 }
 
 .lms-logo-text{

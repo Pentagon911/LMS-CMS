@@ -8,15 +8,12 @@ import LMSDashboard from "../modules/lms/pages/Dashboard.jsx";
 import LMSEditProfile from "../modules/lms/pages/EditProfile.jsx";
 import ExamTimeTablePage from "../modules/lms/pages/TimeTablePage.jsx";
 import UserManagement from "../modules/lms/pages/UserManagement.jsx";
-<<<<<<< HEAD
-//import CourseManagement from "../modules/lms/pages/CourseManagement.jsx";
-=======
 // import CourseManagement from "../modules/lms/pages/CourseManagement.jsx";
->>>>>>> 0d2f8da30ebae6602499cb0a2491abe1f4a2532a
 import EnrollmentsPage from "../modules/lms/pages/EnrollmentsPage.jsx";
 import MyCoursesPage from "../modules/lms/pages/MyCoursesPage.jsx";
 import ExamResultsPage from "../modules/lms/pages/ExamResultsPage.jsx";
 import UpdateResultsPage from "../modules/lms/pages/UpdateResultsPage.jsx";
+import EnrollmentHistoryPage from "../modules/lms/pages/EnrollmentHistoryPage.jsx";
 // import BursaryAppealsPage from "../modules/lms/pages/BursaryAppealsPage.jsx";
 // import HostelAppealsPage from "../modules/lms/pages/HostelAppealsPage.jsx";
 // import ExamAppealsPage from "../modules/lms/pages/ExamAppealsPage.jsx";
@@ -93,6 +90,7 @@ function AppRoutes() {
       <Route path="/lms/edit-profile" element={<LMSLayout> <LMSEditProfile/> </LMSLayout>} />
       <Route path="/lms/academics/time-tables" element={<LMSLayout> <ExamTimeTablePage /> </LMSLayout>} />
       <Route path="/lms/server-management/users" element={<LMSLayout> <UserManagement /> </LMSLayout>} />
+      <Route path="/lms/academics/enrollment-history" element={<LMSLayout> <EnrollmentHistoryPage /> </LMSLayout>} />
       {/* <Route path="/lms/server-management/courses" element={<LMSLayout> <CourseManagement /> </LMSLayout>} /> */}
       <Route path="/lms/academics/enrollment" element={<LMSLayout><EnrollmentsPage /></LMSLayout>} />
       <Route path="/lms/academics/my-courses" element={<LMSLayout><MyCoursesPage /></LMSLayout>} />
