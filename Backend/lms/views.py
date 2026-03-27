@@ -220,6 +220,11 @@ class ExamTimetableViewSet(BaseModelViewSet):
             return ExamTimetable.objects.filter(course__instructor=user)
         return ExamTimetable.objects.filter(course__enrollments__student=user).distinct()
     
+    def perform_create(self, serializer):
+        serializer.save()
+
+    def perform_update(self, serializer):
+        serializer.save()
 
 class ExamResultViewSet(BaseModelViewSet):
     queryset = ExamResult.objects.all()

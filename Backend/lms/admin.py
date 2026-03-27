@@ -15,8 +15,9 @@ class EnrollmentAdmin(admin.ModelAdmin):
 
 @admin.register(ExamTimetable)
 class ExamTimetableAdmin(admin.ModelAdmin):
-    list_display = ('course', 'title', 'date', 'start_time', 'location')
-    list_filter = ('date', 'course')
+    list_display = ['id', 'course', 'title', 'semester', 'created_at'] 
+    list_filter = ['semester', 'created_at']
+    search_fields = ['title', 'course__code', 'course__name']
 
 @admin.register(ExamResult)
 class ExamResultAdmin(admin.ModelAdmin):

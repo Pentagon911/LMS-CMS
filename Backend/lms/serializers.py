@@ -49,13 +49,23 @@ class EnrollmentSerializer(serializers.ModelSerializer):
 
 class ExamTimetableSerializer(serializers.ModelSerializer):
     course_name = serializers.CharField(source='course.name', read_only=True)
-
+    pdf_url = serializers.SerializerMethodField()
     class Meta:
         model = ExamTimetable
         fields = [
-            'id', 'course', 'course_name',
-            'title', 'date', 'start_time', 'end_time', 'location'
+            'id', 'course', 'course_name', 'semester',
+            'title', 'pdf', 'pdf_url', 'created_at'
         ]
+
+    def get_pdf_url(self, obj):
+        return obj.pdf.url if obj.pdf else None
+
+    def validate_pdf(self, value):
+        if value and not value.name.lower().endswith('.pdf'):
+            raise serializers.ValidationError("Only PDF files are allowed.")
+        if value and value.size > 5 * 1024 * 1024:
+            raise serializers.ValidationError("File size must be under  MB.")
+        return value    
 
 class ExamResultSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source='student.get_full_name', read_only=True)

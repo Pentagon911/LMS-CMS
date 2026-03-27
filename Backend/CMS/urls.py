@@ -1,5 +1,4 @@
 # CMS/urls.py
-
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
@@ -28,6 +27,11 @@ urlpatterns = [
     
     # Week announcements (using AnnouncementViewSet)
     path('courses/<int:course_id>/weeks/<int:week_id>/announcements/', views.AnnouncementViewSet.as_view({'get': 'by_week'}), name='week-announcements'),
+    path(
+        'courses/<int:course_id>/dashboard/add_content/', 
+        views.CourseContentViewSet.as_view({'post': 'create'}), 
+        name='special-add-week-content'
+    ),
 
     path('courses/<int:course_id>/weeks/<int:week_number>/announcements/create/', 
          views.AnnouncementViewSet.as_view({'post': 'create_for_week'}), 
