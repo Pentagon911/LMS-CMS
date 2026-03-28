@@ -15,8 +15,8 @@ import json
 from django.db import transaction
 from users.profiles import StudentProfile
 from rest_framework.views import APIView
-
 # Create your views here.
+
 class CourseViewSet(viewsets.ModelViewSet):
     """ViewSet for courses
     GET  /cms/courses/               → List all courses I'm assigned to
@@ -40,7 +40,7 @@ class CourseViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         if user.role == 'instructor':
-            return Course.objects.filter(instructor = user)
+            return Course.objects.filter(instructors = user)
         elif user.role == 'student':
             return Course.objects.filter(
                 enrollments__student=user,  
@@ -69,38 +69,6 @@ class CourseViewSet(viewsets.ModelViewSet):
 
         return Response(courses)
     
-    # def get_announcements(self,course,user):
-    #     """Get batch and course announcements for this course"""
-    #     announcements = []
-    #     batch_announcements = []
-    #     if course.batch:
-    #         batch_announcements = Announcement.objects.filter(batch=course.batch,announcement_type='batch'
-    #         ).order_by('-created_at')[:3]
-
-    #     for ann in batch_announcements:
-    #         announcements.append({
-    #             'id' : ann.id,
-    #             'title': ann.title,
-    #             'content': ann.content[:100] if len(ann.content) > 100 else ann.content,
-    #             'type':'batch',
-    #             'created_at':ann.created_at,
-    #             'created_by':ann.created_by.username if ann.created_by else None
-    #         })
-
-    #     course_announcements = Announcement.objects.filter(course = course,announcement_type = 'course').order_by('-created_at')[:3]
-
-    #     for ann in course_announcements:
-    #         announcements.append({
-    #             'id' : ann.id,
-    #             'title': ann.title,
-    #             'content': ann.content[:100] if len(ann.content) > 100 else ann.content,
-    #             'type':'course',
-    #             'created_at':ann.created_at,
-    #             'created_by':ann.created_by.username if ann.created_by else None
-    #         })
-
-    #         announcements.sort(key=lambda x: x['created_at'], reverse=True)
-    #     return announcements[:3]
     
     @action(detail = True, methods =['get'],url_path='dashboard')
     def dashboard(self,request,pk = None):
@@ -117,7 +85,7 @@ class CourseViewSet(viewsets.ModelViewSet):
             ).exists():
                 return Response({'error': 'Not enrolled in this course'}, status=403)
         elif request.user.role == 'instructor':
-            if request.user != course.instructor:
+            if not course.instructors.filter(id=request.user.id).exists():  
                 return Response({'error': 'Not your Course'},status=403)
 
         serializer = self.get_serializer(course,context = {'request':request})
@@ -127,7 +95,7 @@ class CourseViewSet(viewsets.ModelViewSet):
     def add_week(self, request, pk=None):
         course = self.get_object()
         
-        if request.user.role != 'instructor' or request.user != course.instructor:
+        if request.user.role != 'instructor' or not course.instructors.filter(id=request.user.id).exists():
             return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
 
         week = Week.objects.create(
@@ -396,7 +364,7 @@ class QuizViewSet(viewsets.ModelViewSet):
             {'error': 'Only instructors can access quizzes'}, 
             status=status.HTTP_403_FORBIDDEN
         )
-        all_quizzes = Quiz.objects.filter(courseCode__instructor=request.user).order_by('-created_at')
+        all_quizzes = Quiz.objects.filter(courseCode__instructors=request.user).order_by('-created_at')
         quizzes = []
         for q in all_quizzes:
             quizzes.append({
@@ -412,13 +380,12 @@ class QuizViewSet(viewsets.ModelViewSet):
     def add_to_week(self, request, pk=None):
         """Add existing quiz to a week (update only provided fields)"""
         quiz = self.get_object()
-        
-        # Get week ID
+        if request.user.role != 'instructor' or not quiz.courseCode.instructors.filter(id=request.user.id).exists():
+            return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
         week_order = request.data.get('week_id')
         if not week_order:
             return Response({'error': 'week_id required'}, status=400)
         
-        # Validate week
         try:
             week = Week.objects.get(course = quiz.courseCode,order=week_order)
         except Week.DoesNotExist:
@@ -426,7 +393,6 @@ class QuizViewSet(viewsets.ModelViewSet):
         
         quiz.week = week
         
-        # Update ONLY if field is provided (not None)
         if 'title' in request.data:
             quiz.title = request.data['title']
         
@@ -467,7 +433,7 @@ class QuestionViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         """Simple permission control"""
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            permission_classes = [IsAuthenticated, IsInstructorUser]
+            permission_classes = [IsInstructorUser]
         else:
             permission_classes = [IsAuthenticated]
         
@@ -503,11 +469,9 @@ class OptionViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            # permission_classes = [IsAuthenticated, IsInstructorUser]
-            permission_classes = [permissions.AllowAny]
+            permission_classes = [ IsInstructorUser]
         else:
-            # permission_classes = [IsAuthenticated]
-            permission_classes = [permissions.AllowAny]
+            permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
     
     def get_queryset(self):
@@ -516,6 +480,9 @@ class OptionViewSet(viewsets.ModelViewSet):
 
         if question_id:
             queryset = queryset.filter(question_id = question_id)
+
+        if self.request.user.role == 'instructor':
+            queryset = queryset.filter(question__quiz__courseCode__instructors=self.request.user)
         return queryset.order_by('order')
     
 class QuizAttemptViewSet(viewsets.ModelViewSet):
@@ -550,7 +517,9 @@ class WeekViewSet(viewsets.ModelViewSet):
         """Set permissions based on action"""
         if self.action in ['upload_video', 'upload_pdf', 'add_link', 'delete_content']:
             # Only instructors can upload content
-            permission_classes = [IsAuthenticated, IsInstructorUser]
+            permission_classes = [IsInstructorUser]
+        elif self.action in ['create', 'update', 'partial_update', 'destroy']:
+            permission_classes = [IsInstructorUser]
         else:
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
@@ -596,7 +565,6 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
     
     def perform_create(self, serializer):
-    # 1. Try to get course_id from URL (e.g., /cms/courses/10/announcements/)
         course_id = self.kwargs.get('pk')
         
         if course_id:
@@ -604,23 +572,20 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
                 # We import here to avoid circular imports
                 course = Course.objects.select_related('department__faculty', 'batch').get(id=course_id)
                 
-                # 2. Correct Chain: Course -> Department -> Faculty
-                # Your model says: Course has a 'department', Department has a 'faculty'
                 target_faculty = None
                 if course.department:
                     target_faculty = course.department.faculty
                 
-                # 3. Save with all auto-detected data
                 serializer.save(
                     created_by=self.request.user,
                     course=course,
                     faculty=target_faculty,
-                    batch=course.batch  # Auto-assign batch since Course has a batch field
+                    batch=course.batch  
                 )
             except Course.DoesNotExist:
                 serializer.save(created_by=self.request.user)
         else:
-            # Standard logic for general announcements (Endpoint A)
+            
             serializer.save(created_by=self.request.user)
 
     def get_queryset(self):
@@ -631,25 +596,19 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
             student_faculty = getattr(user, 'faculty', None) 
             student_batch = getattr(user, 'batch', None)
             
-            # Get enrolled courses/modules
             enrolled_courses = Course.objects.filter(
                 enrollments__student=user, 
                 enrollments__status='enrolled'
             )
             
-            # Intersection Logic: 
-            # If an announcement specifies a target, the student MUST match that target.
-            # If a target is NULL, it doesn't restrict the announcement.
             faculty_q = Q(faculty__isnull=True) | Q(faculty=student_faculty)
             batch_q = Q(batch__isnull=True) | Q(batch=student_batch)
             course_q = Q(module__isnull=True) | Q(module__in=enrolled_courses)
             
-            # Combine queries with AND to create the intersection behavior
             return Announcement.objects.filter(faculty_q & batch_q & course_q).distinct()
         
         elif user.role == 'instructor':
-            # Instructors see announcements they created OR announcements for their assigned modules
-            taught_courses = user.courses_taught.all()
+            taught_courses = Course.objects.filter(instructors=user) 
             
             return Announcement.objects.filter(
                 Q(created_by=user) | Q(course__in=taught_courses)
@@ -694,33 +653,31 @@ class CourseContentViewSet(viewsets.ModelViewSet):
     serializer_class = ContentUploadSerializer
     
     def get_queryset(self):
-        # Satisfies ModelViewSet internals, though unused for create()
         return Week.objects.none() 
 
     def create(self, request, *args, **kwargs):
-        # 1. Course Handling: Extract course_id from URL kwargs
         course_id = self.kwargs.get('course_id')
         course = get_object_or_404(Course, id=course_id)
 
-        # Validate incoming frontend data
+        if request.user.role != 'instructor' or not course.instructors.filter(id=request.user.id).exists():
+            return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
+
         init_serializer = self.get_serializer(data=request.data)
         init_serializer.is_valid(raise_exception=True)
         valid_data = init_serializer.validated_data
         
-        # Get the related Week
         week_order = valid_data['week_order']
         week = get_object_or_404(Week, course=course, order=week_order)
 
-        # Prepare base fields to pass to your specific model serializers
         model_data = {
             'title': valid_data['title'],
-            'description': valid_data['content'], # Mapping frontend 'content' to model 'description'
+            'description': valid_data['content'], 
         }
 
         attachment = valid_data.get('attachment')
         link = valid_data.get('link')
 
-        # 2. Attachment Handling & Dispatching
+        #Attachment Handling & Dispatching
         if attachment:
             file_name = attachment.name.lower()
             model_data['file'] = attachment
@@ -739,14 +696,10 @@ class CourseContentViewSet(viewsets.ModelViewSet):
             model_data['link_url'] = link
             target_serializer_class = LinkSerializer
 
-        # 3 & 4. Validation & Saving
-        # Initialize your existing specific serializer (which inherently handles format/size validation)
         target_serializer = target_serializer_class(data=model_data)
         target_serializer.is_valid(raise_exception=True)
         
         with transaction.atomic():
-            # Save the target serializer, passing the fetched Week instance
-            # Since Content is abstract, creating the child creates the full database record.
             target_serializer.save(week=week)
 
         return Response(target_serializer.data, status=status.HTTP_201_CREATED)
@@ -756,35 +709,46 @@ class FacultyBatchYearsView(APIView):
     Get all faculties with their available batch years
     This endpoint is used to populate the announcement creation form
     """
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAdminUser]
     
     def get(self, request):
         faculties = Faculty.objects.all()
         result = []
         
         for faculty in faculties:
-            # Get all batches from departments in this faculty
-            batches = Batch.objects.filter(
-                department__faculty=faculty
-            ).values('year').distinct().order_by('-year')
+            # Get all departments with their batches
+            departments_data = []
+            departments = faculty.departments.all()
             
-            batch_years = [batch['year'] for batch in batches]
+            for department in departments:
+                batches = Batch.objects.filter(
+                    department=department
+                ).values('year').distinct().order_by('-year')
+                
+                batch_years = [str(batch['year']) for batch in batches]  # Convert to string
+                
+                departments_data.append({
+                    'department_id': department.id,
+                    'department_name': department.name,
+                    'department_code': department.code,
+                    'batch_years': batch_years
+                })
             
             result.append({
                 'faculty_id': faculty.id,
                 'faculty_name': faculty.name,
                 'faculty_code': faculty.code,
-                'batch_years': batch_years
+                'departments': departments_data
             })
         
         return Response(result)
-
+    
 class GlobalAnnouncementListView(generics.ListCreateAPIView):
     """
     List and create global announcements
     """
     serializer_class = GlobalAnnouncementSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAdminUser]
     
     def get_queryset(self):
         queryset = GlobalAnnouncement.objects.all()
@@ -810,7 +774,7 @@ class GlobalAnnouncementDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = GlobalAnnouncement.objects.all()
     serializer_class = GlobalAnnouncementSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
 class StudentAnnouncementListView(generics.ListAPIView):
     """
@@ -818,7 +782,7 @@ class StudentAnnouncementListView(generics.ListAPIView):
     This endpoint is used by students to view their announcements
     """
     serializer_class = StudentAnnouncementSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
         user = self.request.user
@@ -850,8 +814,50 @@ class BulkAnnouncementCreateView(APIView):
     """
     Create announcements for multiple targets at once
     This endpoint allows sending the same announcement to multiple faculties/batches/departments
+    Supports batch years (string) and department IDs
     """
     permission_classes = [permissions.IsAuthenticated]
+    
+    def _get_batches_from_faculties(self, faculty_ids):
+        """Get all batches from faculties"""
+        if not faculty_ids:
+            return Batch.objects.none()
+        
+        return Batch.objects.filter(department__faculty_id__in=faculty_ids)
+    
+    def _get_batches_from_departments(self, department_ids):
+        """Get all batches from departments"""
+        if not department_ids:
+            return Batch.objects.none()
+        
+        return Batch.objects.filter(department_id__in=department_ids)
+    
+    def _get_batches_from_years(self, batch_years):
+        """Get all batches matching given years"""
+        if not batch_years:
+            return Batch.objects.none()
+        
+        try:
+            years = [int(year) for year in batch_years]
+        except ValueError:
+            return Batch.objects.none()
+        
+        return Batch.objects.filter(year__in=years)
+    
+    def _get_batches_from_years_and_departments(self, batch_years, department_ids):
+        """Get batches matching both year and department"""
+        if not batch_years or not department_ids:
+            return Batch.objects.none()
+        
+        try:
+            years = [int(year) for year in batch_years]
+        except ValueError:
+            return Batch.objects.none()
+        
+        return Batch.objects.filter(
+            year__in=years,
+            department_id__in=department_ids
+        )
     
     def post(self, request):
         data = request.data
@@ -888,11 +894,42 @@ class BulkAnnouncementCreateView(APIView):
                 
                 # Add relationships based on target type
                 if target['target_type'] == 'faculty':
-                    announcement.faculties.set(target.get('faculty_ids', []))
+                    faculty_ids = target.get('faculty_ids', [])
+                    announcement.faculties.set(faculty_ids)
+                    
                 elif target['target_type'] == 'department':
-                    announcement.departments.set(target.get('department_ids', []))
+                    department_ids = target.get('department_ids', [])
+                    announcement.departments.set(department_ids)
+                    
                 elif target['target_type'] == 'batch':
-                    announcement.batches.set(target.get('batch_ids', []))
+                    batch_years = target.get('batch_years', [])
+                    department_ids = target.get('department_ids', [])
+                    faculty_ids = target.get('faculty_ids', [])
+                    
+                    if batch_years and department_ids:
+                        # Years + Departments
+                        batches = self._get_batches_from_years_and_departments(batch_years, department_ids)
+                        announcement.batches.set(batches)
+                    elif batch_years and faculty_ids:
+                        # Years + Faculties
+                        departments_from_faculties = Department.objects.filter(
+                            faculty_id__in=faculty_ids
+                        ).values_list('id', flat=True)
+                        batches = self._get_batches_from_years_and_departments(batch_years, departments_from_faculties)
+                        announcement.batches.set(batches)
+                    elif batch_years:
+                        # Only Years
+                        batches = self._get_batches_from_years(batch_years)
+                        announcement.batches.set(batches)
+                    elif department_ids:
+                        # Only Departments
+                        batches = self._get_batches_from_departments(department_ids)
+                        announcement.batches.set(batches)
+                    elif faculty_ids:
+                        # Only Faculties
+                        batches = self._get_batches_from_faculties(faculty_ids)
+                        announcement.batches.set(batches)
+                        
                 elif target['target_type'] == 'program':
                     announcement.programs.set(target.get('program_ids', []))
                 

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import*
 from lms.models import Course
+from users.permissions import*
 
 # ========== Serilizers for Content Operations ==========
 
@@ -137,7 +138,6 @@ class AnnouncementSerializer(serializers.ModelSerializer):
             try:
                 course_id = view.kwargs.get('pk')
                 course = Course.objects.get(id=course_id)
-                # Add it back to the data so the rest of the logic works
                 data['course'] = course 
             except Course.DoesNotExist:
                 raise serializers.ValidationError({"course": "Invalid course ID in URL."})
@@ -155,8 +155,9 @@ class AnnouncementSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({"course": "You are not assigned to this course."})
 
         # 3. Week/Course Alignment
-        if week and course and week.course != course:
-            raise serializers.ValidationError({"week": "This week does not belong to the selected course."})
+        if course and not course.instructors.filter(id=request.user.id).exists():  # ← Change here
+            raise serializers.ValidationError({"course": "You are not assigned to this course."})
+
 
         return data
     
@@ -563,8 +564,7 @@ class courseListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = ['id','code', 'title','color']
-
-    
+   
 class courseDashboardSerializer(serializers.ModelSerializer):
     """Serializer for complete course dashboard"""
     courseTitle = serializers.CharField(source = 'name')
@@ -646,7 +646,7 @@ class courseDashboardSerializer(serializers.ModelSerializer):
         quizzes = week.quizzes.all()
 
         if request.user.role== 'student'or request.user.role == 'instructor':
-            quizzes = quizzes.filter(status__in='active')
+            quizzes = quizzes.filter(status__in=['scheduled', 'active'])
         elif request.user.role == 'instructor':
             quizzes = quizzes.filter(status__in=['scheduled', 'active'])
         
@@ -804,7 +804,7 @@ class AnnouncementTargetSerializer(serializers.Serializer):
     target_type = serializers.ChoiceField(choices=GlobalAnnouncement.TARGET_TYPE_CHOICES)
     faculty_ids = serializers.ListField(child=serializers.IntegerField(), required=False)
     department_ids = serializers.ListField(child=serializers.IntegerField(), required=False)
-    batch_ids = serializers.ListField(child=serializers.IntegerField(), required=False)
+    batch_years = serializers.ListField(child=serializers.CharField(), required=False)  # Changed from batch_ids
     program_ids = serializers.ListField(child=serializers.IntegerField(), required=False)
     
     def validate(self, data):
@@ -814,8 +814,8 @@ class AnnouncementTargetSerializer(serializers.Serializer):
             raise serializers.ValidationError("faculty_ids are required for faculty targeting")
         elif target_type == 'department' and not data.get('department_ids'):
             raise serializers.ValidationError("department_ids are required for department targeting")
-        elif target_type == 'batch' and not data.get('batch_ids'):
-            raise serializers.ValidationError("batch_ids are required for batch targeting")
+        elif target_type == 'batch' and not data.get('batch_years') and not data.get('department_ids') and not data.get('faculty_ids'):
+            raise serializers.ValidationError("At least one of batch_years, department_ids, or faculty_ids is required for batch targeting")
         elif target_type == 'program' and not data.get('program_ids'):
             raise serializers.ValidationError("program_ids are required for program targeting")
         
@@ -849,7 +849,7 @@ class GlobalAnnouncementSerializer(serializers.ModelSerializer):
             }
         elif obj.target_type == 'batch':
             return {
-                'batches': [{'id': b.id, 'name': b.name, 'year': b.year} 
+                'batches': [{'id': b.id, 'name': b.name, 'year': b.year, 'department': b.department.name} 
                            for b in obj.batches.all()]
             }
         elif obj.target_type == 'program':
@@ -858,6 +858,7 @@ class GlobalAnnouncementSerializer(serializers.ModelSerializer):
                             for p in obj.programs.all()]
             }
         return None
+    
     
     def create(self, validated_data):
         # Extract many-to-many fields
