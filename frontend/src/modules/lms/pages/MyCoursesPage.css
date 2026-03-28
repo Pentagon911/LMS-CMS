@@ -1338,6 +1338,8 @@ body.dark-mode .instructor-checkbox-label:hover {
   height: 18px;
   cursor: pointer;
   accent-color: #1a2632;
+  margin-right: 10px;
+  transform: translateY(5px);
 }
 
 .instructor-name {
