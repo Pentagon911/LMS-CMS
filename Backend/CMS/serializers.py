@@ -609,7 +609,7 @@ class courseDashboardSerializer(serializers.ModelSerializer):
                     'title': announcement.title,
                     'content':announcement.content,
                     'format': file_format,
-                    'file_url': announcement.pdf.url if announcement.pdf else (announcement.image.url if announcement.image else None),
+                    'fileUrl': announcement.pdf.url if announcement.pdf else (announcement.image.url if announcement.image else None),
                     'date': announcement.created_at.strftime('%Y-%m-%d'),
                     'created_by':announcement.created_by.username
                 })
