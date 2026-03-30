@@ -69,6 +69,48 @@ class CourseViewSet(viewsets.ModelViewSet):
 
         return Response(courses)
     
+    @action(detail=True, methods=['get'], url_path='course_quizzes')
+    def course_quizzes(self, request, pk=None):
+        """Get quizzes for courses"""
+
+        course = self.get_object()
+
+        if request.user.role == 'student':
+        # Check if student is enrolled
+            if not course.enrollments.filter(student=request.user, status='enrolled').exists():
+                return Response(
+                    {'error': 'Not enrolled in this course'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+                
+        elif request.user.role == 'instructor':
+        # ✅ THE FIX: Check if the user exists in the instructors list
+            if not course.instructors.filter(id=request.user.id).exists():
+                return Response(
+                    {'error': 'Not your course'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                    )
+        else:
+            return Response(
+                {'error': 'Unauthorized'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        
+        all_quizzes = Quiz.objects.filter(
+        courseCode=course
+    ).select_related('week', 'courseCode').prefetch_related('questions').order_by('-created_at')
+        
+        quizzes = []
+        for q in all_quizzes:
+            quizzes.append({
+                'quizId': q.id,
+                'title': q.title,
+                'course': q.courseCode.code,
+                'time': q.timeLimitMinutes,
+                'createdAt': q.created_at,
+            })
+        return Response(quizzes)
     
     @action(detail = True, methods =['get'],url_path='dashboard')
     def dashboard(self,request,pk = None):
@@ -89,8 +131,8 @@ class CourseViewSet(viewsets.ModelViewSet):
                 return Response({'error': 'Not your Course'},status=403)
 
         serializer = self.get_serializer(course,context = {'request':request})
-        return Response(serializer.data)  
-
+        return Response(serializer.data)
+    
     @action(detail=True, methods=['post'], url_path='dashboard/add_week')
     def add_week(self, request, pk=None):
         course = self.get_object()
@@ -355,7 +397,8 @@ class QuizViewSet(viewsets.ModelViewSet):
             'total_points': total_points,
             'percentage': f"{round(final_score, 1)}%"
         }, status=status.HTTP_200_OK)
-        
+    
+
     @action(detail=False, methods=['get'])
     def draft_quizzes(self, request):
         """Get all draft quizzes (not assigned to any week)"""
