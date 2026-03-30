@@ -394,8 +394,7 @@ class QuizViewSet(viewsets.ModelViewSet):
             'score': round(final_score, 2),
             'points_earned': round(earned_points, 2),
             'total_points': total_points,
-            'percentage': f"{round(final_score, 1)}%",
-            'results':results
+            'percentage': f"{round(final_score, 1)}%"
         }, status=status.HTTP_200_OK)
     
 
