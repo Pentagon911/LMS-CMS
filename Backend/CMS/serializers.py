@@ -72,94 +72,25 @@ class LinkSerializer(contentSerializer):
         return value
     
 class AnnouncementSerializer(serializers.ModelSerializer):
-    created_by_name = serializers.CharField(source='created_by.username', read_only=True)
-    # Changed from source='week.order' to PrimaryKeyRelatedField so we can write to it
-    week = serializers.PrimaryKeyRelatedField(
-        queryset=Week.objects.all(), 
-        required=False, 
+
+    week = serializers.SlugRelatedField(
+        slug_field='order', 
+        queryset=Week.objects.all(),
+        required=False,
         allow_null=True
     )
-    # We add a separate read-only field to show the "Week 1" number to the frontend
-    week_number = serializers.IntegerField(source='week.order', read_only=True)
-    attachments = serializers.SerializerMethodField()
+    created_by_name = serializers.CharField(source='created_by.username', read_only=True)
 
     class Meta:
         model = Announcement
-        fields = [
-            'id', 'title', 'content', 'faculty', 'batch', 'course', 
-            'week', 'week_number', 'image', 'pdf', 'attachments', 
-            'created_at', 'created_by_name'
-        ]
-        read_only_fields = ['id', 'created_at', 'created_by_name', 'week_number']
-        extra_kwargs = {
-            'image': {'write_only': True},
-            'pdf': {'write_only': True}
-        }
+        fields = ['id', 'title', 'content', 'week', 'image', 'pdf', 'created_by_name']
+        read_only_fields = ['id', 'created_by_name']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        request = self.context.get('request')
         view = self.context.get('view')
-
-        # Detect if we are in the "Course Specific" route (Endpoint B)
-        # Check if 'pk' exists in the URL kwargs
-        is_course_route = view and hasattr(view, 'kwargs') and 'pk' in view.kwargs
-
-        if request and hasattr(request.user, 'role') and request.user.role == 'instructor':
-            # 1. Filter Courses
-            if 'course' in self.fields:
-                self.fields['course'].queryset = request.user.courses_taught.all()
-
-            # 2. Filter Faculty
-            if 'faculty' in self.fields:
-                if hasattr(request.user, 'instructor_profile'):
-                    instructor_faculty = request.user.instructor_profile.faculty
-                    self.fields['faculty'].queryset = Faculty.objects.filter(id=instructor_faculty.id)
-            
-            # 3. Handle Week Field Visibility
-            if 'week' in self.fields:
-                if is_course_route:
-                    # Endpoint B: Only show weeks for THIS course
-                    course_id = view.kwargs.get('pk')
-                    self.fields['week'].queryset = Week.objects.filter(course_id=course_id)
-                else:
-                    # Endpoint A: Hide the week field entirely for general posts
-                    self.fields.pop('week')
-
-    def validate(self, data):
-        faculty = data.get('faculty')
-        batch = data.get('batch')
-        course = data.get('course')
-        week = data.get('week')
-        request = self.context.get('request')
-        view = self.context.get('view')
-
-        if not course and view and 'pk' in view.kwargs:
-            try:
-                course_id = view.kwargs.get('pk')
-                course = Course.objects.get(id=course_id)
-                data['course'] = course 
-            except Course.DoesNotExist:
-                raise serializers.ValidationError({"course": "Invalid course ID in URL."})
-        # 1. Mandatory Target Validation
-        if not any([faculty, batch, course]):
-            raise serializers.ValidationError("At least one target (Faculty, Batch, or Course) must be selected.")
-
-        # 2. Instructor Restrictions
-        if request and request.user.role == 'instructor':
-            if faculty and hasattr(request.user, 'instructor_profile'):
-                if faculty != request.user.instructor_profile.faculty:
-                    raise serializers.ValidationError({"faculty": "You can only post to your own faculty."})
-            
-            if course and not request.user.courses_taught.filter(id=course.id).exists():
-                raise serializers.ValidationError({"course": "You are not assigned to this course."})
-
-        # 3. Week/Course Alignment
-        if course and not course.instructors.filter(id=request.user.id).exists():  # ← Change here
-            raise serializers.ValidationError({"course": "You are not assigned to this course."})
-
-
-        return data
+        if view and 'pk' in view.kwargs:
+            self.fields['week'].queryset = Week.objects.filter(course_id=view.kwargs['pk'])
     
     def get_attachments(self, obj):
         """

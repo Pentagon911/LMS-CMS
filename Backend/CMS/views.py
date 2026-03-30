@@ -14,7 +14,7 @@ from .serializers import *
 import json
 from django.db import transaction
 from users.profiles import StudentProfile
-from rest_framework.views import APIView
+from rest_framework.views import APIView, PermissionDenied
 # Create your views here.
 
 class CourseViewSet(viewsets.ModelViewSet):
@@ -599,65 +599,23 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
     """
     queryset = Announcement.objects.all()
     serializer_class = AnnouncementSerializer
-    
-    def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            permission_classes = [IsAuthenticated, IsInstructorUser]
-        else:
-            permission_classes = [IsAuthenticated]
-        return [permission() for permission in permission_classes]
-    
-    def perform_create(self, serializer):
-        course_id = self.kwargs.get('pk')
-        
-        if course_id:
-            try:
-                # We import here to avoid circular imports
-                course = Course.objects.select_related('department__faculty', 'batch').get(id=course_id)
-                
-                target_faculty = None
-                if course.department:
-                    target_faculty = course.department.faculty
-                
-                serializer.save(
-                    created_by=self.request.user,
-                    course=course,
-                    faculty=target_faculty,
-                    batch=course.batch  
-                )
-            except Course.DoesNotExist:
-                serializer.save(created_by=self.request.user)
-        else:
-            
-            serializer.save(created_by=self.request.user)
+
+    def get_course(self):
+        # Combined: Gets course AND checks if request.user is an instructor for it
+        try:
+            return self.request.user.courses_taught.get(id=self.kwargs['pk'])
+        except Course.DoesNotExist:
+            raise PermissionDenied("Not authorized for this course.")
 
     def get_queryset(self):
-        user = self.request.user
-        
-        if user.role == 'student':
-            # Get student's attributes (Adjust field names to match your actual Student/User model)
-            student_faculty = getattr(user, 'faculty', None) 
-            student_batch = getattr(user, 'batch', None)
-            
-            enrolled_courses = Course.objects.filter(
-                enrollments__student=user, 
-                enrollments__status='enrolled'
-            )
-            
-            faculty_q = Q(faculty__isnull=True) | Q(faculty=student_faculty)
-            batch_q = Q(batch__isnull=True) | Q(batch=student_batch)
-            course_q = Q(module__isnull=True) | Q(module__in=enrolled_courses)
-            
-            return Announcement.objects.filter(faculty_q & batch_q & course_q).distinct()
-        
-        elif user.role == 'instructor':
-            taught_courses = Course.objects.filter(instructors=user) 
-            
-            return Announcement.objects.filter(
-                Q(created_by=user) | Q(course__in=taught_courses)
-            ).distinct()
-            
-        return Announcement.objects.none()
+        return Announcement.objects.filter(course_id=self.kwargs['pk']).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        # We pass the course instance and user directly to save()
+        serializer.save(
+            created_by=self.request.user, 
+            course=self.get_course()
+        )
     
 class AcademicCalendarViewSet(viewsets.ModelViewSet):
     """
