@@ -80,12 +80,20 @@ class AnnouncementSerializer(serializers.ModelSerializer):
         allow_null=True
     )
     created_by_name = serializers.CharField(source='created_by.username', read_only=True)
-
     class Meta:
         model = Announcement
         fields = ['id', 'title', 'content', 'week', 'image', 'pdf', 'created_by_name']
         read_only_fields = ['id', 'created_by_name']
 
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        if instance.image:
+            ret['image'] = instance.image.url
+        if instance.pdf:
+            ret['pdf'] = instance.pdf.url
+        return ret
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         view = self.context.get('view')
