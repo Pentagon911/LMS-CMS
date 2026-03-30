@@ -332,7 +332,7 @@ class QuizViewSet(viewsets.ModelViewSet):
 
         for ans in answerData:
             try:
-                question = Question.objects.get(id=ans['questionId'])
+                question = quiz.questions.filter(order=ans['questionId']).first()
             except Question.DoesNotExist:
                 continue
 
