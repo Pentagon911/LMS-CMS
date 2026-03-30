@@ -28,7 +28,7 @@ const AddContentModal = ({ closeModal, onAdd, weekId, weekNumber, courseId }) =>
       const fetchQuizzes = async () => {
         setLoading(true);
         try {
-          const data = await request.GET('/cms/quizzes/draft_quizzes/');
+          const data = await request.GET(`/cms/courses/${courseId}/course_quizzes/`);
           setQuizzes(data);
         } catch (err) {
           console.error("Failed to load quizzes", err);
@@ -58,7 +58,7 @@ const AddContentModal = ({ closeModal, onAdd, weekId, weekNumber, courseId }) =>
       case 'content':
         return `/cms/courses/${courseId}/dashboard/add_content/`;
       case 'announcement':
-        return `/cms/courses/${courseId}/weeks/${weekNumberForApi}/announcement/create/`;
+        return `/cms/courses/${courseId}/announcements/`;
       case 'quiz':
         return `/cms/quizzes/${selectedQuiz?.quizId}/add_to_week/`;
       default:
@@ -110,126 +110,48 @@ const AddContentModal = ({ closeModal, onAdd, weekId, weekNumber, courseId }) =>
     }
   };
 
-const handleSubmit = async (e) => {
+const handleSubmit = (e) => {
   e.preventDefault();
-  
+
   if (!validateForm()) {
     return;
   }
-  
-  try {
-    setSubmitting(true);
-    const url = getContentUrl();
-    const weekNumberForApi = weekId + 1;
-    
-    if (contentType === 'quiz') {
-      const quizData = {
-        week_id: weekNumberForApi,
-        start_time: startTime
-      };
-      
-      const response = await request.POST(url, quizData);
-      
-      // Map the response to the expected format
-      const savedContent = {
-        ...response,
-        quizId: selectedQuiz?.quizId,
-        type: 'quiz',
-        title: selectedQuiz?.title,
-        duration: selectedQuiz?.time || '15 min',
-        questionsCount: selectedQuiz?.questionsCount || 0
-      };
-      
-      onAdd(savedContent);
-      closeModal();
-    } 
-    else {
-      const formData = new FormData();
-      
-      // Basic fields
-      formData.append('week_order', weekNumberForApi);
-      formData.append('title', title);
-      formData.append('type', contentType);
-      
-      if (courseId) {
-        formData.append('courseId', courseId);
-      }
-      
-      if (contentType === 'content') {
-        const cleanedContent = content.trim() === "<p><br></p>" || content === "<p></p>" ? "" : content;
-        formData.append('content', cleanedContent);
-        
-        if (contentSource === 'file') {
-          attachments.forEach((file) => {
-            formData.append('attachment', file);
-          });
-        } else if (contentSource === 'link') {
-          formData.append('link', linkUrl);
-        }
-      } 
-      else if (contentType === 'announcement') {
-        const cleanedContent = content.trim() === "<p><br></p>" || content === "<p></p>" ? "" : content;
-        formData.append('message', cleanedContent);
-        formData.append('postedAt', new Date().toISOString());
-        
-        attachments.forEach((file) => {
-          formData.append('attachment', file);
-        });
-      }
-      
-      // Debug: Log form data
-      for (let pair of formData.entries()) {
-        console.log(pair[0] + ': ' + (pair[1] instanceof File ? pair[1].name : pair[1]));
-      }
-      
-      const response = await request.UPLOAD(url, formData, {
-        isFormData: true
-      });
-      
-      console.log("Backend response:", response);
-      
-      // Map the backend response to the format expected by WeekCard
-      let savedContent;
-      
-      if (contentType === 'content') {
-        savedContent = {
-          id: response.id,
-          type: 'content',
-          title: response.title,
-          content: response.description, // Backend sends 'description', UI expects 'content'
-          format: response.item_type, // Backend sends 'item_type', UI expects 'format'
-          fileUrl: response.file, // Backend sends 'file', UI expects 'fileUrl'
-          fileSize: response.fileSize,
-          createdAt: response.created_at,
-          // Include any other fields from response
-          ...response
-        };
-      } 
-      else if (contentType === 'announcement') {
-        savedContent = {
-          id: response.id,
-          type: 'announcement',
-          title: response.title,
-          message: response.message || content,
-          date: new Date().toLocaleDateString(),
-          postedAt: response.created_at || new Date().toISOString(),
-          ...response
-        };
-      }
-      
-      console.log("Mapped content for UI:", savedContent);
-      onAdd(savedContent);
-      closeModal();
-    }
-  } catch (err) {
-    console.error("Failed to save content", err);
-    console.error("Error details:", err.response || err);
-    alert("Failed to save content. Please try again.");
-  } finally {
-    setSubmitting(false);
-  }
-};
 
+  // Prepare the data object to pass to parent
+  const newItem = {
+    type: contentType,
+    title,
+    content,  // description or announcement message
+    weekId: weekId + 1,   // optional, parent might need week number
+    courseId,
+  };
+
+  // For content type, include attachments or link
+  if (contentType === 'content') {
+    if (contentSource === 'file') {
+      newItem.attachments = attachments;  // list of File objects
+    } else if (contentSource === 'link') {
+      newItem.link = linkUrl;
+    }
+    newItem.contentSource = contentSource;
+  }
+
+  // For announcement, include attachments if any
+  if (contentType === 'announcement') {
+    if (attachments.length > 0) {
+      newItem.attachments = attachments;
+    }
+  }
+
+  // For quiz, include the selected quiz and start time
+  if (contentType === 'quiz') {
+    newItem.quizId = selectedQuiz?.quizId;
+    newItem.startTime = startTime;
+  }
+
+  onAdd(newItem);
+  closeModal();
+};
   return (
     <div className="acm-modal-overlay" onClick={closeModal}>
       <div className="acm-modal-content" onClick={(e) => e.stopPropagation()}>

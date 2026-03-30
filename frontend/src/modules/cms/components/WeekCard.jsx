@@ -1,30 +1,31 @@
 import { useState } from "react";
 import AddContentModal from "./AddContentModal.jsx";
-import {MdDescription,MdQuiz,MdCampaign,MdFolder,MdAttachFile,MdLink,MdAccessTime,MdAssignment,MdCalendarToday,MdClose,MdAdd,MdExpandMore,MdChevronRight} from "react-icons/md";
+import { MdDescription, MdQuiz, MdCampaign, MdFolder, MdAttachFile, MdLink, MdAccessTime, MdAssignment, MdCalendarToday, MdClose, MdAdd, MdExpandMore, MdChevronRight } from "react-icons/md";
 import "./WeekCard.css";
 
 const WeekCard = ({ data, weekNumber, weekIndex, isLecturer, onContentClick, onAddContent, courseId }) => {
   const [expanded, setExpanded] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [items, setItems] = useState(data.items || []);
 
   const toggleWeek = () => setExpanded(!expanded);
-  
   const addContent = () => setShowModal(true);
   const closeModal = () => setShowModal(false);
 
   const handleAddContent = (newContent) => {
+    // Pass the new content to the parent (which makes the API call and updates state)
     if (onAddContent) {
       onAddContent(newContent);
     }
-    setItems([...items, newContent]);
-    closeModal();
+    closeModal(); // close modal after adding
   };
 
+  // Remove function - currently only updates local view
+  // For a complete solution, you would need a parent callback to delete from server
   const removeContent = (indexToRemove) => {
     if (window.confirm("Are you sure you want to remove this item?")) {
-      const updatedItems = items.filter((_, index) => index !== indexToRemove);
-      setItems(updatedItems);
+      // Here you would call a parent callback to handle deletion
+      // For now, we just warn and do nothing (since local state is removed)
+      console.warn("Delete functionality needs to be implemented in parent");
     }
   };
 
@@ -35,7 +36,7 @@ const WeekCard = ({ data, weekNumber, weekIndex, isLecturer, onContentClick, onA
   };
 
   const getTypeIcon = (type) => {
-    switch(type) {
+    switch (type) {
       case 'content': return <MdDescription />;
       case 'quiz': return <MdQuiz />;
       case 'announcement': return <MdCampaign />;
@@ -44,11 +45,11 @@ const WeekCard = ({ data, weekNumber, weekIndex, isLecturer, onContentClick, onA
   };
 
   const getTypeColor = (type) => {
-    switch(type) {
+    switch (type) {
       case 'content': return '#433AC2';
       case 'quiz': return '#B01D1D';
       case 'announcement': return '#05B010';
-      default: return '#95a5a6'; 
+      default: return '#95a5a6';
     }
   };
 
@@ -59,13 +60,15 @@ const WeekCard = ({ data, weekNumber, weekIndex, isLecturer, onContentClick, onA
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
+  const items = data.items || []; // use data from parent
+
   const renderContentItem = (item, index) => {
     const typeColor = getTypeColor(item.type);
     const typeIcon = getTypeIcon(item.type);
 
     return (
-      <div 
-        key={index} 
+      <div
+        key={index}
         className="cms-week-content-card"
         style={{ borderLeftColor: typeColor }}
         onClick={() => handleItemClick(item)}
@@ -73,7 +76,7 @@ const WeekCard = ({ data, weekNumber, weekIndex, isLecturer, onContentClick, onA
         <div className="cms-week-content-icon" style={{ backgroundColor: typeColor + '20', color: typeColor }}>
           {typeIcon}
         </div>
-        
+
         <div className="cms-week-content-details">
           <div className="cms-week-content-title">
             {item.title}
@@ -81,7 +84,7 @@ const WeekCard = ({ data, weekNumber, weekIndex, isLecturer, onContentClick, onA
               {item.type}
             </span>
           </div>
-          
+
           <div className="cms-week-content-meta">
             {item.type === 'content' && (
               <>
@@ -138,13 +141,13 @@ const WeekCard = ({ data, weekNumber, weekIndex, isLecturer, onContentClick, onA
     <div className={`cms-week-container ${expanded ? 'cms-week-expanded' : ''}`}>
       <div className="cms-week-header" onClick={toggleWeek}>
         <div className="cms-week-title">
-          <span className="cms-week-number">{weekNumber || data.week || 'Week'}</span>
+          <span className="cms-week-number">{`Week ${weekIndex + 1} : ${data.week}` || 'Week'}</span>
           <span className="cms-week-item-count">{items.length} items</span>
         </div>
-        
+
         <div className="cms-week-actions">
           {isLecturer && (
-            <button 
+            <button
               className="cms-week-add-btn"
               onClick={(e) => {
                 e.stopPropagation();
@@ -155,7 +158,7 @@ const WeekCard = ({ data, weekNumber, weekIndex, isLecturer, onContentClick, onA
               <MdAdd />
             </button>
           )}
-          
+
           <button className="cms-week-expand-btn">
             {expanded ? <MdExpandMore /> : <MdChevronRight />}
           </button>
@@ -182,8 +185,8 @@ const WeekCard = ({ data, weekNumber, weekIndex, isLecturer, onContentClick, onA
       )}
 
       {showModal && (
-        <AddContentModal 
-          closeModal={closeModal} 
+        <AddContentModal
+          closeModal={closeModal}
           onAdd={handleAddContent}
           weekId={weekIndex}  // Pass the week index (0-based) as weekId
           weekNumber={weekNumber || data.week}

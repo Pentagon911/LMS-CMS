@@ -257,7 +257,7 @@ const QuizInstructorPage = () => {
                       
                       {question.image && (
                         <div className="qip-question-image">
-                          <img src={question.image} alt="Question" />
+                          <img src={request.getBaseUrl() + question.image} alt="Question" />
                         </div>
                       )}
 

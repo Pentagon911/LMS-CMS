@@ -82,7 +82,6 @@ const formatDate = (dateString) => {
       )}
       
       <div className="announcement-footer">
-        <span className="posted-by">Posted by {announcement.created_by_name}</span>
         <button className="read-more-btn" onClick={() => setExpanded(!expanded)}>
           {expanded ? 'Show less' : 'Read more'}
         </button>
@@ -101,7 +100,7 @@ useEffect(() => {
   const fetchAnnouncements = async () => {
     try {
       setLoading(true);
-      const data = await request.GET('/cms/global-announcements/');
+      const data = await request.GET('/cms/global-announcements/student/');
       setAnnouncements(Array.isArray(data) ? data : []);
       setError('');
     } catch (err) {
