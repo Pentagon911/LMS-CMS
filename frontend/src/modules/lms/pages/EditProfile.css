@@ -1,0 +1,575 @@
+/* EditProfile.css - Professional styling with ep- prefix */
+
+/* Container */
+.ep-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  min-height: calc(100vh - 70px);
+  background: linear-gradient(135deg, #f8fafd 0%, #f1f5f9 100%);
+}
+
+body.dark-mode .ep-container {
+  background: #1a1e24;
+}
+
+/* Card */
+.ep-card {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  border: 1px solid #eef2f6;
+}
+
+body.dark-mode .ep-card {
+  background: #1e242c;
+  border-color: #2a313c;
+}
+
+/* Header */
+.ep-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 28px 32px;
+  background: #fafcff;
+  border-bottom: 1px solid #eef2f6;
+}
+
+body.dark-mode .ep-header {
+  background: #2a313c;
+  border-bottom-color: #323b48;
+}
+
+/* Avatar */
+.ep-avatar-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.ep-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #e2e8f0;
+}
+
+body.dark-mode .ep-avatar {
+  background: #2a313c;
+  border-color: #323b48;
+}
+
+.ep-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ep-avatar-initials {
+  font-size: 36px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+body.dark-mode .ep-avatar-initials {
+  color: #a0a8b7;
+}
+
+.ep-avatar-actions {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  gap: 5px;
+}
+
+.ep-avatar-upload-btn,
+.ep-avatar-remove-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
+  background: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 16px;
+}
+
+.ep-avatar-upload-btn:hover,
+.ep-avatar-remove-btn:hover {
+  background: #f1f5f9;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ep-avatar-remove-btn {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.ep-avatar-remove-btn:hover {
+  background: #fee2e2;
+}
+
+body.dark-mode .ep-avatar-upload-btn {
+  background: #2a313c;
+  color: #a0a8b7;
+  border-color: #323b48;
+}
+
+body.dark-mode .ep-avatar-upload-btn:hover {
+  background: #323b48;
+}
+
+body.dark-mode .ep-avatar-remove-btn {
+  background: #2d1f1f;
+  color: #f87171;
+  border-color: #991b1b;
+}
+
+body.dark-mode .ep-avatar-remove-btn:hover {
+  background: #3a2a2a;
+}
+
+/* Title */
+.ep-title h1 {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1e293b, #2d3a4e);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+body.dark-mode .ep-title h1 {
+  background: none;
+  -webkit-text-fill-color: unset;
+  color: #e5e9f0;
+}
+
+.ep-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  background: #f1f5f9;
+  border-radius: 40px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 0;
+}
+
+body.dark-mode .ep-role-badge {
+  background: #2a313c;
+  color: #a0a8b7;
+}
+
+/* Form Sections */
+.ep-form-section {
+  padding: 28px 32px;
+}
+
+.ep-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 20px 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #eef2f6;
+}
+
+body.dark-mode .ep-section-title {
+  color: #e5e9f0;
+  border-bottom-color: #2a313c;
+}
+
+.ep-section-divider {
+  height: 1px;
+  background: #eef2f6;
+  margin: 0 32px;
+}
+
+body.dark-mode .ep-section-divider {
+  background: #2a313c;
+}
+
+/* Form */
+.ep-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.ep-input-group {
+  margin-bottom: 20px;
+}
+
+.ep-input-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+body.dark-mode .ep-input-group label {
+  color: #a0a8b7;
+}
+
+.ep-input-group input,
+.ep-input-group textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  background: white;
+  font-family: inherit;
+}
+
+.ep-input-group input:focus,
+.ep-input-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+body.dark-mode .ep-input-group input,
+body.dark-mode .ep-input-group textarea {
+  background: #2a313c;
+  border-color: #323b48;
+  color: #e5e9f0;
+}
+
+body.dark-mode .ep-input-group input:focus,
+body.dark-mode .ep-input-group textarea:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+}
+
+.ep-input-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Password Wrapper */
+.ep-password-wrapper {
+  position: relative;
+}
+
+.ep-password-wrapper input {
+  padding-right: 45px;
+}
+
+.ep-password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  transition: color 0.2s ease;
+}
+
+.ep-password-toggle:hover {
+  color: #3b82f6;
+}
+
+body.dark-mode .ep-password-toggle {
+  color: #a0a8b7;
+}
+
+body.dark-mode .ep-password-toggle:hover {
+  color: #60a5fa;
+}
+
+.ep-password-hint {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 6px;
+}
+
+body.dark-mode .ep-password-hint {
+  color: #a0a8b7;
+}
+
+/* Form Buttons */
+.ep-form-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #eef2f6;
+}
+
+body.dark-mode .ep-form-buttons {
+  border-top-color: #2a313c;
+}
+
+.ep-btn-cancel,
+.ep-btn-save,
+.ep-btn-change-password {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ep-btn-cancel {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.ep-btn-cancel:hover {
+  background: #e2e8f0;
+  transform: translateY(-1px);
+}
+
+.ep-btn-save,
+.ep-btn-change-password {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ep-btn-save:hover:not(:disabled),
+.ep-btn-change-password:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.ep-btn-save:disabled,
+.ep-btn-change-password:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+body.dark-mode .ep-btn-cancel {
+  background: #2a313c;
+  border-color: #323b48;
+  color: #a0a8b7;
+}
+
+body.dark-mode .ep-btn-cancel:hover {
+  background: #323b48;
+}
+
+body.dark-mode .ep-btn-save,
+body.dark-mode .ep-btn-change-password {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+body.dark-mode .ep-btn-save:hover:not(:disabled),
+body.dark-mode .ep-btn-change-password:hover:not(:disabled) {
+  background: #2563eb;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Account Info */
+.ep-account-info {
+  padding: 24px 32px;
+  background: #f8fafc;
+  border-top: 1px solid #eef2f6;
+}
+
+body.dark-mode .ep-account-info {
+  background: #2a313c;
+  border-top-color: #323b48;
+}
+
+.ep-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.ep-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ep-info-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+body.dark-mode .ep-info-label {
+  color: #a0a8b7;
+}
+
+.ep-info-value {
+  font-size: 14px;
+  color: #0f172a;
+  font-weight: 500;
+}
+
+body.dark-mode .ep-info-value {
+  color: #e5e9f0;
+}
+
+/* Alerts */
+.ep-success-alert {
+  margin: 0 32px 20px 32px;
+  padding: 14px 20px;
+  background: #f0fdf4;
+  border-left: 4px solid #10b981;
+  border-radius: 12px;
+  color: #16a34a;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.ep-error-alert {
+  margin: 0 32px 20px 32px;
+  padding: 14px 20px;
+  background: #fef2f2;
+  border-left: 4px solid #ef4444;
+  border-radius: 12px;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+body.dark-mode .ep-success-alert {
+  background: #1a2e1f;
+  color: #4ade80;
+}
+
+body.dark-mode .ep-error-alert {
+  background: #2d1f1f;
+  color: #f87171;
+}
+
+/* Loading States */
+.ep-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 16px;
+  background: #f8fafd;
+}
+
+body.dark-mode .ep-loading {
+  background: #1a1e24;
+}
+
+.ep-loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: ep-spin 0.8s linear infinite;
+}
+
+.ep-loading-spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: ep-spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes ep-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ep-container {
+    padding: 16px;
+  }
+  
+  .ep-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+    padding: 24px;
+  }
+  
+  .ep-title h1 {
+    font-size: 24px;
+  }
+  
+  .ep-form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  
+  .ep-form-section {
+    padding: 20px;
+  }
+  
+  .ep-form-buttons {
+    flex-direction: column;
+  }
+  
+  .ep-btn-cancel,
+  .ep-btn-save,
+  .ep-btn-change-password {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .ep-success-alert,
+  .ep-error-alert {
+    margin: 0 20px 16px 20px;
+  }
+  
+  .ep-account-info {
+    padding: 20px;
+  }
+  
+  .ep-info-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}

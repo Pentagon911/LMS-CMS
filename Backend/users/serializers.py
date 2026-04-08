@@ -67,7 +67,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'first_name', 'last_name',
+        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'address', 'date_of_birth',
                  'role', 'phone_number', 'profile_picture', 'profile',
                  'date_joined', 'last_login', 'last_password_change',
                  'department_name', 'faculty_name', 'batch_name')
@@ -112,7 +112,7 @@ class InstructorProfileSerializer(serializers.ModelSerializer):
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'phone_number', 
+        fields = ('first_name', 'last_name', 'phone_number', 'email', 'profile_picture',
                  'address', 'date_of_birth', 'profile_picture')
         
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
