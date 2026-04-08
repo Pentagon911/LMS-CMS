@@ -8,6 +8,7 @@ import LMSDashboard from "../modules/lms/pages/Dashboard.jsx";
 import LMSEditProfile from "../modules/lms/pages/EditProfile.jsx";
 import ExamTimeTablePage from "../modules/lms/pages/TimeTablePage.jsx";
 import UserManagement from "../modules/lms/pages/UserManagement.jsx";
+import BatchStudentManagement from "../modules/lms/pages/BatchStudentManagement.jsx";
 // import CourseManagement from "../modules/lms/pages/CourseManagement.jsx";
 import EnrollmentsPage from "../modules/lms/pages/EnrollmentsPage.jsx";
 import MyCoursesPage from "../modules/lms/pages/MyCoursesPage.jsx";
@@ -91,6 +92,7 @@ function AppRoutes() {
       <Route path="/lms/academics/time-tables" element={<LMSLayout> <ExamTimeTablePage /> </LMSLayout>} />
       <Route path="/lms/server-management/users" element={<LMSLayout> <UserManagement /> </LMSLayout>} />
       <Route path="/lms/academics/enrollment-history" element={<LMSLayout> <EnrollmentHistoryPage /> </LMSLayout>} />
+      <Route path="/admin/batch-students" element={<LMSLayout> <BatchStudentManagement /> </LMSLayout>} />
       {/* <Route path="/lms/server-management/courses" element={<LMSLayout> <CourseManagement /> </LMSLayout>} /> */}
       <Route path="/lms/academics/enrollment" element={<LMSLayout><EnrollmentsPage /></LMSLayout>} />
       <Route path="/lms/academics/my-courses" element={<LMSLayout><MyCoursesPage /></LMSLayout>} />

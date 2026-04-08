@@ -1,7 +1,7 @@
 // UserManagement.jsx (updated with stats)
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MdAdd, MdEdit, MdDelete, MdClose, MdPerson, MdEmail, MdPhone, MdSchool, MdBadge, MdPeople, MdTrendingUp, MdTrendingDown, MdAdminPanelSettings, MdSchool as MdInstructor, MdAccountCircle } from 'react-icons/md';
+import { MdAdd, MdEdit, MdDelete, MdClose, MdPerson, MdEmail, MdPhone, MdSchool, MdBadge, MdPeople, MdTrendingUp, MdTrendingDown, MdAdminPanelSettings, MdSchool as MdInstructor, MdAccountCircle, MdGroupAdd } from 'react-icons/md';
 import request from '../../../utils/requestMethods.jsx';
 import './UserManagement.css';
 
@@ -86,7 +86,7 @@ const UserManagement = () => {
       role: user.role,
       phone_number: user.phone_number || '',
       department: user.department_name || (user.profile?.department ? String(user.profile.department) : ''),
-      program: user.profile?.program ? String(user.profile.program) : '',
+      program: user.profile?.program ? String(user.profile.program_name) : '',
       current_semester: user.profile?.current_semester || 1
     });
     setShowModal(true);
@@ -132,7 +132,7 @@ const UserManagement = () => {
 
     try {
       if (editingUser) {
-        const updated = await request.PUT(`/users/${editingUser.id}/`, payload);
+        const updated = await request.PUT(`/users/profile/${editingUser.id}/`, payload);
         setUsers(prev => prev.map(user => user.id === editingUser.id ? updated : user));
       } else {
         const created = await request.POST('/users/register/', payload);
@@ -165,9 +165,14 @@ const UserManagement = () => {
       <div className="user-management-header">
         <h1>User Management</h1>
         <p>Add, edit, and manage system users</p>
-        <button className="add-user-btn" onClick={handleAddUser}>
-          <MdAdd /> Add New User
-        </button>
+        <div className="button-group">
+          <button className="add-user-btn" onClick={handleAddUser}>
+            <MdAdd /> Add New User
+          </button>
+          <button className="add-user-btn" onClick={() => navigate('/admin/batch-students')}>
+            <MdGroupAdd /> Batch Create Students
+          </button>
+        </div>
       </div>
 
       {/* Stats Dashboard */}

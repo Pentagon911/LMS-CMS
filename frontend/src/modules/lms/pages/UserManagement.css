@@ -33,6 +33,12 @@ body.dark-mode .user-management-header p {
   color: #a0a8b7;
 }
 
+.button-group {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 .add-user-btn {
   display: inline-flex;
   align-items: center;
@@ -48,8 +54,18 @@ body.dark-mode .user-management-header p {
   transition: all 0.2s ease;
 }
 
+body.dark-mode .add-user-btn {
+  background: #0f4bce;
+}
+
+body.dark-mode .add-user-btn:hover {
+  background: #0b3da8;
+}
+
 .add-user-btn:hover{
-  background-color: #0b70d4;
+  background: #0b3da8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 75, 206, 0.3);
 }
 
 /* Table Container */
