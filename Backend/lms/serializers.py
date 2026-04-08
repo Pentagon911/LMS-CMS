@@ -161,10 +161,10 @@ class DepartmentSerializer(serializers.ModelSerializer):
 
 class BatchSerializer(serializers.ModelSerializer):
     department_name = serializers.CharField(source='department.name', read_only=True)
-    
+    faculty_name = serializers.CharField(source='department.faculty.name', read_only=True)
     class Meta:
         model = Batch
-        fields = ['id', 'name', 'year', 'department', 'department_name']
+        fields = ['id', 'name', 'year', 'department', 'department_name', 'faculty_name']
 
 
 class ModuleSerializer(serializers.ModelSerializer):

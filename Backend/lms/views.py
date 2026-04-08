@@ -1,6 +1,6 @@
 #lms/views.py
 from django.shortcuts import get_object_or_404
-from django.db import connection
+from django.db import connection, transaction
 from django.db.models import Q, Count
 from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
@@ -12,6 +12,8 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied, ValidationError
+from users.profiles import StudentProfile
+from users.serializers import UserDetailSerializer
 from users.permissions import (
     IsAdminOrInstructor,
     IsAdminOrSelf,
@@ -1228,3 +1230,148 @@ class StudentDashboardView(APIView):
                            reeval_counts['under_review'],
             }
         })
+
+
+# ========== BATCH STUDENT CREATION VIEWS ==========
+
+class BatchStudentCreateView(APIView):
+    """
+    Admin-only endpoint for creating multiple students for a specific batch.
+    Creates users and student profiles in bulk.
+    Student IDs are generated as: {batch_year}{user_id:06d}
+    """
+    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+
+    def post(self, request, batch_id):
+        try:
+            batch = Batch.objects.select_related('department', 'department__faculty').get(id=batch_id)
+        except Batch.DoesNotExist:
+            return Response(
+                {'error': 'Batch not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        students_data = request.data.get('students', [])
+        
+        if not students_data:
+            return Response(
+                {'error': 'No student data provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        created_students = []
+        errors = []
+        
+        for index, student_data in enumerate(students_data):
+            # Use a separate transaction for each student
+            try:
+                with transaction.atomic():
+                    # Prepare user data
+                    user_data = {
+                        'username': student_data.get('username'),
+                        'email': student_data.get('email'),
+                        'password': student_data.get('password'),
+                        'password2': student_data.get('password2'),
+                        'first_name': student_data.get('first_name'),
+                        'last_name': student_data.get('last_name'),
+                        'role': 'student',
+                        'phone_number': student_data.get('phone_number', '')
+                    }
+                    
+                    # Validate required fields
+                    if not all([user_data['username'], user_data['email'], 
+                               user_data['password'], user_data['password2'],
+                               user_data['first_name'], user_data['last_name']]):
+                        errors.append({
+                            'index': index,
+                            'data': student_data,
+                            'error': 'Missing required fields'
+                        })
+                        continue
+                    
+                    # Check for duplicates
+                    if User.objects.filter(username=user_data['username']).exists():
+                        errors.append({
+                            'index': index,
+                            'data': student_data,
+                            'error': f"Username '{user_data['username']}' already exists"
+                        })
+                        continue
+                    
+                    if User.objects.filter(email=user_data['email']).exists():
+                        errors.append({
+                            'index': index,
+                            'data': student_data,
+                            'error': f"Email '{user_data['email']}' already exists"
+                        })
+                        continue
+                    
+                    # Create user
+                    user = User.objects.create_user(
+                        username=user_data['username'],
+                        email=user_data['email'],
+                        password=user_data['password'],
+                        first_name=user_data['first_name'],
+                        last_name=user_data['last_name'],
+                        role='student',
+                        phone_number=user_data['phone_number']
+                    )
+                    
+                    # Generate student ID
+                    student_id = f"{batch.year}{user.id:06d}"
+                    
+                    # Get program if provided
+                    program = Program.objects.filter(department=batch.department).first()
+                    if not program:
+                        errors.append({
+                            'index': index,
+                            'data': student_data,
+                            'error': f'No program found for department {batch.department.name}'
+                        })
+                        continue
+                    
+                    # Create student profile
+                    StudentProfile.objects.create(
+                        user=user,
+                        student_id=student_id,
+                        faculty=batch.department.faculty,
+                        department=batch.department,
+                        batch=batch,
+                        program=program,
+                        current_semester=student_data.get('current_semester', 1),
+                        cgpa=0.0,
+                        completed_credits=0,
+                        joined_date=timezone.now()
+                    )
+                    
+                    created_students.append({
+                        'index': index,
+                        'user': UserDetailSerializer(user).data,
+                        'student_id': student_id
+                    })
+                    
+            except Exception as e:
+                # Only this student's transaction is rolled back
+                logger.error(f"Error creating student at index {index}: {str(e)}")
+                errors.append({
+                    'index': index,
+                    'data': student_data,
+                    'error': str(e)
+                })
+        
+        related_program = Program.objects.filter(department=batch.department).first()
+        return Response({
+            'message': f'Successfully created {len(created_students)} students for {batch.name}',
+            'batch': {
+                'id': batch.id,
+                'name': batch.name,
+                'year': batch.year,
+                'department': batch.department.name,
+                'faculty': batch.department.faculty.name,
+                'program': related_program.name if related_program else None 
+            },
+            'created_students': created_students,
+            'errors': errors,
+            'total_created': len(created_students),
+            'total_errors': len(errors)
+        }, status=status.HTTP_201_CREATED if created_students else status.HTTP_400_BAD_REQUEST)

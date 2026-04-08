@@ -23,9 +23,11 @@ urlpatterns = [
     path('departments/<int:pk>/', views.DepartmentDetailView.as_view(), name='department-detail'), # Retrieve/Update/Delete department (admin only)
     path('batches/', views.BatchListCreateView.as_view(), name='batch-list'),                      # List/Create batches with department filter (admin only)
     path('batches/<int:pk>/', views.BatchDetailView.as_view(), name='batch-detail'),               # Retrieve/Update/Delete batch (admin only)
-    # path('courses/', views.CourseListCreateView.as_view(), name='course-list'),                    # List/Create courses with department/semester filters (admin only)
+    # path('courses/', views.CourseListCreateView.as_view(), name='course-list'),                  # List/Create courses with department/semester filters (admin only)
     path('courses/<int:pk>/', views.CourseDetailView.as_view(), name='course-detail'),             # Retrieve/Update/Delete course (admin only)
     path('modules/', views.ModuleListCreateView.as_view(), name='module-list'),                    # List/Create modules with course filter (admin/instructor only)
     path('modules/<int:pk>/', views.ModuleDetailView.as_view(), name='module-detail'),             # Retrieve/Update/Delete module (admin/instructor only)
-    
+
+    # Batch Student Management
+    path('batches/<int:batch_id>/create-students/', views.BatchStudentCreateView.as_view(), name='batch-create-students'),
 ]
