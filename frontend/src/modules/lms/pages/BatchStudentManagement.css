@@ -777,3 +777,144 @@ body.dark-mode .bsm-error-items::-webkit-scrollbar-thumb:hover {
     gap: 0.25rem;
   }
 }
+
+.bsm-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.bsm-form-group {
+  margin-bottom: 1rem;
+}
+
+.bsm-form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #5a6778;
+  margin-bottom: 0.4rem;
+}
+
+body.dark-mode .bsm-form-label {
+  color: #a0a8b7;
+}
+
+.bsm-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #eef2f6;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background: white;
+  transition: all 0.2s ease;
+}
+
+.bsm-input:focus {
+  outline: none;
+  border-color: #0f4bce;
+  box-shadow: 0 0 0 3px rgba(15, 75, 206, 0.1);
+}
+
+body.dark-mode .bsm-input {
+  background: #2a313c;
+  border-color: #323b48;
+  color: #e5e9f0;
+}
+
+body.dark-mode .bsm-input:focus {
+  border-color: #5a9cff;
+}
+
+.bsm-create-batch-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background: #0f4bce;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bsm-create-batch-btn:hover:not(:disabled) {
+  background: #0b3da8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 75, 206, 0.3);
+}
+
+.bsm-create-batch-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.bsm-batch-created {
+  margin-top: 1rem;
+}
+
+.bsm-success-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #e8f8ef;
+  border: 1px solid #c6f0d4;
+  border-radius: 10px;
+  color: #1e7e34;
+  font-weight: 500;
+  flex-wrap: wrap;
+}
+
+body.dark-mode .bsm-success-message {
+  background: #1e3a2a;
+  border-color: #2e5a3e;
+  color: #81c784;
+}
+
+.bsm-reset-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+  padding: 0.25rem 0.75rem;
+  background: rgba(15, 75, 206, 0.1);
+  border: 1px solid #0f4bce;
+  border-radius: 6px;
+  color: #0f4bce;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+}
+
+.bsm-reset-btn:hover {
+  background: #0f4bce;
+  color: white;
+}
+
+body.dark-mode .bsm-reset-btn {
+  background: rgba(90, 156, 255, 0.1);
+  border-color: #5a9cff;
+  color: #5a9cff;
+}
+
+body.dark-mode .bsm-reset-btn:hover {
+  background: #5a9cff;
+  color: #1e242c;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .bsm-form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .bsm-reset-btn {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+}
