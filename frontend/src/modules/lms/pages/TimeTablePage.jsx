@@ -7,17 +7,17 @@ import './TimeTableCustom.css';
 const ExamTimetablePage = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  
+
   // Data states
   const [examTimetables, setExamTimetables] = useState([]);
-  
+
   // Filter states
   const [examFilter, setExamFilter] = useState({
     year: '',
     semester: '',
     department: ''
   });
-  
+
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -29,7 +29,7 @@ const ExamTimetablePage = () => {
     file: null
   });
   const [loading, setLoading] = useState(false);
-  
+
   // Options
   const years = ['2024', '2025', '2026', '2027', '2028'];
   const semesters = ['Semester 1', 'Semester 2'];
@@ -108,7 +108,7 @@ const ExamTimetablePage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       // In real app: await request.POST('/api/timetables/exams', formData);
       const newItem = {
@@ -117,13 +117,13 @@ const ExamTimetablePage = () => {
         uploadedAt: new Date().toISOString(),
         fileUrl: formData.file ? URL.createObjectURL(formData.file) : (editingItem?.fileUrl || '')
       };
-      
+
       if (editingItem) {
         setExamTimetables(prev => prev.map(item => item.id === editingItem.id ? newItem : item));
       } else {
         setExamTimetables(prev => [...prev, newItem]);
       }
-      
+
       setShowAddModal(false);
     } catch (err) {
       console.error("Failed to save", err);
