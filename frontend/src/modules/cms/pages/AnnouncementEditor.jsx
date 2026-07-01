@@ -12,26 +12,26 @@ const AnnouncementEditor = ({ announcement = null, onSave, onCancel }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
-  // Data from API
+
   const [facultiesData, setFacultiesData] = useState([]); // { faculty_id, faculty_name, faculty_code, batch_years }
   const [batchYearsList, setBatchYearsList] = useState([]); // unique sorted batch years
 
-  // Selected IDs
+
   const [selectedFaculties, setSelectedFaculties] = useState([]);
   const [selectedBatchYears, setSelectedBatchYears] = useState([]);
   const [selectedDepartments, setSelectedDepartments] = useState([]);
 
-  // UI toggle for expand/collapse
+
   const [showFacultyFilter, setShowFacultyFilter] = useState(false);
   const [showBatchFilter, setShowBatchFilter] = useState(false);
   const [showDepartmentFilter, setShowDepartmentFilter] = useState(false);
 
-  // Search terms for filtering lists
+
   const [facultySearchTerm, setFacultySearchTerm] = useState("");
   const [batchSearchTerm, setBatchSearchTerm] = useState("");
   const [deptSearchTerm, setDeptSearchTerm] = useState("");
 
-  // Dummy departments (placeholder until API is ready)
+
   const dummyDepartments = [
     { id: 1, name: "Computer Science", code: "CS" },
     { id: 2, name: "Information Technology", code: "IT" },
@@ -40,14 +40,14 @@ const AnnouncementEditor = ({ announcement = null, onSave, onCancel }) => {
     { id: 5, name: "Civil Engineering", code: "CE" }
   ];
 
-  // Fetch faculties and batch years on mount
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const data = await request.GET("/cms/global-announcements/faculty-batch-years/");
         setFacultiesData(data);
         
-        // Extract unique batch years from all faculties
+
         const allYears = data.flatMap(faculty => faculty.batch_years || []);
         const uniqueYears = [...new Set(allYears)].sort((a, b) => b - a); // descending order
         setBatchYearsList(uniqueYears);
@@ -58,16 +58,16 @@ const AnnouncementEditor = ({ announcement = null, onSave, onCancel }) => {
     fetchData();
   }, []);
 
-  // Populate form when editing an existing announcement
+
   useEffect(() => {
     if (announcement) {
       setTitle(announcement.title || "");
       setContent(announcement.content || "");
       setAudience(announcement.target_type === "all" ? "ALL" : "SPECIFIC");
       
-      // Parse targets if present
+
       if (announcement.targets) {
-        // Assuming targets is an array like [{ target_type: "faculty", faculty_ids: [...] }, ...]
+
         const facultyTarget = announcement.targets.find(t => t.target_type === "faculty");
         if (facultyTarget) setSelectedFaculties(facultyTarget.faculty_ids || []);
         
@@ -80,7 +80,7 @@ const AnnouncementEditor = ({ announcement = null, onSave, onCancel }) => {
     }
   }, [announcement]);
 
-  // File upload handlers
+
   const handleFileUpload = (e) => {
     const files = Array.from(e.target.files);
     setAttachments(prev => [...prev, ...files]);
@@ -90,7 +90,7 @@ const AnnouncementEditor = ({ announcement = null, onSave, onCancel }) => {
     setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Selection handlers
+
   const handleFacultyToggle = (facultyId) => {
     setSelectedFaculties(prev => 
       prev.includes(facultyId) ? prev.filter(id => id !== facultyId) : [...prev, facultyId]
@@ -139,7 +139,7 @@ const AnnouncementEditor = ({ announcement = null, onSave, onCancel }) => {
     setSelectedDepartments([]);
   };
 
-  // Filtered lists based on search terms
+
   const filteredFaculties = facultiesData.filter(faculty =>
     faculty.faculty_name?.toLowerCase().includes(facultySearchTerm.toLowerCase()) ||
     faculty.faculty_code?.toLowerCase().includes(facultySearchTerm.toLowerCase())
@@ -154,88 +154,137 @@ const AnnouncementEditor = ({ announcement = null, onSave, onCancel }) => {
     dept.code.toLowerCase().includes(deptSearchTerm.toLowerCase())
   );
 
-  // Build targets array for submission
-  const buildTargets = () => {
-    const targets = [];
-    if (selectedFaculties.length > 0) {
-      targets.push({
-        target_type: "faculty",
-        faculty_ids: selectedFaculties
-      });
-    }
-    if (selectedBatchYears.length > 0) {
-      targets.push({
-        target_type: "batch",
-        batch_years: selectedBatchYears
-      });
-    }
-    if (selectedDepartments.length > 0) {
-      targets.push({
-        target_type: "department",
-        department_ids: selectedDepartments
-      });
-    }
-    return targets;
-  };
+    const buildTargets = () => {
+      const targets = [];
+    
 
-  // Submit handler
-  const handleSubmit = async () => {
-    if (!title.trim()) {
-      alert("Please enter an announcement title");
-      return;
-    }
-    if (!content.trim() || content === "<p><br></p>") {
-      alert("Please enter announcement content");
-      return;
-    }
-    if (audience === "SPECIFIC") {
-      const targets = buildTargets();
-      if (targets.length === 0) {
-        alert("Please select at least one faculty, batch year, or department.");
+      if (selectedFaculties.length > 0) {
+        targets.push({
+          target_type: "faculty",
+          faculty_ids: selectedFaculties
+        });
+      }
+    
+
+      if (selectedDepartments.length > 0) {
+        targets.push({
+          target_type: "department",
+          department_ids: selectedDepartments
+        });
+      }
+    
+
+      const hasBatch = selectedBatchYears.length > 0;
+      const hasDept = selectedDepartments.length > 0;
+      const hasFaculty = selectedFaculties.length > 0;
+    
+      if (hasBatch) {
+
+        targets.push({
+          target_type: "batch",
+          batch_years: selectedBatchYears
+        });
+    
+
+        if (hasDept) {
+          targets.push({
+            target_type: "batch",
+            batch_years: selectedBatchYears,
+            department_ids: selectedDepartments
+          });
+        }
+    
+
+        if (hasFaculty) {
+          targets.push({
+            target_type: "batch",
+            batch_years: selectedBatchYears,
+            faculty_ids: selectedFaculties
+          });
+        }
+    
+
+        if (hasDept && hasFaculty) {
+          targets.push({
+            target_type: "batch",
+            batch_years: selectedBatchYears,
+            department_ids: selectedDepartments,
+            faculty_ids: selectedFaculties
+          });
+        }
+      } else {
+
+        if (hasDept) {
+          targets.push({
+            target_type: "batch",
+            department_ids: selectedDepartments
+          });
+        }
+        if (hasFaculty) {
+          targets.push({
+            target_type: "batch",
+            faculty_ids: selectedFaculties
+          });
+        }
+      }
+    
+      return targets;
+    };
+
+    const handleSubmit = async () => {
+
+      if (!title.trim()) {
+        alert("Please enter an announcement title");
         return;
       }
-    }
-
-    setIsSubmitting(true);
-
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("content", content);
-    
-    // Add PDF files
-    attachments.forEach(file => {
-      formData.append("pdf_files", file);
-    });
-
-    if (audience === "ALL") {
-      formData.append("target_type", "all");
-    } else {
-      const targets = buildTargets();
-      formData.append("targets", JSON.stringify(targets));
-    }
-
-    try {
-      const response = await request.UPLOAD("/cms/global-announcements/bulk-create/", formData, {
-        isFormData: true
-      });
-      console.log("Announcement posted:", response);
-      if (onSave) {
-        onSave(response);
+      if (!content.trim() || content === "<p><br></p>") {
+        alert("Please enter announcement content");
+        return;
       }
-      // Optionally reset form
-      setTitle("");
-      setContent("");
-      setAttachments([]);
-      setSelectedFaculties([]);
-      setSelectedBatchYears([]);
-      setSelectedDepartments([]);
-    } catch (err) {
-      console.error("Failed to post announcement", err);
-      alert("Failed to post announcement. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+      if (audience === "SPECIFIC") {
+        const targets = buildTargets();
+        if (targets.length === 0) {
+          alert("Please select at least one faculty, batch year, or department.");
+          return;
+        }
+      }
+    
+      setIsSubmitting(true);
+    
+
+      const jsonData = {
+        title: title,
+        content: content,
+        pdf_file: null,                     // keep null if not uploading files here
+        is_active: true,                    // you can make this dynamic later
+        publish_from: new Date().toISOString(),
+        publish_until: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+        targets: audience === "ALL" ? [] : buildTargets()
+      };
+    
+      try {
+
+        const response = await request.POST("/cms/global-announcements/bulk-create/", jsonData);
+        console.log("Announcement posted:", response);
+    
+        if (onSave) {
+          onSave(response);
+        }
+    
+
+        setTitle("");
+        setContent("");
+        setAttachments([]);
+        setSelectedFaculties([]);
+        setSelectedBatchYears([]);
+        setSelectedDepartments([]);
+      } catch (err) {
+        console.error("Failed to post announcement", err);
+        alert("Failed to post announcement. Please try again.");
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
 
   return (
     <div className="announcement-editor-container">

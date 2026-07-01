@@ -25,20 +25,17 @@ class Week(models.Model):
         return f"Week {self.order}: {self.topic}"
     
     def save(self, *args, **kwargs):
-        # 1. Only calculate order if it's a NEW record and order isn't manually set
+        # Only calculate order if it's a NEW record and order isn't manually set
         if not self.pk and not self.order:
-            # Look at the database for the current highest week number for this course
             max_order = Week.objects.filter(course=self.course).aggregate(
                 max_val=models.Max('order')
             )['max_val'] or 0
             
             self.order = max_order + 1
 
-        # 2. Try to save. If another request beat us to it, catch the error and increment
         try:
             super().save(*args, **kwargs)
         except IntegrityError:
-            # Refetch the max order (it likely changed in the last millisecond)
             max_order = Week.objects.filter(course=self.course).aggregate(
                 max_val=models.Max('order')
             )['max_val'] or 0
@@ -200,7 +197,6 @@ class Question(models.Model):
         ('short',"Short Answer"),
     ]
 
-    #
     quiz = models.ForeignKey(Quiz,on_delete=models.CASCADE,related_name='questions')
 
     # Custom question ID (e.g., 'q1', 'q2')

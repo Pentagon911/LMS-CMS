@@ -248,24 +248,24 @@ if (activeTab === 'semester') {
   }
 };
 
-  const filteredSemesterTimetables = semesterTimetables.filter(item => {
-    if (semesterFilter.year && item.year !== semesterFilter.year) return false;
-    if (semesterFilter.semester && item.semester !== semesterFilter.semester) return false;
-    if (semesterFilter.faculty && item.faculty !== semesterFilter.faculty) return false;
-    return true;
-  });
+    const filteredSemesterTimetables = semesterTimetables.filter(item => {
+      if (semesterFilter.year && String(item.year) !== semesterFilter.year) return false;
+      if (semesterFilter.semester && String(item.semester) !== semesterFilter.semester) return false;
+      if (semesterFilter.faculty && item.faculty !== semesterFilter.faculty) return false;
+      return true;
+    });
 
-  const filteredPracticalTimetables = practicalTimetables.filter(item => {
-    if (practicalFilter.year && item.year !== practicalFilter.year) return false;
-    if (practicalFilter.semester && item.semester !== practicalFilter.semester) return false;
-    if (practicalFilter.moduleCode && item.moduleCode !== practicalFilter.moduleCode) return false;
-    
-    // For students, only show their enrolled modules
-    if (role === 'student' && userModules.length > 0) {
-      return userModules.some(m => m.code === item.moduleCode);
-    }
-    return true;
-  });
+    const filteredPracticalTimetables = practicalTimetables.filter(item => {
+      if (practicalFilter.year && String(item.year) !== practicalFilter.year) return false;
+      if (practicalFilter.semester && String(item.semester) !== practicalFilter.semester) return false;
+      if (practicalFilter.moduleCode && String(item.moduleCode) !== practicalFilter.moduleCode) return false;
+      
+      // For students, only show their enrolled modules
+      if (role === 'student' && userModules.length > 0) {
+        return userModules.some(m => String(m.code) === String(item.moduleCode));
+      }
+      return true;
+    });
 
   const isAdmin = role === 'admin';
 

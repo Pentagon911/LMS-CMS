@@ -31,6 +31,46 @@ body.dark-mode .announcement-editor-header h1 {
   color: #e5e9f0;
 }
 
+.announcements-list-wrapper {
+  max-height: 420px;          /* Adjust based on your card height (~80px each * 5) */
+  overflow-y: auto;
+  padding-right: 4px;         /* Prevents content from hiding behind scrollbar */
+  border-radius: 8px;         /* Optional */
+}
+
+.announcements-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;                  /* Spacing between cards */
+}
+
+/* Optional: custom scrollbar styling */
+.announcements-list-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+
+.announcements-list-wrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 8px;
+}
+
+.announcements-list-wrapper::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 8px;
+}
+
+.announcements-list-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.announcements-scroll-hint {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #999;
+  margin-top: 8px;
+  font-style: italic;
+}
+
 body.dark-mode .announcement-editor-header p {
   color: #a0a8b7;
 }

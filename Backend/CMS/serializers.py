@@ -143,7 +143,6 @@ class AnnouncementSerializer(serializers.ModelSerializer):
                 # Get clean file name
                 file_name = file_field.name.split('/')[-1]
                 
-                # Get URL (Handles S3 or Local Media)
                 file_url = file_field.url if hasattr(file_field, 'url') else f"/media/{file_field.name}"
                 
                 # Get file size safely
@@ -436,14 +435,13 @@ class QuizCreateSerializer(serializers.ModelSerializer):
             options_data = q_data.pop('options', [])
             q_data['order'] = q_index
             
-            # Remove id if present (since we're creating new)
             q_data.pop('id', None)
             
             question = Question.objects.create(quiz=instance, **q_data)
             
             for opt_index, opt_data in enumerate(options_data, start=1):
                 opt_data['order'] = opt_index
-                opt_data.pop('id', None)  # Remove id for new options
+                opt_data.pop('id', None)  
                 Option.objects.create(question=question, **opt_data)
         
         return instance
@@ -478,9 +476,9 @@ class studentAnswerSerializer(serializers.ModelSerializer):
             'question', 
             'questionText',      # Shows the actual question
             'questionType',      # Shows type (single, multiple, etc.)
-            'attempt',            # Fixed: was 'attemp'
-            'selectedOptions',     # IMPORTANT: You forgot this field!
-            'selectedOptionsDetails',  # Human-readable options
+            'attempt',            
+            'selectedOptions',     
+            'selectedOptionsDetails',  
             'textAnswer', 
             'isCorrect',
             'answeredAt'
@@ -493,7 +491,7 @@ class studentAnswerSerializer(serializers.ModelSerializer):
             'id': opt.id,
             'optionId': opt.optionId,
             'text': opt.text,
-            'is_correct': opt.is_correct  # This will be filtered in views for students
+            'is_correct': opt.is_correct  
         } for opt in obj.selectedOptions.all()]
     
 class courseListSerializer(serializers.ModelSerializer):

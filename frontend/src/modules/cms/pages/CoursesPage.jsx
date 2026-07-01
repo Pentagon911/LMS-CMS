@@ -5,14 +5,14 @@ import request from "../../../utils/requestMethods.jsx";
 import "./CoursesPage.css";
 import { MdAttachFile, MdCampaign, MdDescription } from "react-icons/md";
 
-// Announcement Card component
+
 const AnnouncementCard = ({ announcement }) => {
   const [expanded, setExpanded] = useState(false);
   
 const formatDate = (dateString) => {
   const date = new Date(dateString);
 
-  // Format date & time
+
   return date.toLocaleString('en-US', { 
     month: 'short',   // "Mar"
     day: 'numeric',   // "23"
@@ -23,7 +23,7 @@ const formatDate = (dateString) => {
     hour12: true      // 12-hour format, change to false for 24-hour
   });
 };
-    // Function to strip HTML tags for preview
+
   const getPlainTextPreview = (html, maxLength = 100) => {
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = html;
@@ -90,7 +90,7 @@ const formatDate = (dateString) => {
   );
 };
 
-// Announcements list component
+
 const Announcements = () => {
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -100,7 +100,7 @@ useEffect(() => {
   const fetchAnnouncements = async () => {
     try {
       setLoading(true);
-      const data = await request.GET('/cms/global-announcements/student/');
+      const data = await request.GET('/cms/global-announcements/');
       setAnnouncements(Array.isArray(data) ? data : []);
       setError('');
     } catch (err) {
@@ -130,27 +130,56 @@ useEffect(() => {
     );
   }
 
-  return (
-    <div className="announcements-container">
-      <div className="announcements-header">
-        <h2 className="announcements-title"><MdCampaign /> Announcements</h2>
-        <span className="announcements-count">{announcements.length} total</span>
-      </div>
-      
-      {announcements.length === 0 ? (
-        <p className="no-announcements">No announcements yet.</p>
-      ) : (
-        <div className="announcements-list">
-          {announcements.map((announcement, idx) => (
-            <AnnouncementCard 
-              key={announcement.id || idx} 
-              announcement={announcement} 
-            />
-          ))}
+ // return (
+ //   <div className="announcements-container">
+ //     <div className="announcements-header">
+ //       <h2 className="announcements-title"><MdCampaign /> Announcements</h2>
+ //       <span className="announcements-count">{announcements.length} total</span>
+ //     </div>
+ //     
+ //     {announcements.length === 0 ? (
+ //       <p className="no-announcements">No announcements yet.</p>
+ //     ) : (
+ //       <div className="announcements-list">
+ //         {announcements.map((announcement, idx) => (
+ //           <AnnouncementCard 
+ //             key={announcement.id || idx} 
+ //             announcement={announcement} 
+ //           />
+ //         ))}
+ //       </div>
+ //     )}
+ //   </div>
+ // );
+    //
+    return (
+      <div className="announcements-container">
+        <div className="announcements-header">
+          <h2 className="announcements-title"><MdCampaign /> Announcements</h2>
+          <span className="announcements-count">{announcements.length} total</span>
         </div>
-      )}
-    </div>
-  );
+        
+        {announcements.length === 0 ? (
+          <p className="no-announcements">No announcements yet.</p>
+        ) : (
+          <>
+            <div className="announcements-list-wrapper">
+              <div className="announcements-list">
+                {announcements.map((announcement, idx) => (
+                  <AnnouncementCard 
+                    key={announcement.id || idx} 
+                    announcement={announcement} 
+                  />
+                ))}
+              </div>
+            </div>
+            {announcements.length > 5 && (
+              <div className="announcements-scroll-hint">Scroll for more announcements</div>
+            )}
+          </>
+        )}
+      </div>
+    );
 };
 
 const CoursesPage = () => {
@@ -162,7 +191,7 @@ const CoursesPage = () => {
   const scrollRef = useRef(null);
   const navigate = useNavigate();
 
-// Fetch modules using request method
+
   useEffect(() => {
     const fetchModules = async () => {
       try {

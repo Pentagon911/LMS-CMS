@@ -15,7 +15,6 @@ import json
 from django.db import transaction
 from users.profiles import StudentProfile
 from rest_framework.views import APIView, PermissionDenied
-# Create your views here.
 
 class CourseViewSet(viewsets.ModelViewSet):
     """ViewSet for courses
@@ -84,7 +83,6 @@ class CourseViewSet(viewsets.ModelViewSet):
                 )
                 
         elif request.user.role == 'instructor':
-        # ✅ THE FIX: Check if the user exists in the instructors list
             if not course.instructors.filter(id=request.user.id).exists():
                 return Response(
                     {'error': 'Not your course'}, 
@@ -205,11 +203,11 @@ class QuizViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         # Write operations (create, update, delete)
         if self.action in ['create', 'update', 'partial_update', 'destroy',]:
-            permission_classes = [permissions.AllowAny]
+            permission_classes = [permissions.IsAuthenticated]
         elif self.action in ['submit']:
-            permission_classes = [permissions.AllowAny]
+            permission_classes = [permissions.IsAuthenticated]
         else:
-            permission_classes = [permissions.AllowAny]
+            permission_classes = [permissions.IsAuthenticated]
         return [permission() for permission in permission_classes]
 
     def retrieve(self,request,*args,**kwargs):
@@ -271,18 +269,15 @@ class QuizViewSet(viewsets.ModelViewSet):
             for index, question in enumerate(questions):
                 image_key = f'image_{index}'
                 
-                # If the user uploaded a NEW image for this question, attach it
+                # If the user uploaded a new image for this question, attach it
                 if image_key in request.FILES:
                     question['image'] = request.FILES[image_key]
                 else:
-                    # If they didn't upload a new image, remove the 'image' key 
-                    # so the serializer doesn't accidentally wipe out the old image.
                     question.pop('image', None)
         else:
-            # Fallback just in case you send standard JSON from Postman
             quiz_data = request.data.copy() if hasattr(request.data, 'copy') else request.data
 
-        # 3. Hand the clean data over to your QuizCreateSerializer
+        # Hand the clean data over to your QuizCreateSerializer
         serializer = self.get_serializer(
             instance, 
             data=quiz_data, 
@@ -292,7 +287,7 @@ class QuizViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         
-        # 4. Return success to the frontend
+        # Return success to the frontend
         return Response({
             'quizId': instance.quizId,
             'message': 'Quiz updated successfully'
@@ -600,7 +595,6 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
     serializer_class = AnnouncementSerializer
 
     def get_course(self):
-        # Combined: Gets course AND checks if request.user is an instructor for it
         try:
             return self.request.user.courses_taught.get(id=self.kwargs['pk'])
         except Course.DoesNotExist:
@@ -610,7 +604,6 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
         return Announcement.objects.filter(course_id=self.kwargs['pk']).order_by('-created_at')
 
     def perform_create(self, serializer):
-        # We pass the course instance and user directly to save()
         serializer.save(
             created_by=self.request.user, 
             course=self.get_course()
@@ -797,12 +790,10 @@ class StudentAnnouncementListView(generics.ListAPIView):
             publish_from__lte=timezone.now()
         )
         
-        # Filter by publish_until if set
         queryset = queryset.filter(
             Q(publish_until__isnull=True) | Q(publish_until__gte=timezone.now())
         )
         
-        # Filter announcements that are visible to this student
         visible_announcements = []
         for announcement in queryset:
             if announcement.is_visible_to_student(student_profile):
