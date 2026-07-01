@@ -144,15 +144,15 @@ const ExamTimetablePage = () => {
   return (
     <div className="timetable-container">
       <div className="timetable-header">
-        <h1>Exam Timetable Management</h1>
-        <p>View and manage examination timetables</p>
+        <h1 className = "timetable-headertitle">Exam Timetable Management</h1>
+        <p className="timetable-headerdescription">View and manage examination timetables</p>
       </div>
 
       <div className="timetable-content">
         {/* Filters */}
         <div className="filters-section">
           <div className="filters-header">
-            <MdFilterList /> Filter Exam Timetables
+            
           </div>
           <div className="filters-grid">
             <select
@@ -199,7 +199,7 @@ const ExamTimetablePage = () => {
             filteredExamTimetables.map(item => (
               <div key={item.id} className="timetable-card">
                 <div className="timetable-info">
-                  <h3>{item.title}</h3>
+                  <h3 className = "module-title">{item.title}</h3>
                   <div className="timetable-meta">
                     <span><MdEvent /> {item.year} • {item.semester}</span>
                     <span>{item.department}</span>
