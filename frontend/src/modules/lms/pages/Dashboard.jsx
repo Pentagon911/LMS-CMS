@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MdPerson, MdBadge, MdAdminPanelSettings, MdCalendarToday } from "react-icons/md";
 import "./LMSDashboard.css";  // new CSS file
+import request from "../../../utils/requestMethods.jsx";
 
 const Dashboard = () => {
   const [userData, setUserData] = useState(null);
@@ -91,7 +92,7 @@ const Dashboard = () => {
             <div className="lms-avatar">
               {userData.profile_picture ? (
                 <img
-                  src={userData.profile_picture}
+                  src={`${request.getBaseUrl()}${userData.profile_picture}`}
                   alt="Profile"
                   className="lms-avatar-img"
                 />

@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { MdDashboard, MdMenuBook, MdQuiz, MdPerson, MdCampaign, MdLogout, MdLibraryBooks, MdDarkMode, MdLightMode, MdTableChart } from 'react-icons/md';
 import { getUserFromToken } from '../../../utils/auth';
 import './Header.css';
+import request from "../../../utils/requestMethods.jsx";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -258,7 +259,7 @@ const Header = () => {
             >
               <div className="cms-avatar">
                 {user?.profile_picture ? (
-                  <img src={user.profile_picture} alt={getDisplayName()} />
+                  <img src={`${request.getBaseUrl()}${user.profile_picture}`} alt={getDisplayName()} />
                 ) : (
                   <span className="cms-avatar-placeholder">
                     {getUserInitial()}

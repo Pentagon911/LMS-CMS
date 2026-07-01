@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getUserFromToken } from "../../../utils/auth";
 import { MdPerson, MdBadge, MdAdminPanelSettings, MdCalendarToday } from "react-icons/md";
 import "./Dashboard.css";
+import request from "../../../utils/requestMethods";
 
 const Dashboard = () => {
   const [userData, setUserData] = useState(null);
@@ -17,7 +18,6 @@ const Dashboard = () => {
 
 
   useEffect(() => {
-    // Get user data from localStorage (assuming you store it after login)
     const storedUser = localStorage.getItem("user");
     
     if (storedUser) {
@@ -109,7 +109,7 @@ const Dashboard = () => {
           <div className="profile-header">
             <div className="profile-avatar">
               {userData.profile_picture ? (
-                <img src={userData.profile_picture} alt="Profile" />
+                <img src={`${request.getBaseUrl()}${userData.profile_picture}`} alt="Profile" />
               ) : (
                 <div className="avatar-placeholder">
                   {getInitials()}

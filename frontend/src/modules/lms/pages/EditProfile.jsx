@@ -487,6 +487,7 @@ const EditProfile = () => {
                 name="dateOfBirth"
                 value={profileForm.dateOfBirth}
                 onChange={handleInputChange}
+                required
               />
             </div>
 

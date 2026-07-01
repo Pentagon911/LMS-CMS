@@ -228,15 +228,21 @@
 }
 
 .avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #2c3e50, #1a2632);
-  display: flex;
+  width: 40px;              
+  height: 40px;
+  border-radius: 50%;      
+  overflow: hidden;       
+  flex-shrink: 0;        
+  display: inline-flex; 
   align-items: center;
   justify-content: center;
-  color: white;
-  font-weight: 600;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .profile-name {

@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { MdDashboard, MdPerson, MdVolunteerActivism, MdLogout, MdLibraryBooks, MdSchool, MdDarkMode, MdLightMode, MdAdminPanelSettings, MdExpandMore, MdMenuBook, MdAssignment, MdEvent, MdGrade, MdPeople, MdAttachMoney, MdHelp, MdHome, MdUpload, MdMedicalServices, MdHelpOutline
 } from 'react-icons/md';
 import './Header.css';
+import request from "../../../utils/requestMethods.jsx";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -69,7 +70,11 @@ const Header = () => {
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         try {
-          setUser(JSON.parse(storedUser));
+          const parsedUser = JSON.parse(storedUser);
+          if (parsedUser.profile_picture) {
+            parsedUser.profile_picture = `${request.getBaseUrl()}${parsedUser.profile_picture}`;
+          }
+          setUser(parsedUser);
         } catch (error) {
           console.error("Failed to parse user from localStorage", error);
         }
