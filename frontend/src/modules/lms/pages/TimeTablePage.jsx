@@ -10,30 +10,35 @@ const ExamTimetablePage = () => {
 
   // Data states
   const [examTimetables, setExamTimetables] = useState([]);
+  const [courses, setCourses] = useState([]);
+
+  // UI states
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Filter states
   const [examFilter, setExamFilter] = useState({
-    year: '',
     semester: '',
-    department: ''
+    course: ''   // now stores course ID (string or number)
   });
 
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({
-    year: '',
     semester: '',
-    department: '',
+    course: '',
     title: '',
-    file: null
+    pdf: null
   });
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [downloadLoading, setDownloadLoading] = useState(false);
 
-  // Options
-  const years = ['2024', '2025', '2026', '2027', '2028'];
-  const semesters = ['Semester 1', 'Semester 2'];
-  const departments = ['Computer Science', 'Information Technology', 'Software Engineering', 'Data Science'];
+  // Static options
+  const semesters = [
+    { value: 1, label: 'Semester 1' },
+    { value: 2, label: 'Semester 2' }
+  ];
 
   // Get user from localStorage
   useEffect(() => {
@@ -48,135 +53,233 @@ const ExamTimetablePage = () => {
     }
   }, []);
 
-  // Load exam timetables
+  // Load data
   useEffect(() => {
-    fetchExamTimetables();
+    fetchData();
   }, []);
 
-  const fetchExamTimetables = async () => {
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      // In real app: const data = await request.GET('/api/timetables/exams');
-      const mockData = [
-        { id: 1, year: '2026', semester: 'Semester 1', department: 'Computer Science', title: 'CS Semester 1 Exam Timetable', fileUrl: '/exams/cs_s1_2026.pdf', uploadedAt: '2026-01-20' },
-        { id: 2, year: '2026', semester: 'Semester 1', department: 'Information Technology', title: 'IT Semester 1 Exam Timetable', fileUrl: '/exams/it_s1_2026.pdf', uploadedAt: '2026-01-20' }
-      ];
-      setExamTimetables(mockData);
+      const [timetables, coursesData] = await Promise.all([
+        request.GET('/lms/exam-timetables/'),
+        request.GET('/lms/courses/')
+      ]);
+      console.log('Fetched timetables:', timetables);
+      console.log('Fetched courses:', coursesData);
+      setExamTimetables(timetables);
+      setCourses(coursesData);
     } catch (err) {
-      console.error("Failed to fetch exam timetables", err);
+      console.error('Failed to fetch data:', err);
+      setError('Failed to load data. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDownload = (fileUrl, title) => {
-    window.open(fileUrl, '_blank');
+  // ----- Download -----
+  const handleDownload = async (item) => {
+    setDownloadLoading(true);
+    try {
+      const response = await request.GET(`/lms/exam-timetables/${item.id}/download/`, {
+        responseType: 'blob'
+      });
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const filename = item.pdf ? item.pdf.split('/').pop() : `${item.title}.pdf`;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download failed:', err);
+      alert('Failed to download the file. Please try again.');
+    } finally {
+      setDownloadLoading(false);
+    }
   };
 
+  // ----- CRUD -----
   const handleAdd = () => {
     setEditingItem(null);
-    setFormData({
-      year: '',
-      semester: '',
-      department: '',
-      title: '',
-      file: null
-    });
+    setFormData({ semester: '', course: '', title: '', pdf: null });
     setShowAddModal(true);
   };
 
   const handleEdit = (item) => {
     setEditingItem(item);
     setFormData({
-      year: item.year,
       semester: item.semester,
-      department: item.department,
+      course: typeof item.course === 'object' ? item.course.id : item.course,
       title: item.title,
-      file: null
+      pdf: null
     });
     setShowAddModal(true);
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this exam timetable?')) {
-      try {
-        // In real app: await request.DELETE(`/api/timetables/exams/${id}`);
-        setExamTimetables(prev => prev.filter(item => item.id !== id));
-      } catch (err) {
-        console.error("Failed to delete", err);
-      }
+    if (!window.confirm('Are you sure you want to delete this exam timetable?')) return;
+    try {
+      await request.DELETE(`/lms/exam-timetables/${id}/`);
+      await fetchData();
+    } catch (err) {
+      console.error("Failed to delete", err);
+      alert('Delete failed: ' + (err.message || 'Unknown error'));
     }
   };
 
+  // ----- handleSubmit with auto‑refresh -----
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-
+    setSubmitting(true);
     try {
-      // In real app: await request.POST('/api/timetables/exams', formData);
-      const newItem = {
-        id: editingItem ? editingItem.id : Date.now(),
-        ...formData,
-        uploadedAt: new Date().toISOString(),
-        fileUrl: formData.file ? URL.createObjectURL(formData.file) : (editingItem?.fileUrl || '')
-      };
+      if (formData.pdf) {
+        const file = formData.pdf;
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+          alert('Please select a PDF file.');
+          setSubmitting(false);
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          alert('File size must be under 5 MB.');
+          setSubmitting(false);
+          return;
+        }
+      } else if (!editingItem) {
+        alert('Please select a PDF file.');
+        setSubmitting(false);
+        return;
+      }
+
+      const formDataToSend = new FormData();
+      formDataToSend.append('semester', Number(formData.semester));
+      formDataToSend.append('course', formData.course);
+      formDataToSend.append('title', formData.title);
+      if (formData.pdf) {
+        formDataToSend.append('pdf', formData.pdf);
+      }
 
       if (editingItem) {
-        setExamTimetables(prev => prev.map(item => item.id === editingItem.id ? newItem : item));
+        await request.PUT(`/lms/exam-timetables/${editingItem.id}/`, formDataToSend, {
+          isFormData: true
+        });
       } else {
-        setExamTimetables(prev => [...prev, newItem]);
+        await request.POST('/lms/exam-timetables/', formDataToSend, {
+          isFormData: true
+        });
       }
 
       setShowAddModal(false);
+      await fetchData();
+
     } catch (err) {
-      console.error("Failed to save", err);
+      console.error("Failed to save – full error:", err);
+      let errorMsg = 'Failed to save exam timetable. Please check your input.';
+      if (err.data) {
+        const data = err.data;
+        if (typeof data === 'object') {
+          const messages = Object.entries(data)
+            .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+            .join('\n');
+          if (messages) errorMsg = messages;
+        } else if (typeof data === 'string') {
+          errorMsg = data;
+        }
+      } else if (err.response && err.response.data) {
+        const data = err.response.data;
+        if (typeof data === 'object') {
+          const messages = Object.entries(data)
+            .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+            .join('\n');
+          if (messages) errorMsg = messages;
+        } else if (typeof data === 'string') {
+          errorMsg = data;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+      alert(errorMsg);
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
+  // ----- Filtering (fixed) -----
   const filteredExamTimetables = examTimetables.filter(item => {
-    if (examFilter.year && item.year !== examFilter.year) return false;
-    if (examFilter.semester && item.semester !== examFilter.semester) return false;
-    if (examFilter.department && item.department !== examFilter.department) return false;
+    // Semester filter
+    if (examFilter.semester && Number(item.semester) !== Number(examFilter.semester)) {
+      return false;
+    }
+
+    // Course filter – compare IDs (convert both to number)
+    if (examFilter.course) {
+      const itemCourseId = typeof item.course === 'object' ? item.course.id : Number(item.course);
+      if (itemCourseId !== Number(examFilter.course)) {
+        return false;
+      }
+    }
+
     return true;
   });
 
   const isAdmin = user?.role?.toLowerCase() === 'admin';
 
+  // ---- Loading / Error states ----
+  if (loading) {
+    return (
+      <div className="timetable-container">
+        <div className="loading-state">Loading exam timetables...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="timetable-container">
+        <div className="error-state">
+          <p>⚠️ {error}</p>
+          <button onClick={fetchData} className="retry-btn">Retry</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="timetable-container">
       <div className="timetable-header">
-        <h1 className = "timetable-headertitle">Exam Timetable Management</h1>
+        <h1 className="timetable-headertitle">Exam Timetable Management</h1>
         <p className="timetable-headerdescription">View and manage examination timetables</p>
       </div>
 
       <div className="timetable-content">
         {/* Filters */}
         <div className="filters-section">
-          <div className="filters-header">
-            
-          </div>
           <div className="filters-grid">
-            <select
-              value={examFilter.year}
-              onChange={(e) => setExamFilter({ ...examFilter, year: e.target.value })}
-            >
-              <option value="">All Years</option>
-              {years.map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
             <select
               value={examFilter.semester}
               onChange={(e) => setExamFilter({ ...examFilter, semester: e.target.value })}
             >
               <option value="">All Semesters</option>
-              {semesters.map(s => <option key={s} value={s}>{s}</option>)}
+              {semesters.map(s => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
             </select>
+
             <select
-              value={examFilter.department}
-              onChange={(e) => setExamFilter({ ...examFilter, department: e.target.value })}
+              value={examFilter.course}
+              onChange={(e) => setExamFilter({ ...examFilter, course: e.target.value })}
             >
-              <option value="">All Departments</option>
-              {departments.map(d => <option key={d} value={d}>{d}</option>)}
+              <option value="">All Courses</option>
+              {courses.map(c => (
+                <option key={c.id} value={c.id}>{c.code} - {c.name}</option>
+              ))}
             </select>
-            <button className="clear-filters" onClick={() => setExamFilter({ year: '', semester: '', department: '' })}>
+
+            <button className="clear-filters" onClick={() => setExamFilter({ semester: '', course: '' })}>
               Clear Filters
             </button>
           </div>
@@ -189,7 +292,7 @@ const ExamTimetablePage = () => {
           </button>
         )}
 
-        {/* Exam Timetable List */}
+        {/* Timetable List */}
         <div className="timetable-list">
           {filteredExamTimetables.length === 0 ? (
             <div className="empty-state">
@@ -199,16 +302,24 @@ const ExamTimetablePage = () => {
             filteredExamTimetables.map(item => (
               <div key={item.id} className="timetable-card">
                 <div className="timetable-info">
-                  <h3 className = "module-title">{item.title}</h3>
+                  <h3 className="module-title">{item.title}</h3>
                   <div className="timetable-meta">
-                    <span><MdEvent /> {item.year} • {item.semester}</span>
-                    <span>{item.department}</span>
-                    <span>Uploaded: {new Date(item.uploadedAt).toLocaleDateString()}</span>
+                    <span><MdEvent /> Semester {item.semester}</span>
+                    <span>
+                      {typeof item.course === 'object'
+                        ? item.course.code
+                        : (courses.find(c => c.id === item.course)?.code || item.course)}
+                    </span>
+                    <span>Uploaded: {new Date(item.created_at).toLocaleDateString()}</span>
                   </div>
                 </div>
                 <div className="timetable-actions">
-                  <button className="download-btn" onClick={() => handleDownload(item.fileUrl, item.title)}>
-                    <MdDownload /> Download
+                  <button
+                    className="download-btn"
+                    onClick={() => handleDownload(item)}
+                    disabled={downloadLoading}
+                  >
+                    <MdDownload /> {downloadLoading ? 'Downloading...' : 'Download'}
                   </button>
                   {isAdmin && (
                     <>
@@ -227,7 +338,7 @@ const ExamTimetablePage = () => {
         </div>
       </div>
 
-      {/* Add/Edit Modal */}
+      {/* Add/Edit Modal (unchanged) */}
       {showAddModal && (
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -239,18 +350,6 @@ const ExamTimetablePage = () => {
             </div>
             <form onSubmit={handleSubmit} className="modal-form">
               <div className="form-group">
-                <label>Year *</label>
-                <select
-                  value={formData.year}
-                  onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                  required
-                >
-                  <option value="">Select Year</option>
-                  {years.map(y => <option key={y} value={y}>{y}</option>)}
-                </select>
-              </div>
-
-              <div className="form-group">
                 <label>Semester *</label>
                 <select
                   value={formData.semester}
@@ -258,19 +357,23 @@ const ExamTimetablePage = () => {
                   required
                 >
                   <option value="">Select Semester</option>
-                  {semesters.map(s => <option key={s} value={s}>{s}</option>)}
+                  {semesters.map(s => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
                 </select>
               </div>
 
               <div className="form-group">
-                <label>Department *</label>
+                <label>Course *</label>
                 <select
-                  value={formData.department}
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                  value={formData.course}
+                  onChange={(e) => setFormData({ ...formData, course: e.target.value })}
                   required
                 >
-                  <option value="">Select Department</option>
-                  {departments.map(d => <option key={d} value={d}>{d}</option>)}
+                  <option value="">Select Course</option>
+                  {courses.map(c => (
+                    <option key={c.id} value={c.id}>{c.code} - {c.name}</option>
+                  ))}
                 </select>
               </div>
 
@@ -280,20 +383,20 @@ const ExamTimetablePage = () => {
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="e.g., CS Semester 1 Exam Timetable"
+                  placeholder="e.g., CS101 Exam Timetable"
                   required
                 />
               </div>
 
               <div className="form-group">
-                <label>PDF File *</label>
+                <label>PDF File {!editingItem && '*'}</label>
                 <input
                   type="file"
                   accept=".pdf"
-                  onChange={(e) => setFormData({ ...formData, file: e.target.files[0] })}
+                  onChange={(e) => setFormData({ ...formData, pdf: e.target.files[0] })}
                   required={!editingItem}
                 />
-                {editingItem && !formData.file && (
+                {editingItem && !formData.pdf && (
                   <p className="file-note">Current file: {editingItem.title}.pdf</p>
                 )}
               </div>
@@ -302,8 +405,8 @@ const ExamTimetablePage = () => {
                 <button type="button" className="cancel-btn" onClick={() => setShowAddModal(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="save-btn" disabled={loading}>
-                  {loading ? 'Saving...' : (editingItem ? 'Update' : 'Add')}
+                <button type="submit" className="save-btn" disabled={submitting}>
+                  {submitting ? 'Saving...' : (editingItem ? 'Update' : 'Add')}
                 </button>
               </div>
             </form>

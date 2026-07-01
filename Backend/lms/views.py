@@ -1,4 +1,6 @@
 #lms/views.py
+from django.http import FileResponse
+import os
 from django.shortcuts import get_object_or_404
 from django.db import connection, transaction
 from django.db.models import Q, Count
@@ -211,23 +213,48 @@ class EnrollmentViewSet(BaseModelViewSet):
         })    
 
 class ExamTimetableViewSet(BaseModelViewSet):
+    """
+    ViewSet for managing exam timetables.
+    Handles CRUD + file download.
+    """
     queryset = ExamTimetable.objects.all()
     serializer_class = ExamTimetableSerializer
-        
+
     def get_queryset(self):
+        """
+        Return all timetables for admin, instructor and student.
+        (No course‑specific filtering because the model has no FK to Course.)
+        """
         user = self.request.user
-        if user.role == 'admin':
-            return ExamTimetable.objects.all()
-        if user.role == 'instructor':
-            return ExamTimetable.objects.filter(course__instructor=user)
-        return ExamTimetable.objects.filter(course__enrollments__student=user).distinct()
-    
+        # All authenticated users can see all timetables.
+        # You can add role‑based restrictions here if needed.
+        return ExamTimetable.objects.all()
+
     def perform_create(self, serializer):
+        # The file is automatically handled by the FileField.
         serializer.save()
 
     def perform_update(self, serializer):
         serializer.save()
 
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
+    def download(self, request, pk=None):
+        """
+        Download the timetable PDF file.
+        """
+        timetable = self.get_object()
+        file_path = timetable.pdf.path  # assumes field name is 'file'
+
+        if not os.path.exists(file_path):
+            return Response(
+                {"error": "File not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        response = FileResponse(open(file_path, 'rb'))
+        response['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
+        return response
+        
 class ExamResultViewSet(BaseModelViewSet):
     queryset = ExamResult.objects.all()
     serializer_class = ExamResultSerializer
