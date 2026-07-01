@@ -240,7 +240,7 @@ class ExamResultViewSet(BaseModelViewSet):
         if user.role == 'admin':
             queryset = ExamResult.objects.all()
         elif user.role == 'instructor':
-            queryset = ExamResult.objects.filter(exam__course__instructor=user)
+            queryset = ExamResult.objects.filter(exam__course__instructors=user)
         else:
             queryset = ExamResult.objects.filter(student=user)
         
@@ -345,7 +345,7 @@ class ExamResultViewSet(BaseModelViewSet):
         """
         instructor = request.user
         results = ExamResult.objects.filter(
-            exam__course__instructor=instructor
+            exam__course__instructors=instructor
         ).select_related('exam__course', 'student')
         
         serializer = ExamResultSerializer(results, many=True)

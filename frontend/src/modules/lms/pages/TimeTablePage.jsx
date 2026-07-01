@@ -7,17 +7,17 @@ import './TimeTableCustom.css';
 const ExamTimetablePage = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  
+
   // Data states
   const [examTimetables, setExamTimetables] = useState([]);
-  
+
   // Filter states
   const [examFilter, setExamFilter] = useState({
     year: '',
     semester: '',
     department: ''
   });
-  
+
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -29,7 +29,7 @@ const ExamTimetablePage = () => {
     file: null
   });
   const [loading, setLoading] = useState(false);
-  
+
   // Options
   const years = ['2024', '2025', '2026', '2027', '2028'];
   const semesters = ['Semester 1', 'Semester 2'];
@@ -108,7 +108,7 @@ const ExamTimetablePage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       // In real app: await request.POST('/api/timetables/exams', formData);
       const newItem = {
@@ -117,13 +117,13 @@ const ExamTimetablePage = () => {
         uploadedAt: new Date().toISOString(),
         fileUrl: formData.file ? URL.createObjectURL(formData.file) : (editingItem?.fileUrl || '')
       };
-      
+
       if (editingItem) {
         setExamTimetables(prev => prev.map(item => item.id === editingItem.id ? newItem : item));
       } else {
         setExamTimetables(prev => [...prev, newItem]);
       }
-      
+
       setShowAddModal(false);
     } catch (err) {
       console.error("Failed to save", err);
@@ -144,15 +144,15 @@ const ExamTimetablePage = () => {
   return (
     <div className="timetable-container">
       <div className="timetable-header">
-        <h1>Exam Timetable Management</h1>
-        <p>View and manage examination timetables</p>
+        <h1 className = "timetable-headertitle">Exam Timetable Management</h1>
+        <p className="timetable-headerdescription">View and manage examination timetables</p>
       </div>
 
       <div className="timetable-content">
         {/* Filters */}
         <div className="filters-section">
           <div className="filters-header">
-            <MdFilterList /> Filter Exam Timetables
+            
           </div>
           <div className="filters-grid">
             <select
@@ -199,7 +199,7 @@ const ExamTimetablePage = () => {
             filteredExamTimetables.map(item => (
               <div key={item.id} className="timetable-card">
                 <div className="timetable-info">
-                  <h3>{item.title}</h3>
+                  <h3 className = "module-title">{item.title}</h3>
                   <div className="timetable-meta">
                     <span><MdEvent /> {item.year} • {item.semester}</span>
                     <span>{item.department}</span>

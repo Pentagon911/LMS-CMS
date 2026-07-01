@@ -11,9 +11,12 @@ import './BatchStudentManagement.css';
 
 const BatchStudentManagement = () => {
   const navigate = useNavigate();
-  const [batches, setBatches] = useState([]);
-  const [selectedBatch, setSelectedBatch] = useState(null);
-  const [batchDetails, setBatchDetails] = useState(null);
+  const [departments, setDepartments] = useState([]);
+  const [selectedDepartment, setSelectedDepartment] = useState(null);
+  const [batchName, setBatchName] = useState('');
+  const [batchYear, setBatchYear] = useState('');
+  const [isCreatingBatch, setIsCreatingBatch] = useState(false);
+  const [createdBatch, setCreatedBatch] = useState(null);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -23,48 +26,72 @@ const BatchStudentManagement = () => {
   const [studentInput, setStudentInput] = useState('');
   const [parsedStudents, setParsedStudents] = useState([]);
 
-  // Fetch all batches on component mount
+  // Fetch all departments on component mount
   useEffect(() => {
-    fetchBatches();
+    fetchDepartments();
   }, []);
 
-  // Fetch batch details when batch is selected
-  useEffect(() => {
-    if (selectedBatch) {
-      fetchBatchDetails(selectedBatch);
-    }
-  }, [selectedBatch]);
-
-  const fetchBatches = async () => {
+  const fetchDepartments = async () => {
     setLoading(true);
     try {
-      const data = await request.GET('/lms/batches/');
-      setBatches(data);
+      const data = await request.GET('/lms/departments/');
+      setDepartments(data);
     } catch (err) {
-      console.error('Failed to fetch batches', err);
-      setError('Failed to load batches');
+      console.error('Failed to fetch departments', err);
+      setError('Failed to load departments');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchBatchDetails = async (batchId) => {
-    try {
-      const data = await request.GET(`/lms/batches/${batchId}/`);
-      setBatchDetails(data);
-    } catch (err) {
-      console.error('Failed to fetch batch details', err);
-      setError('Failed to load batch details');
-    }
+  const handleDepartmentSelect = (e) => {
+    const deptId = parseInt(e.target.value);
+    setSelectedDepartment(deptId);
+    setError(null);
   };
 
-  const handleBatchSelect = (e) => {
-    const batchId = parseInt(e.target.value);
-    setSelectedBatch(batchId);
-    setResult(null);
+  const handleBatchNameChange = (e) => {
+    setBatchName(e.target.value);
     setError(null);
-    setStudentInput('');
-    setParsedStudents([]);
+  };
+
+  const handleBatchYearChange = (e) => {
+    setBatchYear(e.target.value);
+    setError(null);
+  };
+
+  const createBatch = async () => {
+    if (!selectedDepartment) {
+      setError('Please select a department');
+      return;
+    }
+    if (!batchName.trim()) {
+      setError('Please enter a batch name');
+      return;
+    }
+    if (!batchYear.trim()) {
+      setError('Please enter a batch year');
+      return;
+    }
+
+    setIsCreatingBatch(true);
+    setError(null);
+
+    try {
+      const response = await request.POST('/lms/batches/', {
+        name: batchName.trim(),
+        year: batchYear.trim(),
+        department: selectedDepartment
+      });
+      
+      setCreatedBatch(response);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to create batch', err);
+      setError(err.response?.data?.error || 'Failed to create batch');
+    } finally {
+      setIsCreatingBatch(false);
+    }
   };
 
   const parseStudentData = (input) => {
@@ -168,8 +195,8 @@ const BatchStudentManagement = () => {
   };
 
   const handleSubmit = async () => {
-    if (!selectedBatch) {
-      setError('Please select a batch');
+    if (!createdBatch) {
+      setError('Please create a batch first');
       return;
     }
 
@@ -182,7 +209,7 @@ const BatchStudentManagement = () => {
     setError(null);
 
     try {
-      const response = await request.POST(`/lms/batches/${selectedBatch}/create-students/`, {
+      const response = await request.POST(`/lms/batches/${createdBatch.id}/create-students/`, {
         students: parsedStudents
       });
       
@@ -225,137 +252,193 @@ mike.brown|mike.brown@example.com|Mike|Brown|password123|`;
     return 'bsm-preview-empty';
   };
 
+  const resetForm = () => {
+    setSelectedDepartment(null);
+    setBatchName('');
+    setBatchYear('');
+    setCreatedBatch(null);
+    setStudentInput('');
+    setParsedStudents([]);
+    setError(null);
+    setResult(null);
+  };
+
   return (
     <div className="bsm-container">
       <div className="bsm-header">
         <h1><MdGroupAdd /> Batch Student Management</h1>
-        <p>Create multiple students for a specific batch at once</p>
+        <p>Create a new batch and add multiple students at once</p>
       </div>
 
-      {/* Batch Selection Card */}
+      {/* Create Batch Card */}
       <div className="bsm-card">
         <div className="bsm-card-header">
           <MdSchool className="bsm-card-icon" />
-          <h3>Select Batch</h3>
+          <h3>Create New Batch</h3>
         </div>
         <div className="bsm-card-content">
-          <select 
-            className="bsm-select" 
-            value={selectedBatch || ''} 
-            onChange={handleBatchSelect}
-            disabled={loading}
-          >
-            <option value="">-- Select a batch --</option>
-            {batches.map(batch => (
-              <option key={batch.id} value={batch.id}>
-                {batch.name} ({batch.year}) - {batch.department_name}
-              </option>
-            ))}
-          </select>
-
-          {batchDetails && (
-            <div className="bsm-batch-info">
-              <div className="bsm-info-row">
-                <span className="bsm-info-label">Department:</span>
-                <span className="bsm-info-value">{batchDetails.department_name}</span>
-              </div>
-              <div className="bsm-info-row">
-                <span className="bsm-info-label">Faculty:</span>
-                <span className="bsm-info-value">{batchDetails.faculty_name}</span>
-              </div>
-              <div className="bsm-info-row">
-                <span className="bsm-info-label">Year:</span>
-                <span className="bsm-info-value">{batchDetails.year}</span>
-              </div>
+          <div className="bsm-form-row">
+            <div className="bsm-form-group">
+              <label className="bsm-form-label">Batch Name</label>
+              <input
+                type="text"
+                className="bsm-input"
+                placeholder="e.g., Batch 27"
+                value={batchName}
+                onChange={handleBatchNameChange}
+                disabled={isCreatingBatch || !!createdBatch}
+              />
             </div>
-          )}
-        </div>
-      </div>
+            <div className="bsm-form-group">
+              <label className="bsm-form-label">Batch Year</label>
+              <input
+                type="text"
+                className="bsm-input"
+                placeholder="e.g., 2027"
+                value={batchYear}
+                onChange={handleBatchYearChange}
+                disabled={isCreatingBatch || !!createdBatch}
+              />
+            </div>
+          </div>
 
-      {/* Student Data Input Card */}
-      <div className="bsm-card">
-        <div className="bsm-card-header">
-          <MdAssignment className="bsm-card-icon" />
-          <h3>Student Data Input</h3>
-          <div className="bsm-card-actions">
-            <button className="bsm-icon-btn" onClick={downloadTemplate} title="Download Template">
-              <MdDownload />
-            </button>
-            <button className="bsm-icon-btn" onClick={handlePasteFromClipboard} title="Paste from Clipboard">
-              <MdContentPaste />
-            </button>
-            <label className="bsm-icon-btn bsm-file-label" title="Upload File">
-              <MdFileUpload />
-              <input type="file" accept=".txt,.csv" onChange={handleFileUpload} className="bsm-file-input" />
-            </label>
+          <div className="bsm-form-group">
+            <label className="bsm-form-label">Department</label>
+            <select 
+              className="bsm-select" 
+              value={selectedDepartment || ''} 
+              onChange={handleDepartmentSelect}
+              disabled={isCreatingBatch || !!createdBatch}
+            >
+              <option value="">-- Select a department --</option>
+              {departments.map(dept => (
+                <option key={dept.id} value={dept.id}>
+                  {dept.name} ({dept.code}) - {dept.faculty_name}
+                </option>
+              ))}
+            </select>
           </div>
-        </div>
-        <div className="bsm-card-content">
-          <div className="bsm-format-info">
-            <strong>Format:</strong> username|email|first_name|last_name|password|phone_number
-            <br />
-            <small>Separate fields with | or , (comma). One student per line. Phone number is optional.</small>
-          </div>
-          
-          <textarea
-            className="bsm-textarea"
-            rows="10"
-            placeholder={`john.doe|john.doe@example.com|John|Doe|password123|
-jane.smith|jane.smith@example.com|Jane|Smith|password123|+1234567890`}
-            value={studentInput}
-            onChange={handleTextareaChange}
-          />
-          
-          {parsedStudents.length > 0 && (
-            <div className={`bsm-preview ${getPreviewClass()}`}>
-              <div className="bsm-preview-header">
-                <strong>Preview: {parsedStudents.length} student(s) ready</strong>
-                <button className="bsm-clear-btn" onClick={handleClearInput}>
-                  <MdDelete /> Clear
+
+          {!createdBatch ? (
+            <button 
+              className="bsm-create-batch-btn" 
+              onClick={createBatch}
+              disabled={!selectedDepartment || !batchName.trim() || !batchYear.trim() || isCreatingBatch}
+            >
+              {isCreatingBatch ? 'Creating Batch...' : 'Create Batch'}
+            </button>
+          ) : (
+            <div className="bsm-batch-created">
+              <div className="bsm-success-message">
+                <MdCheckCircle />
+                <span>Batch "{createdBatch.name}" created successfully!</span>
+                <button className="bsm-reset-btn" onClick={resetForm}>
+                  <MdClose /> Create Another Batch
                 </button>
               </div>
-              <div className="bsm-preview-list">
-                {parsedStudents.slice(0, 5).map((student, index) => (
-                  <div key={index} className="bsm-preview-item">
-                    <span className="bsm-preview-name">{student.first_name} {student.last_name}</span>
-                    <span className="bsm-preview-username">@{student.username}</span>
-                    <span className="bsm-preview-email">{student.email}</span>
-                  </div>
-                ))}
-                {parsedStudents.length > 5 && (
-                  <div className="bsm-preview-more">
-                    ... and {parsedStudents.length - 5} more
-                  </div>
-                )}
+              <div className="bsm-batch-info">
+                <div className="bsm-info-row">
+                  <span className="bsm-info-label">Department:</span>
+                  <span className="bsm-info-value">{createdBatch.department_name}</span>
+                </div>
+                <div className="bsm-info-row">
+                  <span className="bsm-info-label">Year:</span>
+                  <span className="bsm-info-value">{createdBatch.year}</span>
+                </div>
               </div>
-            </div>
-          )}
-          
-          {error && (
-            <div className="bsm-error-message">
-              <MdWarning />
-              <span>{error}</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Submit Button */}
-      <div className="bsm-actions">
-        <button 
-          className="bsm-cancel-btn" 
-          onClick={() => navigate('/admin/users')}
-        >
-          Cancel
-        </button>
-        <button 
-          className="bsm-submit-btn" 
-          onClick={handleSubmit}
-          disabled={!selectedBatch || parsedStudents.length === 0 || submitting}
-        >
-          {submitting ? 'Creating Students...' : `Create ${parsedStudents.length} Student(s)`}
-        </button>
-      </div>
+      {/* Student Data Input Card - Only show if batch is created */}
+      {createdBatch && (
+        <>
+          <div className="bsm-card">
+            <div className="bsm-card-header">
+              <MdAssignment className="bsm-card-icon" />
+              <h3>Student Data Input</h3>
+              <div className="bsm-card-actions">
+                <button className="bsm-icon-btn" onClick={downloadTemplate} title="Download Template">
+                  <MdDownload />
+                </button>
+                <button className="bsm-icon-btn" onClick={handlePasteFromClipboard} title="Paste from Clipboard">
+                  <MdContentPaste />
+                </button>
+                <label className="bsm-icon-btn bsm-file-label" title="Upload File">
+                  <MdFileUpload />
+                  <input type="file" accept=".txt,.csv" onChange={handleFileUpload} className="bsm-file-input" />
+                </label>
+              </div>
+            </div>
+            <div className="bsm-card-content">
+              <div className="bsm-format-info">
+                <strong>Format:</strong> username|email|first_name|last_name|password|phone_number
+                <br />
+                <small>Separate fields with | or , (comma). One student per line. Phone number is optional.</small>
+              </div>
+              
+              <textarea
+                className="bsm-textarea"
+                rows="10"
+                placeholder={`john.doe|john.doe@example.com|John|Doe|password123|
+jane.smith|jane.smith@example.com|Jane|Smith|password123|+1234567890`}
+                value={studentInput}
+                onChange={handleTextareaChange}
+              />
+              
+              {parsedStudents.length > 0 && (
+                <div className={`bsm-preview ${getPreviewClass()}`}>
+                  <div className="bsm-preview-header">
+                    <strong>Preview: {parsedStudents.length} student(s) ready</strong>
+                    <button className="bsm-clear-btn" onClick={handleClearInput}>
+                      <MdDelete /> Clear
+                    </button>
+                  </div>
+                  <div className="bsm-preview-list">
+                    {parsedStudents.slice(0, 5).map((student, index) => (
+                      <div key={index} className="bsm-preview-item">
+                        <span className="bsm-preview-name">{student.first_name} {student.last_name}</span>
+                        <span className="bsm-preview-username">@{student.username}</span>
+                        <span className="bsm-preview-email">{student.email}</span>
+                      </div>
+                    ))}
+                    {parsedStudents.length > 5 && (
+                      <div className="bsm-preview-more">
+                        ... and {parsedStudents.length - 5} more
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {error && (
+                <div className="bsm-error-message">
+                  <MdWarning />
+                  <span>{error}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <div className="bsm-actions">
+            <button 
+              className="bsm-cancel-btn" 
+              onClick={() => navigate('/admin/users')}
+            >
+              Cancel
+            </button>
+            <button 
+              className="bsm-submit-btn" 
+              onClick={handleSubmit}
+              disabled={!createdBatch || parsedStudents.length === 0 || submitting}
+            >
+              {submitting ? 'Creating Students...' : `Create ${parsedStudents.length} Student(s)`}
+            </button>
+          </div>
+        </>
+      )}
 
       {/* Result Modal */}
       {showModal && result && (
