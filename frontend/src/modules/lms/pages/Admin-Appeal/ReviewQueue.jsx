@@ -168,13 +168,6 @@ const ReviewQueue = () => {
                   <td>{item.batch_name || 'N/A'}</td>
                   <td>{item.assigned_to_name || 'Unassigned'}</td>
                   <td className="rq-actions">
-                    <button
-                      className="rq-action-btn-view-btn"
-                      onClick={() => handleViewAppeal(item)}
-                      title="View Appeal"
-                    >
-                      <MdVisibility />
-                    </button>
                     {!item.assigned_to && (
                       <button
                         className="rq-action-btn-assign-btn"

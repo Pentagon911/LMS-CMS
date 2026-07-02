@@ -15,7 +15,6 @@ import json
 from django.db import transaction
 from users.profiles import StudentProfile
 from rest_framework.views import APIView, PermissionDenied
-# Create your views here.
 
 class CourseViewSet(viewsets.ModelViewSet):
     """ViewSet for courses
@@ -275,14 +274,11 @@ class QuizViewSet(viewsets.ModelViewSet):
                 if image_key in request.FILES:
                     question['image'] = request.FILES[image_key]
                 else:
-                    # If they didn't upload a new image, remove the 'image' key 
-                    # so the serializer doesn't accidentally wipe out the old image.
                     question.pop('image', None)
         else:
-            # Fallback just in case you send standard JSON from Postman
             quiz_data = request.data.copy() if hasattr(request.data, 'copy') else request.data
 
-        # 3. Hand the clean data over to your QuizCreateSerializer
+        # Hand the clean data over to your QuizCreateSerializer
         serializer = self.get_serializer(
             instance, 
             data=quiz_data, 
@@ -292,7 +288,7 @@ class QuizViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         
-        # 4. Return success to the frontend
+        # Return success to the frontend
         return Response({
             'quizId': instance.quizId,
             'message': 'Quiz updated successfully'
