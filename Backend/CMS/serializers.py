@@ -476,11 +476,11 @@ class studentAnswerSerializer(serializers.ModelSerializer):
         fields = [
             'id', 
             'question', 
-            'questionText',      # Shows the actual question
-            'questionType',      # Shows type (single, multiple, etc.)
-            'attempt',            # Fixed: was 'attemp'
-            'selectedOptions',     # IMPORTANT: You forgot this field!
-            'selectedOptionsDetails',  # Human-readable options
+            'questionText',      
+            'questionType',      
+            'attempt',            
+            'selectedOptions',     
+            'selectedOptionsDetails',  
             'textAnswer', 
             'isCorrect',
             'answeredAt'
@@ -529,8 +529,6 @@ class courseDashboardSerializer(serializers.ModelSerializer):
     def get_week_items(self, week):
         items = []
         
-
-        # Helper function to safely check file size without crashing
         def get_safe_file_size(file_obj):
             try:
                 if file_obj and file_obj.storage.exists(file_obj.name):
@@ -607,7 +605,7 @@ class courseDashboardSerializer(serializers.ModelSerializer):
         if announcements:
             for announcement in announcements:
 
-                file_format = 'Text' # Default if no file
+                file_format = 'Text' 
                 if announcement.pdf:
                     file_format = 'PDF'
                 elif announcement.image:
@@ -725,7 +723,7 @@ class ContentUploadSerializer(serializers.Serializer):
         if not attachment and not link:
             raise serializers.ValidationError("You must provide either an attachment or a link.")
         
-        # Optional: Prevent providing both at the same time
+        # Prevent providing both at the same time
         if attachment and link:
             raise serializers.ValidationError("Please provide either an attachment or a link, not both.")
             
@@ -761,88 +759,24 @@ class AnnouncementTargetSerializer(serializers.Serializer):
         return data
 
 class GlobalAnnouncementSerializer(serializers.ModelSerializer):
-    target_details = serializers.SerializerMethodField()
+    """Serializer for viewing announcements"""
+    
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
     
     class Meta:
         model = GlobalAnnouncement
         fields = [
-            'id', 'title', 'content', 'pdf_file',
-            'target_type', 'faculties', 'departments', 'batches', 'programs',
-            'created_by', 'created_by_name', 'created_at', 'updated_at',
-            'is_active', 'publish_from', 'publish_until', 'target_details'
+            'id', 
+            'title', 
+            'content', 
+            'pdf_file',
+            'target_type',
+            'created_by_name',
+            'created_at',
+            'is_active',
+            'publish_from',
+            'publish_until'
         ]
-        read_only_fields = ['created_by', 'created_at', 'updated_at']
-    
-    def get_target_details(self, obj):
-        """Get readable target details"""
-        if obj.target_type == 'faculty':
-            return {
-                'faculties': [{'id': f.id, 'name': f.name, 'code': f.code} 
-                             for f in obj.faculties.all()]
-            }
-        elif obj.target_type == 'department':
-            return {
-                'departments': [{'id': d.id, 'name': d.name, 'code': d.code} 
-                               for d in obj.departments.all()]
-            }
-        elif obj.target_type == 'batch':
-            return {
-                'batches': [{'id': b.id, 'name': b.name, 'year': b.year, 'department': b.department.name} 
-                           for b in obj.batches.all()]
-            }
-        elif obj.target_type == 'program':
-            return {
-                'programs': [{'id': p.id, 'name': p.name, 'code': p.code} 
-                            for p in obj.programs.all()]
-            }
-        return None
-    
-    
-    def create(self, validated_data):
-        # Extract many-to-many fields
-        faculties = validated_data.pop('faculties', [])
-        departments = validated_data.pop('departments', [])
-        batches = validated_data.pop('batches', [])
-        programs = validated_data.pop('programs', [])
-        
-        # Set created_by from context
-        validated_data['created_by'] = self.context['request'].user
-        
-        # Create announcement
-        announcement = GlobalAnnouncement.objects.create(**validated_data)
-        
-        # Add many-to-many relationships
-        announcement.faculties.set(faculties)
-        announcement.departments.set(departments)
-        announcement.batches.set(batches)
-        announcement.programs.set(programs)
-        
-        return announcement
-    
-    def update(self, instance, validated_data):
-        # Extract many-to-many fields
-        faculties = validated_data.pop('faculties', None)
-        departments = validated_data.pop('departments', None)
-        batches = validated_data.pop('batches', None)
-        programs = validated_data.pop('programs', None)
-        
-        # Update regular fields
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-        
-        # Update many-to-many relationships if provided
-        if faculties is not None:
-            instance.faculties.set(faculties)
-        if departments is not None:
-            instance.departments.set(departments)
-        if batches is not None:
-            instance.batches.set(batches)
-        if programs is not None:
-            instance.programs.set(programs)
-        
-        return instance
 
 class StudentAnnouncementSerializer(serializers.ModelSerializer):
     """Simplified serializer for student view"""

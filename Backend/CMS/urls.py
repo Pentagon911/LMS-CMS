@@ -33,9 +33,8 @@ urlpatterns = [
     ),
     
     # Announcement endpoints
-    path('global-announcements/faculty-batch-years/', views.FacultyBatchYearsView.as_view(), name='faculty-batch-years'),
-    path('global-announcements/', views.GlobalAnnouncementListView.as_view(), name='announcement-list'),
-    path('global-announcements/<int:pk>/', views.GlobalAnnouncementDetailView.as_view(), name='announcement-detail'),
-    path('global-announcements/student/', views.StudentAnnouncementListView.as_view(), name='student-announcements'),
-    path('global-announcements/bulk-create/', views.BulkAnnouncementCreateView.as_view(), name='bulk-announcement-create'),
+      path('global-announcements/faculty-batch-years/', views.FacultyBatchYearsView.as_view(), name='faculty-batch-years'),
+      path('global-announcements/', views.GlobalAnnouncementListView.as_view(), name='announcement-list'),
+      path('global-announcements/bulk-create/', views.BulkAnnouncementCreateView.as_view(), name='bulk-announcement-create'),
+
 ]

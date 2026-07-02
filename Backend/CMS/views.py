@@ -84,7 +84,7 @@ class CourseViewSet(viewsets.ModelViewSet):
                 )
                 
         elif request.user.role == 'instructor':
-        # ✅ THE FIX: Check if the user exists in the instructors list
+        # Check if the user exists in the instructors list
             if not course.instructors.filter(id=request.user.id).exists():
                 return Response(
                     {'error': 'Not your course'}, 
@@ -205,11 +205,11 @@ class QuizViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         # Write operations (create, update, delete)
         if self.action in ['create', 'update', 'partial_update', 'destroy',]:
-            permission_classes = [permissions.AllowAny]
+            permission_classes = [permissions.IsAuthenticated]
         elif self.action in ['submit']:
-            permission_classes = [permissions.AllowAny]
+            permission_classes = [permissions.IsAuthenticated]
         else:
-            permission_classes = [permissions.AllowAny]
+            permission_classes = [permissions.IsAuthenticated]
         return [permission() for permission in permission_classes]
 
     def retrieve(self,request,*args,**kwargs):
@@ -271,7 +271,7 @@ class QuizViewSet(viewsets.ModelViewSet):
             for index, question in enumerate(questions):
                 image_key = f'image_{index}'
                 
-                # If the user uploaded a NEW image for this question, attach it
+                # If the user uploaded a new image for this question, attach it
                 if image_key in request.FILES:
                     question['image'] = request.FILES[image_key]
                 else:
@@ -600,7 +600,7 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
     serializer_class = AnnouncementSerializer
 
     def get_course(self):
-        # Combined: Gets course AND checks if request.user is an instructor for it
+        # Gets course and checks if request.user is an instructor for it
         try:
             return self.request.user.courses_taught.get(id=self.kwargs['pk'])
         except Course.DoesNotExist:
@@ -610,7 +610,7 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
         return Announcement.objects.filter(course_id=self.kwargs['pk']).order_by('-created_at')
 
     def perform_create(self, serializer):
-        # We pass the course instance and user directly to save()
+        # pass the course instance and user directly to save()
         serializer.save(
             created_by=self.request.user, 
             course=self.get_course()
@@ -743,72 +743,240 @@ class FacultyBatchYearsView(APIView):
         
         return Response(result)
     
-class GlobalAnnouncementListView(generics.ListCreateAPIView):
-    """
-    List and create global announcements
-    """
-    serializer_class = GlobalAnnouncementSerializer
-    permission_classes = [IsAdminUser]
+# class GlobalAnnouncementListView(generics.ListCreateAPIView):
+#     """
+#     List and create global announcements
+#     """
+#     serializer_class = GlobalAnnouncementSerializer
+#     permission_classes = [IsAdminUser]
     
-    def get_queryset(self):
-        queryset = GlobalAnnouncement.objects.all()
+#     def get_queryset(self):
+#         queryset = GlobalAnnouncement.objects.all()
         
-        # Filter by active status if specified
-        is_active = self.request.query_params.get('is_active')
-        if is_active is not None:
-            queryset = queryset.filter(is_active=is_active.lower() == 'true')
+#         # Filter by active status if specified
+#         is_active = self.request.query_params.get('is_active')
+#         if is_active is not None:
+#             queryset = queryset.filter(is_active=is_active.lower() == 'true')
         
-        # Filter by target type
-        target_type = self.request.query_params.get('target_type')
-        if target_type:
-            queryset = queryset.filter(target_type=target_type)
+#         # Filter by target type
+#         target_type = self.request.query_params.get('target_type')
+#         if target_type:
+#             queryset = queryset.filter(target_type=target_type)
         
-        return queryset
+#         return queryset
     
-    def perform_create(self, serializer):
-        serializer.save()
+#     def perform_create(self, serializer):
+#         serializer.save()
 
-class GlobalAnnouncementDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """
-    Retrieve, update or delete a global announcement
-    """
-    queryset = GlobalAnnouncement.objects.all()
-    serializer_class = GlobalAnnouncementSerializer
-    permission_classes = [IsAuthenticated]
+# class GlobalAnnouncementDetailView(generics.RetrieveUpdateDestroyAPIView):
+#     """
+#     Retrieve, update or delete a global announcement
+#     """
+#     queryset = GlobalAnnouncement.objects.all()
+#     serializer_class = GlobalAnnouncementSerializer
+#     permission_classes = [IsAuthenticated]
 
-class StudentAnnouncementListView(generics.ListAPIView):
+# class StudentAnnouncementListView(generics.ListAPIView):
+#     """
+#     Get all announcements visible to the current student user
+#     This endpoint is used by students to view their announcements
+#     """
+#     serializer_class = StudentAnnouncementSerializer
+#     permission_classes = [IsAuthenticated]
+    
+#     def get_queryset(self):
+#         user = self.request.user
+        
+#         # Check if user has a student profile
+#         if not hasattr(user, 'student_profile'):
+#             return GlobalAnnouncement.objects.none()
+        
+#         student_profile = user.student_profile
+#         queryset = GlobalAnnouncement.objects.filter(
+#             is_active=True,
+#             publish_from__lte=timezone.now()
+#         )
+        
+#         # Filter by publish_until if set
+#         queryset = queryset.filter(
+#             Q(publish_until__isnull=True) | Q(publish_until__gte=timezone.now())
+#         )
+        
+#         # Filter announcements that are visible to this student
+#         visible_announcements = []
+#         for announcement in queryset:
+#             if announcement.is_visible_to_student(student_profile):
+#                 visible_announcements.append(announcement.id)
+        
+#         return GlobalAnnouncement.objects.filter(id__in=visible_announcements)
+    
+
+
+# class InstructorAnnouncementListView(generics.ListAPIView):
+#     """
+#     Get all announcements visible to the current instructor user
+#     This endpoint is used by instructors to view their announcements
+#     """
+#     serializer_class = StudentAnnouncementSerializer  # Reuse same serializer
+#     permission_classes = [IsAuthenticated]
+    
+#     def get_queryset(self):
+#         user = self.request.user
+        
+#         # Check if user has an instructor profile
+#         if not hasattr(user, 'instructor_profile'):
+#             return GlobalAnnouncement.objects.none()
+        
+#         instructor_profile = user.instructor_profile
+        
+#         # Base queryset - active announcements
+#         queryset = GlobalAnnouncement.objects.filter(
+#             is_active=True,
+#             publish_from__lte=timezone.now()
+#         )
+        
+#         # Filter by publish_until if set
+#         queryset = queryset.filter(
+#             Q(publish_until__isnull=True) | Q(publish_until__gte=timezone.now())
+#         )
+        
+#         # Filter announcements that are visible to this instructor
+#         visible_announcements = []
+#         for announcement in queryset:
+#             if self._is_visible_to_instructor(announcement, instructor_profile):
+#                 visible_announcements.append(announcement.id)
+        
+#         return GlobalAnnouncement.objects.filter(id__in=visible_announcements)
+    
+#     def _is_visible_to_instructor(self, announcement, instructor_profile):
+#         """
+#         Check if announcement is visible to this instructor
+#         (Without modifying the model)
+#         """
+#         # All announcements (visible to everyone)
+#         if announcement.target_type == 'all':
+#             return True
+        
+#         # faculty targeting
+#         if announcement.target_type == 'faculty':
+#             if not instructor_profile.faculty:
+#                 return False
+#             return announcement.faculties.filter(
+#                 id=instructor_profile.faculty.id
+#             ).exists()
+        
+#         # department targeting
+#         if announcement.target_type == 'department':
+#             if not instructor_profile.department:
+#                 return False
+#             return announcement.departments.filter(
+#                 id=instructor_profile.department.id
+#             ).exists()
+        
+#         # student announcements (instructors don't see these)
+#         if announcement.target_type in ['batch', 'program']:
+#             return False
+        
+        
+#         return False
+
+class GlobalAnnouncementListView(APIView):
     """
-    Get all announcements visible to the current student user
-    This endpoint is used by students to view their announcements
+    Unified Announcement View for Admin, Instructor, and Student
+    URL: /cms/global-announcements/
+    GET only - View announcements based on role
+    
+    - Admin: Sees ALL announcements
+    - Instructor: Sees announcements targeted to their faculty/department
+    - Student: Sees announcements targeted to their faculty/department/batch/program
     """
-    serializer_class = StudentAnnouncementSerializer
     permission_classes = [IsAuthenticated]
     
-    def get_queryset(self):
-        user = self.request.user
+    def get(self, request):
+        user = request.user
+        role = getattr(user, 'role', None)
         
-        # Check if user has a student profile
-        if not hasattr(user, 'student_profile'):
-            return GlobalAnnouncement.objects.none()
+        # Get announcements based on role
+        if role == 'admin':
+            announcements = self._get_admin_announcements()
+        elif role == 'instructor':
+            announcements = self._get_instructor_announcements(user)
+        elif role == 'student':
+            announcements = self._get_student_announcements(user)
+        else:
+            announcements = []
         
-        student_profile = user.student_profile
+        # Return response
+        return Response({
+            'role': role,
+            'total': len(announcements),
+            'announcements': announcements
+        })
+    
+    # ============================================
+    # ADMIN - See ALL announcements
+    # ============================================
+    def _get_admin_announcements(self):
+        """Admin sees ALL announcements"""
+        queryset = GlobalAnnouncement.objects.all().order_by('-created_at')
+        return GlobalAnnouncementSerializer(queryset, many=True).data
+    
+    # ============================================
+    # INSTRUCTOR - See faculty/department announcements
+    # ============================================
+    def _get_instructor_announcements(self, user):
+        """Instructor sees announcements targeted to their faculty/department"""
+        if not hasattr(user, 'instructor_profile'):
+            return []
+        
+        profile = user.instructor_profile
+        
+        # Base queryset - active announcements
         queryset = GlobalAnnouncement.objects.filter(
             is_active=True,
             publish_from__lte=timezone.now()
-        )
-        
-        # Filter by publish_until if set
-        queryset = queryset.filter(
+        ).filter(
             Q(publish_until__isnull=True) | Q(publish_until__gte=timezone.now())
         )
         
-        # Filter announcements that are visible to this student
-        visible_announcements = []
+        visible = []
         for announcement in queryset:
-            if announcement.is_visible_to_student(student_profile):
-                visible_announcements.append(announcement.id)
+            is_visible = (
+                announcement.target_type == 'all' or
+                (announcement.target_type == 'faculty' and profile.faculty and 
+                 announcement.faculties.filter(id=profile.faculty.id).exists()) or
+                (announcement.target_type == 'department' and profile.department and 
+                 announcement.departments.filter(id=profile.department.id).exists())
+            )
+            if is_visible:
+                visible.append(announcement)
         
-        return GlobalAnnouncement.objects.filter(id__in=visible_announcements)
+        return GlobalAnnouncementSerializer(visible, many=True).data
+    
+    # ============================================
+    # STUDENT - See personalized announcements
+    # ============================================
+    def _get_student_announcements(self, user):
+        """Student sees announcements targeted to them"""
+        if not hasattr(user, 'student_profile'):
+            return []
+        
+        profile = user.student_profile
+        
+        # Base queryset - active announcements
+        queryset = GlobalAnnouncement.objects.filter(
+            is_active=True,
+            publish_from__lte=timezone.now()
+        ).filter(
+            Q(publish_until__isnull=True) | Q(publish_until__gte=timezone.now())
+        )
+        
+        visible = []
+        for announcement in queryset:
+            if announcement.is_visible_to_student(profile):
+                visible.append(announcement)
+        
+        return GlobalAnnouncementSerializer(visible, many=True).data
 
 class BulkAnnouncementCreateView(APIView):
     """
@@ -816,7 +984,7 @@ class BulkAnnouncementCreateView(APIView):
     This endpoint allows sending the same announcement to multiple faculties/batches/departments
     Supports batch years (string) and department IDs
     """
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated,IsAdminUser]
     
     def _get_batches_from_faculties(self, faculty_ids):
         """Get all batches from faculties"""

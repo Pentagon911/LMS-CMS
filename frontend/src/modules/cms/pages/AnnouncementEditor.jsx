@@ -180,62 +180,81 @@ const AnnouncementEditor = ({ announcement = null, onSave, onCancel }) => {
 
   // Submit handler
   const handleSubmit = async () => {
+    // Validation
     if (!title.trim()) {
-      alert("Please enter an announcement title");
-      return;
+        alert("Please enter an announcement title");
+        return;
     }
     if (!content.trim() || content === "<p><br></p>") {
-      alert("Please enter announcement content");
-      return;
+        alert("Please enter announcement content");
+        return;
     }
     if (audience === "SPECIFIC") {
-      const targets = buildTargets();
-      if (targets.length === 0) {
-        alert("Please select at least one faculty, batch year, or department.");
-        return;
-      }
+        const targets = buildTargets();
+        if (targets.length === 0) {
+            alert("Please select at least one faculty, batch year, or department.");
+            return;
+        }
     }
 
     setIsSubmitting(true);
 
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("content", content);
-    
-    // Add PDF files
-    attachments.forEach(file => {
-      formData.append("pdf_files", file);
-    });
-
-    if (audience === "ALL") {
-      formData.append("target_type", "all");
-    } else {
-      const targets = buildTargets();
-      formData.append("targets", JSON.stringify(targets));
-    }
-
     try {
-      const response = await request.UPLOAD("/cms/global-announcements/bulk-create/", formData, {
-        isFormData: true
-      });
-      console.log("Announcement posted:", response);
-      if (onSave) {
-        onSave(response);
-      }
-      // Optionally reset form
-      setTitle("");
-      setContent("");
-      setAttachments([]);
-      setSelectedFaculties([]);
-      setSelectedBatchYears([]);
-      setSelectedDepartments([]);
+        // ✅ Build JSON request body
+        const requestData = {
+            title: title,
+            content: content,
+            is_active: true,
+            publish_from: new Date().toISOString()
+        };
+
+        // ✅ Handle audience
+        if (audience === "ALL") {
+            requestData.targets = [
+                {
+                    target_type: "all"
+                }
+            ];
+        } else {
+            requestData.targets = buildTargets();
+        }
+
+        console.log('📤 Sending request data:', JSON.stringify(requestData, null, 2));
+
+        // ✅ POST with JSON (not FormData)
+        const response = await request.POST(
+            "/cms/global-announcements/bulk-create/", 
+            requestData
+        );
+        
+        console.log("✅ Announcement posted:", response);
+        
+        if (onSave) {
+            onSave(response);
+        }
+        
+        // Reset form
+        setTitle("");
+        setContent("");
+        setAttachments([]);
+        setSelectedFaculties([]);
+        setSelectedBatchYears([]);
+        setSelectedDepartments([]);
+        alert(`✅ ${response.total_created || 0} announcements created successfully!`);
+        
     } catch (err) {
-      console.error("Failed to post announcement", err);
-      alert("Failed to post announcement. Please try again.");
+        console.error("Failed to post announcement", err);
+        
+        // ✅ Show detailed error
+        if (err.response && err.response.data) {
+            alert(`Failed to post announcement: ${JSON.stringify(err.response.data)}`);
+        } else {
+            alert("Failed to post announcement. Please try again.");
+        }
     } finally {
-      setIsSubmitting(false);
+        setIsSubmitting(false);
     }
-  };
+};
 
   return (
     <div className="announcement-editor-container">

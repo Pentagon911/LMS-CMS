@@ -100,8 +100,16 @@ useEffect(() => {
   const fetchAnnouncements = async () => {
     try {
       setLoading(true);
-      const data = await request.GET('/cms/global-announcements/student/');
+      const data = await request.GET('/cms/global-announcements/');
       setAnnouncements(Array.isArray(data) ? data : []);
+
+      if (data && data.announcements) {
+    setAnnouncements(data.announcements);
+} else if (Array.isArray(data)) {
+    setAnnouncements(data);
+} else {
+    setAnnouncements([]);
+}
       setError('');
     } catch (err) {
       console.error("Failed to load announcements", err);

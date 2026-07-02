@@ -25,20 +25,16 @@ class Week(models.Model):
         return f"Week {self.order}: {self.topic}"
     
     def save(self, *args, **kwargs):
-        # 1. Only calculate order if it's a NEW record and order isn't manually set
         if not self.pk and not self.order:
-            # Look at the database for the current highest week number for this course
             max_order = Week.objects.filter(course=self.course).aggregate(
                 max_val=models.Max('order')
             )['max_val'] or 0
             
             self.order = max_order + 1
 
-        # 2. Try to save. If another request beat us to it, catch the error and increment
         try:
             super().save(*args, **kwargs)
         except IntegrityError:
-            # Refetch the max order (it likely changed in the last millisecond)
             max_order = Week.objects.filter(course=self.course).aggregate(
                 max_val=models.Max('order')
             )['max_val'] or 0
@@ -47,6 +43,7 @@ class Week(models.Model):
 
 #Abstract parent class
 class Content(models.Model):
+
     week = models.ForeignKey(Week,on_delete=models.CASCADE)
     title = models.TextField()
     description = models.TextField()
@@ -71,7 +68,7 @@ class Video(Content):
     def fileSize(self):
         """Get file size in MB"""
         if self.file:
-            return self.file.size / (1024 * 1024)  # Convert bytes to MB
+            return self.file.size / (1024 * 1024)  
         return 0
 
 class Pdf(Content):
@@ -99,7 +96,6 @@ class Link(Content):
 class Quiz(models.Model):
     """Quiz model - represents a quiz in a specific week"""
 
-    # Prefix for generating custom quiz IDs
     QUIZ_ID_PREFIX  = 'quiz'
 
     STATUS_CHOICES = [
@@ -200,7 +196,6 @@ class Question(models.Model):
         ('short',"Short Answer"),
     ]
 
-    #
     quiz = models.ForeignKey(Quiz,on_delete=models.CASCADE,related_name='questions')
 
     # Custom question ID (e.g., 'q1', 'q2')
@@ -220,7 +215,7 @@ class Question(models.Model):
 
     def save(self,*args,**kwargs):
         if not self.questionId:
-             # Generate question_id like 'q1', 'q2', etc.
+             # Generate question_id like 'q1', 'q2'.
             lastQuestion = Question.objects.filter(quiz=self.quiz).order_by('-order').first()
             if lastQuestion and lastQuestion.questionId:
                 lastNum = int(lastQuestion.questionId.replace('q', ''))
@@ -400,7 +395,6 @@ class GlobalAnnouncement(models.Model):
     # Target selection
     target_type = models.CharField(max_length=20, choices=TARGET_TYPE_CHOICES, default='all')
     
-    # These fields are used based on target_type
     faculties = models.ManyToManyField(
         'lms.Faculty',  
         blank=True,
