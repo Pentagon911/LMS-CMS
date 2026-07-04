@@ -307,12 +307,6 @@ Contributions are welcome! Please ensure:
 
 ---
 
-## 📄 License
-
-[Add your license here]
-
----
-
 ## 👥 Team
 
 Pentagon911 Organization
